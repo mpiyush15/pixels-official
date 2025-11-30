@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, Calendar, Trash2, Eye, X } from 'lucide-react';
+import { Mail, Phone, Calendar, Trash2, Eye, X, UserPlus } from 'lucide-react';
 
 interface Lead {
   _id: string;
@@ -57,6 +57,30 @@ export default function LeadsPage() {
       fetchLeads();
     } catch (error) {
       console.error('Error deleting lead:', error);
+    }
+  };
+
+  const convertToClient = async (leadId: string) => {
+    if (!confirm('Are you sure you want to convert this lead to a client?')) return;
+
+    try {
+      const response = await fetch('/api/leads/convert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leadId }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Lead converted to client successfully!');
+        fetchLeads();
+      } else {
+        alert(data.error || 'Failed to convert lead');
+      }
+    } catch (error) {
+      console.error('Error converting lead:', error);
+      alert('Failed to convert lead to client');
     }
   };
 
@@ -163,12 +187,23 @@ export default function LeadsPage() {
                         <button
                           onClick={() => setSelectedLead(lead)}
                           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="View Details"
                         >
                           <Eye className="w-4 h-4 text-gray-600" />
                         </button>
+                        {lead.status !== 'converted' && (
+                          <button
+                            onClick={() => convertToClient(lead._id)}
+                            className="p-2 hover:bg-green-50 rounded-lg transition-colors"
+                            title="Convert to Client"
+                          >
+                            <UserPlus className="w-4 h-4 text-green-600" />
+                          </button>
+                        )}
                         <button
                           onClick={() => deleteLead(lead._id)}
                           className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Delete Lead"
                         >
                           <Trash2 className="w-4 h-4 text-red-600" />
                         </button>
@@ -230,6 +265,29 @@ export default function LeadsPage() {
                 </p>
               </div>
             </div>
+
+            {selectedLead.status !== 'converted' && (
+              <div className="mt-6 flex gap-3">
+                <button
+                  onClick={() => {
+                    convertToClient(selectedLead._id);
+                    setSelectedLead(null);
+                  }}
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-light transition-colors flex items-center justify-center gap-2"
+                >
+                  <UserPlus className="w-5 h-5" />
+                  Convert to Client
+                </button>
+              </div>
+            )}
+
+            {selectedLead.status === 'converted' && (
+              <div className="mt-6 bg-green-50 border border-green-200 rounded-xl p-4">
+                <p className="text-green-700 font-light text-center">
+                  ✓ This lead has been converted to a client
+                </p>
+              </div>
+            )}
           </motion.div>
         </div>
       )}

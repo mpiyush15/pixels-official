@@ -31,9 +31,20 @@ export async function POST(request: NextRequest) {
     const invoiceNumber = `INV-${String(count + 1).padStart(5, '0')}`;
 
     const invoice = {
-      ...body,
       invoiceNumber,
+      clientId: body.clientId,
+      clientName: body.clientName,
+      clientEmail: body.clientEmail,
+      clientPhone: body.clientPhone || '',
+      clientCompany: body.clientCompany || '',
+      clientAddress: body.clientAddress || '',
+      services: body.services,
+      subtotal: body.subtotal,
+      tax: body.tax,
+      total: body.total,
       status: 'draft',
+      issueDate: body.issueDate,
+      dueDate: body.dueDate,
       createdAt: new Date(),
     };
 

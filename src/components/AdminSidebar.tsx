@@ -10,7 +10,10 @@ import {
   Mail,
   LogOut,
   Menu,
-  X
+  X,
+  CreditCard,
+  Receipt,
+  FolderKanban
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -18,7 +21,10 @@ const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
   { icon: Mail, label: 'Leads', path: '/admin/leads' },
   { icon: Users, label: 'Clients', path: '/admin/clients' },
+  { icon: FolderKanban, label: 'Projects', path: '/admin/projects' },
   { icon: FileText, label: 'Invoices', path: '/admin/invoices' },
+  { icon: CreditCard, label: 'Payments', path: '/admin/payments' },
+  { icon: Receipt, label: 'Expenses', path: '/admin/expenses' },
   { icon: TrendingUp, label: 'Business Overview', path: '/admin/overview' },
 ];
 
