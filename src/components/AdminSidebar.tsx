@@ -13,7 +13,8 @@ import {
   X,
   CreditCard,
   Receipt,
-  FolderKanban
+  FolderKanban,
+  ExternalLink
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -87,6 +88,18 @@ export default function AdminSidebar() {
               </motion.button>
             );
           })}
+          
+          {/* Client Portal Link - Opens in new tab */}
+          <motion.a
+            href="/client-portal/login"
+            target="_blank"
+            rel="noopener noreferrer"
+            whileHover={{ x: 4 }}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-colors border border-blue-500/20 mt-4"
+          >
+            <ExternalLink className="w-5 h-5" strokeWidth={1.5} />
+            <span className="font-light">Client Portal</span>
+          </motion.a>
         </nav>
 
         {/* Logout */}

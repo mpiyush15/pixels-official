@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { Menu, X, Home, Briefcase, Mail, Info, Code } from 'lucide-react';
+import { Menu, X, Home, Briefcase, Mail, Info, Code, LogIn } from 'lucide-react';
 import Link from 'next/link';
 
 export default function Navbar() {
@@ -25,6 +25,7 @@ export default function Navbar() {
     { name: 'About', href: '/about', icon: Info },
     { name: 'Portfolio', href: '/portfolio', icon: Briefcase },
     { name: 'Contact', href: '/contact', icon: Mail },
+    { name: 'Client Portal', href: '/client-portal/login', icon: LogIn },
   ];
 
   const handleMenuClick = (href: string) => {

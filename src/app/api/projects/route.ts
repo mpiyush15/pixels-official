@@ -51,6 +51,10 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
       milestones: body.milestones || [],
       tasks: body.tasks || [],
+      // Phase-based project support (Web Dev, E-commerce, etc.)
+      phases: body.phases || [],
+      // Video-based project support (Video Production, Content Marketing)
+      videos: body.videos || [],
     };
 
     const result = await db.collection('projects').insertOne(project);
