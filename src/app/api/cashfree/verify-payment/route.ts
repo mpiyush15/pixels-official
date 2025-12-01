@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const baseUrl = process.env.CASHFREE_MODE === 'PROD'
+    const baseUrl = process.env.CASHFREE_MODE === 'production'
       ? 'https://api.cashfree.com'
       : 'https://sandbox.cashfree.com';
 
@@ -22,8 +22,8 @@ export async function GET(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         'x-api-version': '2023-08-01',
-        'x-client-id': process.env.NEXT_PUBLIC_CASHFREE_APP_ID!,
-        'x-client-secret': process.env.CASHFREE_SECRET_KEY!,
+        'x-client-id': process.env.CASHFREE_CLIENT_ID!,
+        'x-client-secret': process.env.CASHFREE_CLIENT_SECRET!,
       },
     });
 

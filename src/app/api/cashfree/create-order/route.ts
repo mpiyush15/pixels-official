@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     const orderId = `ORDER_${Date.now()}_${Math.random().toString(36).substring(7)}`;
     
     // For production mode, use production URL, otherwise sandbox
-    const baseUrl = process.env.CASHFREE_MODE === 'PROD'
+    const baseUrl = process.env.CASHFREE_MODE === 'production'
       ? 'https://api.cashfree.com'
       : 'https://sandbox.cashfree.com';
 
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     // Create order in Cashfree using REST API
     console.log('Creating order with base URL:', baseUrl);
-    console.log('Using APP ID:', process.env.NEXT_PUBLIC_CASHFREE_APP_ID);
+    console.log('Using Client ID:', process.env.CASHFREE_CLIENT_ID);
     console.log('Order details:', { orderId, planPrice, customerEmail });
     
     const response = await fetch(`${baseUrl}/pg/orders`, {
@@ -48,8 +48,8 @@ export async function POST(request: NextRequest) {
       headers: {
         'Content-Type': 'application/json',
         'x-api-version': '2023-08-01',
-        'x-client-id': process.env.NEXT_PUBLIC_CASHFREE_APP_ID!,
-        'x-client-secret': process.env.CASHFREE_SECRET_KEY!,
+        'x-client-id': process.env.CASHFREE_CLIENT_ID!,
+        'x-client-secret': process.env.CASHFREE_CLIENT_SECRET!,
       },
       body: JSON.stringify(orderRequest),
     });
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     console.error('Cashfree order creation error:', error);
     
     // Provide helpful error message for development
-    const errorMessage = process.env.CASHFREE_MODE === 'SANDBOX' 
+    const errorMessage = process.env.CASHFREE_MODE === 'sandbox' 
       ? 'Sandbox credentials invalid. Please get your sandbox API keys from Cashfree dashboard or deploy to production with HTTPS.'
       : error.message;
     
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       { 
         error: 'Failed to create payment order',
         message: errorMessage,
-        hint: process.env.CASHFREE_MODE === 'SANDBOX' 
+        hint: process.env.CASHFREE_MODE === 'sandbox' 
           ? 'Get sandbox credentials from: https://merchant.cashfree.com/merchants/login'
           : 'Ensure your domain uses HTTPS'
       },
