@@ -10,8 +10,13 @@ export async function GET() {
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-    // Fetch all data
-    const clients = await db.collection('clients').find().toArray();
+    // Fetch all data - only development clients for dashboard
+    const clients = await db.collection('clients').find({ 
+      $or: [
+        { clientType: 'development' },
+        { clientType: { $exists: false } } // Include old clients without clientType field
+      ]
+    }).toArray();
     const invoices = await db.collection('invoices').find().toArray();
 
     // Calculate totals

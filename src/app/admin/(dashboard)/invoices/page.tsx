@@ -37,6 +37,10 @@ interface Invoice {
   paidAt?: string;
   paymentMethod?: string;
   paymentDetails?: string;
+  paymentLink?: string;
+  cashfreeOrderId?: string;
+  paymentSessionId?: string;
+  paymentLinkCreatedAt?: string;
   createdAt: string;
 }
 
@@ -61,6 +65,7 @@ export default function InvoicesPage() {
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [generatingPaymentLink, setGeneratingPaymentLink] = useState(false);
   const [paymentData, setPaymentData] = useState({
     method: 'bank_transfer',
     details: '',
@@ -610,6 +615,47 @@ export default function InvoicesPage() {
     }
   };
 
+  const handleGeneratePaymentLink = async () => {
+    if (!selectedInvoice) return;
+    
+    setGeneratingPaymentLink(true);
+    try {
+      const response = await fetch(`/api/invoices/${selectedInvoice._id}/generate-payment-link`, {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Copy to clipboard
+        await navigator.clipboard.writeText(data.paymentLink);
+        
+        // Update the invoice in state
+        setInvoices(invoices.map(inv => 
+          inv._id === selectedInvoice._id 
+            ? { ...inv, paymentLink: data.paymentLink, cashfreeOrderId: data.orderId }
+            : inv
+        ));
+        
+        // Update selected invoice
+        setSelectedInvoice({
+          ...selectedInvoice,
+          paymentLink: data.paymentLink,
+          cashfreeOrderId: data.orderId
+        } as any);
+
+        alert('Payment link generated and copied to clipboard!\n\n' + data.paymentLink);
+      } else {
+        alert('Failed to generate payment link: ' + (data.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error generating payment link:', error);
+      alert('Failed to generate payment link. Please try again.');
+    } finally {
+      setGeneratingPaymentLink(false);
+    }
+  };
+
   const totalRevenue = invoices
     .filter(inv => inv.status === 'paid')
     .reduce((sum, inv) => sum + inv.total, 0);
@@ -1060,6 +1106,18 @@ export default function InvoicesPage() {
                   <Mail className="w-4 h-4" />
                   Email Client
                 </button>
+                {/* Generate Payment Link Button - Available for all statuses except cancelled */}
+                {selectedInvoice.status !== 'cancelled' && (
+                  <button
+                    onClick={handleGeneratePaymentLink}
+                    disabled={generatingPaymentLink}
+                    className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2 text-xs font-light whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Generate payment link with Cashfree"
+                  >
+                    <IndianRupee className="w-4 h-4" />
+                    {generatingPaymentLink ? 'Generating...' : 'Generate Payment Link'}
+                  </button>
+                )}
                 <button
                   onClick={() => setSelectedInvoice(null)}
                   className="p-2 hover:bg-gray-100 rounded-lg"

@@ -10,9 +10,14 @@ export async function GET(request: NextRequest) {
     const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
 
-    // Total counts
+    // Total counts - only development clients
     const totalLeads = await db.collection('leads').countDocuments();
-    const totalClients = await db.collection('clients').countDocuments();
+    const totalClients = await db.collection('clients').countDocuments({
+      $or: [
+        { clientType: 'development' },
+        { clientType: { $exists: false } }
+      ]
+    });
     const totalInvoices = await db.collection('invoices').countDocuments();
 
     // Current month stats
@@ -24,10 +29,18 @@ export async function GET(request: NextRequest) {
     });
 
     const currentMonthClients = await db.collection('clients').countDocuments({
-      createdAt: { $gte: firstDayOfMonth }
+      createdAt: { $gte: firstDayOfMonth },
+      $or: [
+        { clientType: 'development' },
+        { clientType: { $exists: false } }
+      ]
     });
     const lastMonthClients = await db.collection('clients').countDocuments({
-      createdAt: { $gte: lastMonth, $lt: firstDayOfMonth }
+      createdAt: { $gte: lastMonth, $lt: firstDayOfMonth },
+      $or: [
+        { clientType: 'development' },
+        { clientType: { $exists: false } }
+      ]
     });
 
     // Calculate total revenue

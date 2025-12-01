@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
-import { Code, Video, Megaphone, Palette, Search, BarChart, ArrowRight, X, Check, CreditCard, Shield } from 'lucide-react';
+import { Code, Search, BarChart, ArrowRight, X, Check, CreditCard, Shield } from 'lucide-react';
 import { useRef, useState } from 'react';
 
 export default function ServicesPage() {
@@ -143,12 +143,6 @@ export default function ServicesPage() {
       features: ['Custom Design', 'Responsive Layout', 'SEO Optimized', 'Fast Performance']
     },
     {
-      icon: <Megaphone className="w-12 h-12" strokeWidth={1.5} />,
-      title: 'Social Media Marketing',
-      description: 'Build your brand presence and engage with your audience across all major social platforms.',
-      features: ['Content Strategy', 'Post Management', 'Ad Campaigns', 'Analytics']
-    },
-    {
       icon: <Search className="w-12 h-12" strokeWidth={1.5} />,
       title: 'SEO Services',
       description: 'Improve your online visibility and rank higher in search engine results.',
@@ -159,18 +153,6 @@ export default function ServicesPage() {
       title: 'Analytics & Reporting',
       description: 'Track your digital performance and make data-driven decisions for growth.',
       features: ['Performance Tracking', 'Custom Reports', 'ROI Analysis', 'Insights']
-    },
-    {
-      icon: <Video className="w-12 h-12" strokeWidth={1.5} />,
-      title: 'Video Content Creation',
-      description: 'Capture attention and drive engagement with our professional corporate video content creation and ad creation services. From promotional videos to social media ads, we bring your vision to life.',
-      features: ['Corporate Videos', 'Ad Creation', 'Social Media Content', 'Product Demos']
-    },
-    {
-      icon: <Palette className="w-12 h-12" strokeWidth={1.5} />,
-      title: 'Graphic Design',
-      description: 'Create stunning visual content that captures attention and communicates your message effectively.',
-      features: ['Brand Identity', 'Marketing Materials', 'Social Graphics', 'Print Design']
     }
   ];
 
@@ -304,14 +286,9 @@ export default function ServicesPage() {
                     <motion.button
                       whileHover={{ scale: 1.05, x: 10 }}
                       whileTap={{ scale: 0.95 }}
-                      onClick={() => {
-                        if (index === 1) { // Social Media Marketing
-                          setShowPlansModal(true);
-                        }
-                      }}
                       className="flex items-center gap-2 text-black font-light text-lg group mt-8 bg-gray-50 px-8 py-4 rounded-full border border-gray-200 hover:border-black hover:bg-white transition-all duration-300"
                     >
-                      <span>{index === 1 ? 'View Plans' : 'Learn More'}</span>
+                      <span>Learn More</span>
                       <ArrowRight className="w-5 h-5 group-hover:translate-x-2 transition-transform" strokeWidth={1.5} />
                     </motion.button>
                   </div>

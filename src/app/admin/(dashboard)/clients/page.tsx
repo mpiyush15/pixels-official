@@ -36,6 +36,7 @@ interface Client {
   status: "active" | "inactive";
   createdAt: string;
   portalAccessEnabled?: boolean;
+  clientType?: "development" | "other"; // New field
 }
 
 interface Invoice {
@@ -74,7 +75,8 @@ export default function ClientsPage() {
     company: "",
     industry: "",
     address: "",
-    status: "active" as "active" | "inactive"
+    status: "active" as "active" | "inactive",
+    clientType: "development" as "development" | "other"
   };
 
   const [formData, setFormData] = useState(emptyForm);
@@ -149,7 +151,8 @@ export default function ClientsPage() {
       company: c.company,
       industry: c.industry || "",
       address: c.address || "",
-      status: c.status
+      status: c.status,
+      clientType: c.clientType || "development"
     });
     setShowAddModal(true);
   };
@@ -530,6 +533,27 @@ export default function ClientsPage() {
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-light"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm text-gray-600 font-light mb-2">
+                    Client Type
+                  </label>
+                  <select
+                    value={formData.clientType}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        clientType: e.target.value as "development" | "other"
+                      })
+                    }
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-light"
+                  >
+                    <option value="development">Development Client</option>
+                    <option value="other">Other Services</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-600 font-light mb-2">
                     Status

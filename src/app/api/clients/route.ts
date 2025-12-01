@@ -1,12 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const db = await getDatabase();
+    const searchParams = request.nextUrl.searchParams;
+    const clientType = searchParams.get('type');
+    
+    // Build query filter - if type is specified, filter by it, otherwise get all
+    const filter = clientType ? { clientType } : {};
+    
     const clients = await db
       .collection('clients')
-      .find()
+      .find(filter)
       .sort({ createdAt: -1 })
       .toArray();
 

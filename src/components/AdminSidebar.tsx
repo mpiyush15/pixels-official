@@ -14,7 +14,9 @@ import {
   CreditCard,
   Receipt,
   FolderKanban,
-  ExternalLink
+  ExternalLink,
+  UserCog,
+  Image
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -27,6 +29,8 @@ const menuItems = [
   { icon: CreditCard, label: 'Payments', path: '/admin/payments' },
   { icon: Receipt, label: 'Expenses', path: '/admin/expenses' },
   { icon: TrendingUp, label: 'Business Overview', path: '/admin/overview' },
+  { icon: UserCog, label: 'Staff Management', path: '/admin/staff' },
+  { icon: Image, label: 'Daily Content', path: '/admin/daily-content' },
 ];
 
 export default function AdminSidebar() {
@@ -58,13 +62,13 @@ export default function AdminSidebar() {
         } lg:translate-x-0 transition-transform duration-300`}
       >
         {/* Logo */}
-        <div className="p-8 border-b border-white/10">
+        <div className="p-8 border-b border-white/10 flex-shrink-0">
           <h1 className="text-2xl font-light text-white">Pixels Digital</h1>
           <p className="text-gray-400 text-sm font-light mt-1">Admin Dashboard</p>
         </div>
 
-        {/* Menu Items */}
-        <nav className="flex-1 p-4 space-y-2">
+        {/* Menu Items - Scrollable */}
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;
@@ -103,7 +107,7 @@ export default function AdminSidebar() {
         </nav>
 
         {/* Logout */}
-        <div className="p-4 border-t border-white/10">
+        <div className="p-4 border-t border-white/10 flex-shrink-0">
           <motion.button
             onClick={handleLogout}
             whileHover={{ x: 4 }}
