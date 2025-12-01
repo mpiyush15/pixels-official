@@ -102,10 +102,15 @@ export default function InvoicesPage() {
       ]);
       const invoicesData = await invoicesRes.json();
       const clientsData = await clientsRes.json();
-      setInvoices(invoicesData);
-      setClients(clientsData);
+      
+      // Ensure we always set arrays, even if the response is malformed
+      setInvoices(Array.isArray(invoicesData) ? invoicesData : []);
+      setClients(Array.isArray(clientsData) ? clientsData : []);
     } catch (error) {
       console.error('Error fetching data:', error);
+      // Set empty arrays on error to prevent undefined errors
+      setInvoices([]);
+      setClients([]);
     } finally {
       setLoading(false);
     }
@@ -656,7 +661,7 @@ export default function InvoicesPage() {
     }
   };
 
-  const totalRevenue = invoices
+  const totalRevenue = (invoices || [])
     .filter(inv => inv.status === 'paid')
     .reduce((sum, inv) => sum + inv.total, 0);
 
@@ -683,24 +688,24 @@ export default function InvoicesPage() {
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
         <div className="bg-white rounded-xl p-6 border border-gray-200">
           <p className="text-sm text-gray-600 font-light">Total Invoices</p>
-          <p className="text-3xl font-light text-black mt-2">{invoices.length}</p>
+          <p className="text-3xl font-light text-black mt-2">{invoices?.length || 0}</p>
         </div>
         <div className="bg-white rounded-xl p-6 border border-gray-200">
           <p className="text-sm text-gray-600 font-light">Paid</p>
           <p className="text-3xl font-light text-green-600 mt-2">
-            {invoices.filter(inv => inv.status === 'paid').length}
+            {invoices?.filter(inv => inv.status === 'paid').length || 0}
           </p>
         </div>
         <div className="bg-white rounded-xl p-6 border border-gray-200">
           <p className="text-sm text-gray-600 font-light">Pending</p>
           <p className="text-3xl font-light text-blue-600 mt-2">
-            {invoices.filter(inv => inv.status === 'sent').length}
+            {invoices?.filter(inv => inv.status === 'sent').length || 0}
           </p>
         </div>
         <div className="bg-white rounded-xl p-6 border border-gray-200">
           <p className="text-sm text-gray-600 font-light">Cancelled</p>
           <p className="text-3xl font-light text-red-600 mt-2">
-            {invoices.filter(inv => inv.status === 'cancelled').length}
+            {invoices?.filter(inv => inv.status === 'cancelled').length || 0}
           </p>
         </div>
         <div className="bg-white rounded-xl p-6 border border-gray-200">
