@@ -49,7 +49,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Create Cashfree order
-    const baseUrl = process.env.CASHFREE_MODE === 'production'
+    const isProduction = process.env.CASHFREE_MODE?.toUpperCase() === 'PRODUCTION' || 
+                         process.env.CASHFREE_MODE?.toUpperCase() === 'PROD';
+    const baseUrl = isProduction
       ? 'https://api.cashfree.com'
       : 'https://sandbox.cashfree.com';
 
@@ -59,6 +61,7 @@ export async function POST(req: NextRequest) {
       orderId,
       amount,
       mode: process.env.CASHFREE_MODE,
+      isProduction,
       baseUrl,
       clientId: process.env.CASHFREE_CLIENT_ID?.substring(0, 8) + '...',
     });
@@ -110,7 +113,7 @@ export async function POST(req: NextRequest) {
     const orderData = await orderResponse.json();
 
     // Generate payment URL
-    const paymentUrl = process.env.CASHFREE_MODE === 'production'
+    const paymentUrl = isProduction
       ? `https://payments.cashfree.com/order/${orderData.payment_session_id}`
       : `https://sandbox.cashfree.com/pg/view/order/${orderData.payment_session_id}`;
 
