@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
 
     // Generate payment URL
     const paymentUrl = isProduction
-      ? `https://payments.cashfree.com/order/${orderData.payment_session_id}`
+      ? `https://payments.cashfree.com/pg/view/order/${orderData.payment_session_id}`
       : `https://sandbox.cashfree.com/pg/view/order/${orderData.payment_session_id}`;
 
     // Store order info in milestone for tracking
