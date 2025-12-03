@@ -3,8 +3,10 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Phone, Mail, MapPin, Send, CheckCircle } from 'lucide-react';
+import { usePageTracking } from '@/lib/analytics';
 
 export default function ContactPage() {
+  usePageTracking();
   const [formData, setFormData] = useState({
     name: '',
     email: '',

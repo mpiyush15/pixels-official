@@ -78,6 +78,40 @@ Value: https://www.pixelsdigital.tech
 Environment: Production
 ```
 
+### Email Configuration (Resend - Temporary):
+```
+Variable Name: RESEND_API_KEY
+Value: [Your Resend API Key - starts with re_]
+Environment: Production, Preview, Development
+
+Variable Name: EMAIL_FROM
+Value: noreply@pixelsdigital.tech
+Environment: Production, Preview, Development
+```
+
+### Email Configuration (AWS SES SMTP - RECOMMENDED):
+```
+Variable Name: SMTP_HOST
+Value: email-smtp.us-east-1.amazonaws.com
+Environment: Production, Preview, Development
+
+Variable Name: SMTP_PORT
+Value: 587
+Environment: Production, Preview, Development
+
+Variable Name: SMTP_USER
+Value: AKIAQXXZQE6UBDQIW6JR
+Environment: Production, Preview, Development
+
+Variable Name: SMTP_PASSWORD
+Value: BAlSo3USCpkbB5snnbM9Er8mGIdOmJl+MLGojoczx9k/
+Environment: Production, Preview, Development
+
+Variable Name: EMAIL_FROM
+Value: noreply@pixelsdigital.tech
+Environment: Production, Preview, Development
+```
+
 ### Optional Variables (Google Drive):
 ```
 Variable Name: GOOGLE_CLIENT_ID
@@ -112,6 +146,11 @@ Environment: Production
 ### Step 3: Add Missing Variables
 - [ ] Add: CASHFREE_CLIENT_ID (use old NEXT_PUBLIC_CASHFREE_APP_ID value)
 - [ ] Add: NEXTAUTH_URL = https://www.pixelsdigital.tech
+- [ ] Add: SMTP_HOST = email-smtp.us-east-1.amazonaws.com (for email)
+- [ ] Add: SMTP_PORT = 587 (for email)
+- [ ] Add: SMTP_USER = AKIAQXXZQE6UBDQIW6JR (for email)
+- [ ] Add: SMTP_PASSWORD = BAlSo3USCpkbB5snnbM9Er8mGIdOmJl+MLGojoczx9k/ (for email)
+- [ ] Add: EMAIL_FROM = noreply@pixelsdigital.tech (for email)
 
 ### Step 4: Verify These Are Set
 - [ ] MONGODB_URI ✓

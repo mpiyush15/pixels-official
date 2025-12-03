@@ -3,8 +3,10 @@
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { Code, Search, BarChart, ArrowRight, X, Check, CreditCard, Shield } from 'lucide-react';
 import { useRef, useState } from 'react';
+import { usePageTracking } from '@/lib/analytics';
 
 export default function ServicesPage() {
+  usePageTracking();
   const containerRef = useRef(null);
   const [activeService, setActiveService] = useState(0);
   const [showPlansModal, setShowPlansModal] = useState(false);

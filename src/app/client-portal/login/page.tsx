@@ -97,6 +97,15 @@ export default function ClientLoginPage() {
             </div>
           </div>
 
+          <div className="flex justify-end">
+            <a
+              href="/client-portal/forgot-password"
+              className="text-sm text-gray-600 hover:text-black font-light transition-colors"
+            >
+              Forgot password?
+            </a>
+          </div>
+
           <button
             type="submit"
             disabled={loading}

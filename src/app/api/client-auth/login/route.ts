@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
 import bcrypt from 'bcryptjs';
+import { sendLoginAlertEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -69,6 +70,15 @@ export async function POST(request: NextRequest) {
       sameSite: 'lax',
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
+
+    // Send login alert email (don't wait for it)
+    const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'Unknown';
+    sendLoginAlertEmail(
+      client.email,
+      client.name,
+      ipAddress,
+      new Date()
+    ).catch(err => console.error('Failed to send login alert:', err));
 
     return response;
   } catch (error) {

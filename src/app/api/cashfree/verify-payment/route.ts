@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getDatabase } from '@/lib/mongodb';
+import { sendPaymentConfirmationEmail } from '@/lib/email';
 
 export async function GET(request: NextRequest) {
   try {
@@ -30,6 +32,27 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
 
     if (response.ok) {
+      // If payment is successful, send confirmation email
+      if (data.order_status === 'PAID') {
+        const db = await getDatabase();
+        const payment = await db.collection('payments').findOne({ orderId: data.order_id });
+        
+        if (payment) {
+          const client = await db.collection('clients').findOne({ _id: payment.clientId });
+          
+          if (client) {
+            // Send payment confirmation email (don't wait for it)
+            sendPaymentConfirmationEmail(
+              client.email,
+              client.name,
+              data.order_amount,
+              data.order_id,
+              new Date()
+            ).catch(err => console.error('Failed to send payment confirmation:', err));
+          }
+        }
+      }
+
       return NextResponse.json({
         success: true,
         order_id: data.order_id,

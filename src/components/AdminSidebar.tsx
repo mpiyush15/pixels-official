@@ -16,15 +16,17 @@ import {
   FolderKanban,
   ExternalLink,
   UserCog,
-  Image
+  Image,
+  MessageCircle
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
   { icon: Mail, label: 'Leads', path: '/admin/leads' },
   { icon: Users, label: 'Clients', path: '/admin/clients' },
   { icon: FolderKanban, label: 'Projects', path: '/admin/projects' },
+  { icon: MessageCircle, label: 'Project Chats', path: '/admin/chats' },
   { icon: FileText, label: 'Invoices', path: '/admin/invoices' },
   { icon: CreditCard, label: 'Payments', path: '/admin/payments' },
   { icon: Receipt, label: 'Expenses', path: '/admin/expenses' },
@@ -37,6 +39,27 @@ export default function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Fetch unread message count
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await fetch('/api/chat/unread-count');
+      const data = await response.json();
+      if (data.success) {
+        setUnreadCount(data.unreadCount);
+      }
+    } catch (error) {
+      console.error('Error fetching unread count:', error);
+    }
+  };
+
+  useEffect(() => {
+    fetchUnreadCount();
+    // DISABLED: Poll every 10 seconds for new messages
+    // const interval = setInterval(fetchUnreadCount, 10000);
+    // return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -72,6 +95,8 @@ export default function AdminSidebar() {
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;
+            const isChatsPage = item.path === '/admin/chats';
+            const showBadge = isChatsPage && unreadCount > 0;
 
             return (
               <motion.button
@@ -81,7 +106,7 @@ export default function AdminSidebar() {
                   setIsMobileMenuOpen(false);
                 }}
                 whileHover={{ x: 4 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors ${
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors relative ${
                   isActive
                     ? 'bg-white text-black'
                     : 'text-gray-400 hover:text-white hover:bg-white/5'
@@ -89,6 +114,11 @@ export default function AdminSidebar() {
               >
                 <Icon className="w-5 h-5" strokeWidth={1.5} />
                 <span className="font-light">{item.label}</span>
+                {showBadge && (
+                  <span className="ml-auto bg-red-500 text-white text-xs font-semibold rounded-full px-2 py-0.5 min-w-[20px] text-center">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
               </motion.button>
             );
           })}

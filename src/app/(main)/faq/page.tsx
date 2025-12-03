@@ -3,8 +3,10 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { usePageTracking } from '@/lib/analytics';
 
 export default function FAQPage() {
+  usePageTracking();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   const faqs = [

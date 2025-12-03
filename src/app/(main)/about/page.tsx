@@ -3,8 +3,10 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { Users, Target, Lightbulb, TrendingUp } from 'lucide-react';
 import { useRef } from 'react';
+import { usePageTracking } from '@/lib/analytics';
 
 export default function AboutPage() {
+  usePageTracking();
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,

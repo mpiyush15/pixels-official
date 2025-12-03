@@ -16,7 +16,13 @@ import {
   AlertCircle,
   Target,
   IndianRupee,
+  Upload,
+  FileText,
+  Download,
+  Lock,
+  Unlock,
 } from 'lucide-react';
+import WorkSubmissionsList from '@/components/WorkSubmissionsList';
 
 interface Client {
   _id: string;
@@ -39,8 +45,17 @@ interface Project {
   budget: number;
   milestones: Array<{
     name: string;
+    description?: string;
     status: 'pending' | 'in-progress' | 'completed';
     dueDate: string;
+    amount?: number;
+    paymentStatus?: 'unpaid' | 'paid';
+    paidAt?: string;
+    fileUrl?: string;
+    fileKey?: string;
+    fileName?: string;
+    fileSize?: number;
+    uploadedAt?: string;
   }>;
   tasks: Array<{
     name: string;
@@ -70,6 +85,7 @@ export default function ProjectsPage() {
   const [showViewModal, setShowViewModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [uploadingFiles, setUploadingFiles] = useState<{ [key: number]: boolean }>({});
 
   const [formData, setFormData] = useState({
     clientId: '',
@@ -81,7 +97,20 @@ export default function ProjectsPage() {
     startDate: new Date().toISOString().split('T')[0],
     endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
     budget: 0,
-    milestones: [] as Array<{ name: string; status: 'pending' | 'in-progress' | 'completed'; dueDate: string }>,
+    milestones: [] as Array<{ 
+      name: string;
+      description?: string;
+      status: 'pending' | 'in-progress' | 'completed'; 
+      dueDate: string;
+      amount?: number;
+      paymentStatus?: 'unpaid' | 'paid';
+      paidAt?: string;
+      fileUrl?: string;
+      fileKey?: string;
+      fileName?: string;
+      fileSize?: number;
+      uploadedAt?: string;
+    }>,
     tasks: [] as Array<{ name: string; completed: boolean }>,
   });
 
@@ -189,7 +218,14 @@ export default function ProjectsPage() {
       ...formData,
       milestones: [
         ...formData.milestones,
-        { name: '', status: 'pending', dueDate: new Date().toISOString().split('T')[0] },
+        { 
+          name: '', 
+          description: '', 
+          status: 'pending', 
+          dueDate: new Date().toISOString().split('T')[0],
+          amount: 0,
+          paymentStatus: 'unpaid'
+        },
       ],
     });
   };
@@ -204,6 +240,111 @@ export default function ProjectsPage() {
   const updateMilestone = (index: number, field: string, value: any) => {
     const updated = [...formData.milestones];
     updated[index] = { ...updated[index], [field]: value };
+    setFormData({ ...formData, milestones: updated });
+  };
+
+  const handleFileUpload = async (index: number, file: File) => {
+    if (!file) return;
+
+    // Validate file size on frontend too
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      alert(`File too large! Maximum size is 10MB. Your file is ${(file.size / 1024 / 1024).toFixed(2)}MB`);
+      return;
+    }
+
+    // Validate file type on frontend
+    const validExtensions = ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'jpg', 'jpeg', 'png', 'gif', 'txt'];
+    const fileExtension = file.name.split('.').pop()?.toLowerCase();
+    
+    if (!fileExtension || !validExtensions.includes(fileExtension)) {
+      alert(`Invalid file type! Allowed: PDF, Word, Excel, Images, Text.\nYour file: ${file.name}`);
+      return;
+    }
+
+    setUploadingFiles({ ...uploadingFiles, [index]: true });
+
+    try {
+      console.log('Step 1: Requesting presigned URL for:', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        extension: fileExtension
+      });
+
+      // Step 1: Get presigned URL from our API
+      const urlResponse = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          fileType: file.type,
+          fileSize: file.size,
+        }),
+      });
+
+      const urlData = await urlResponse.json();
+      console.log('Presigned URL response:', urlData);
+
+      if (!urlData.success) {
+        console.error('Failed to get presigned URL:', urlData);
+        alert(`Failed to prepare upload: ${urlData.error || 'Unknown error'}`);
+        return;
+      }
+
+      console.log('Step 2: Uploading directly to S3...');
+
+      // Step 2: Upload directly to S3 using presigned URL
+      const uploadResponse = await fetch(urlData.uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': file.type,
+        },
+        body: file,
+      });
+
+      console.log('S3 upload response:', {
+        status: uploadResponse.status,
+        statusText: uploadResponse.statusText,
+        ok: uploadResponse.ok
+      });
+
+      if (!uploadResponse.ok) {
+        const errorText = await uploadResponse.text();
+        console.error('S3 upload failed:', errorText);
+        alert(`Failed to upload to S3: ${uploadResponse.statusText}`);
+        return;
+      }
+
+      console.log('Upload successful! Updating milestone...');
+
+      // Step 3: Update milestone with file info
+      const updated = [...formData.milestones];
+      updated[index] = {
+        ...updated[index],
+        fileUrl: urlData.fileUrl,
+        fileKey: urlData.fileKey,
+        fileName: urlData.fileName,
+        fileSize: urlData.fileSize,
+        uploadedAt: new Date().toISOString(),
+      };
+      setFormData({ ...formData, milestones: updated });
+      alert('File uploaded successfully!');
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      alert(`Failed to upload file: ${error instanceof Error ? error.message : 'Network error'}`);
+    } finally {
+      setUploadingFiles({ ...uploadingFiles, [index]: false });
+    }
+  };
+
+  const removeFile = (index: number) => {
+    const updated = [...formData.milestones];
+    delete updated[index].fileUrl;
+    delete updated[index].fileKey;
+    delete updated[index].fileName;
+    delete updated[index].fileSize;
+    delete updated[index].uploadedAt;
     setFormData({ ...formData, milestones: updated });
   };
 
@@ -541,9 +682,9 @@ export default function ProjectsPage() {
                   </button>
                 </div>
                 {formData.milestones.length > 0 && (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {formData.milestones.map((milestone, index) => (
-                      <div key={index} className="bg-gray-50 p-4 rounded-xl">
+                      <div key={index} className="bg-gray-50 p-4 rounded-xl space-y-3">
                         <div className="grid md:grid-cols-3 gap-3">
                           <input
                             type="text"
@@ -561,21 +702,133 @@ export default function ProjectsPage() {
                             <option value="in-progress">In Progress</option>
                             <option value="completed">Completed</option>
                           </select>
-                          <div className="flex gap-2">
+                          <input
+                            type="date"
+                            value={milestone.dueDate}
+                            onChange={(e) => updateMilestone(index, 'dueDate', e.target.value)}
+                            className="px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black font-light text-sm"
+                          />
+                        </div>
+
+                        {/* Description Field */}
+                        <div>
+                          <textarea
+                            placeholder="Milestone description (optional)"
+                            value={milestone.description || ''}
+                            onChange={(e) => updateMilestone(index, 'description', e.target.value)}
+                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black font-light text-sm resize-none"
+                            rows={2}
+                          />
+                        </div>
+
+                        {/* Amount Field */}
+                        <div className="grid md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs text-gray-600 font-light mb-1">
+                              Amount (₹) - Leave 0 for free access
+                            </label>
                             <input
-                              type="date"
-                              value={milestone.dueDate}
-                              onChange={(e) => updateMilestone(index, 'dueDate', e.target.value)}
-                              className="flex-1 px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black font-light text-sm"
+                              type="number"
+                              placeholder="Milestone amount"
+                              value={milestone.amount || 0}
+                              onChange={(e) => updateMilestone(index, 'amount', parseFloat(e.target.value) || 0)}
+                              className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black font-light text-sm"
+                              min="0"
                             />
-                            <button
-                              type="button"
-                              onClick={() => removeMilestone(index)}
-                              className="px-3 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm"
-                            >
-                              Remove
-                            </button>
                           </div>
+                          <div>
+                            <label className="block text-xs text-gray-600 font-light mb-1">
+                              Payment Status
+                            </label>
+                            <select
+                              value={milestone.paymentStatus || 'unpaid'}
+                              onChange={(e) => updateMilestone(index, 'paymentStatus', e.target.value)}
+                              className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black font-light text-sm"
+                            >
+                              <option value="unpaid">Unpaid (Locked)</option>
+                              <option value="paid">Paid (Unlocked)</option>
+                            </select>
+                          </div>
+                        </div>
+                        
+                        {/* File Upload Section */}
+                        <div className="border-t border-gray-200 pt-3">
+                          <label className="block text-xs text-gray-600 font-light mb-2">
+                            Attach Document (Report, PDF, etc.)
+                          </label>
+                          {milestone.fileUrl ? (
+                            <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-200">
+                              <FileText className="w-4 h-4 text-green-600" />
+                              <div className="flex-1">
+                                <p className="text-sm font-light text-gray-700">{milestone.fileName}</p>
+                                <p className="text-xs text-gray-500">
+                                  {milestone.fileSize ? `${(milestone.fileSize / 1024).toFixed(1)} KB` : ''}
+                                </p>
+                              </div>
+                              <a
+                                href={milestone.fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 hover:bg-green-50 rounded"
+                                title="Download"
+                              >
+                                <Download className="w-4 h-4 text-green-600" />
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => removeFile(index)}
+                                className="p-1 hover:bg-red-50 rounded text-red-600"
+                                title="Remove file"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="relative">
+                              <input
+                                type="file"
+                                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.txt"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) handleFileUpload(index, file);
+                                }}
+                                className="hidden"
+                                id={`file-upload-${index}`}
+                                disabled={uploadingFiles[index]}
+                              />
+                              <label
+                                htmlFor={`file-upload-${index}`}
+                                className={`flex items-center justify-center gap-2 px-3 py-2 bg-white border border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-black transition-colors text-sm font-light ${
+                                  uploadingFiles[index] ? 'opacity-50 cursor-not-allowed' : ''
+                                }`}
+                              >
+                                {uploadingFiles[index] ? (
+                                  <>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
+                                    <span className="text-gray-600">Uploading...</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Upload className="w-4 h-4 text-gray-600" />
+                                    <span className="text-gray-600">Choose file to upload</span>
+                                  </>
+                                )}
+                              </label>
+                              <p className="text-xs text-gray-500 mt-1">
+                                PDF, Word, Excel, Images (max 10MB)
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => removeMilestone(index)}
+                            className="px-3 py-1 text-red-600 hover:bg-red-50 rounded-lg text-sm font-light"
+                          >
+                            Remove Milestone
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -665,27 +918,78 @@ export default function ProjectsPage() {
                 {selectedProject.milestones && selectedProject.milestones.length > 0 && (
                   <div>
                     <h3 className="text-sm font-medium text-gray-600 mb-2">Milestones</h3>
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       {selectedProject.milestones.map((milestone, idx) => (
-                        <div key={idx} className="flex items-center justify-between text-sm">
-                          <div className="flex items-center gap-2">
-                            {milestone.status === 'completed' ? (
-                              <CheckCircle className="w-4 h-4 text-green-600" />
-                            ) : milestone.status === 'in-progress' ? (
-                              <Clock className="w-4 h-4 text-yellow-600" />
-                            ) : (
-                              <div className="w-4 h-4 border-2 border-gray-300 rounded-full"></div>
-                            )}
-                            <span className="font-light">{milestone.name}</span>
+                        <div key={idx} className="bg-gray-50 p-3 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2">
+                              {milestone.status === 'completed' ? (
+                                <CheckCircle className="w-4 h-4 text-green-600" />
+                              ) : milestone.status === 'in-progress' ? (
+                                <Clock className="w-4 h-4 text-yellow-600" />
+                              ) : (
+                                <div className="w-4 h-4 border-2 border-gray-300 rounded-full"></div>
+                              )}
+                              <span className="font-light text-sm">{milestone.name}</span>
+                              
+                              {/* Payment Status Badge */}
+                              {milestone.amount && milestone.amount > 0 && (
+                                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs font-light flex items-center gap-1 ${
+                                  milestone.paymentStatus === 'paid' 
+                                    ? 'bg-green-100 text-green-700' 
+                                    : 'bg-red-100 text-red-700'
+                                }`}>
+                                  {milestone.paymentStatus === 'paid' ? (
+                                    <>
+                                      <Unlock className="w-3 h-3" />
+                                      Paid ₹{milestone.amount.toLocaleString('en-IN')}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Lock className="w-3 h-3" />
+                                      ₹{milestone.amount.toLocaleString('en-IN')}
+                                    </>
+                                  )}
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-xs text-gray-500">
+                              {new Date(milestone.dueDate).toLocaleDateString('en-IN')}
+                            </span>
                           </div>
-                          <span className="text-xs text-gray-500">
-                            {new Date(milestone.dueDate).toLocaleDateString('en-IN')}
-                          </span>
+                          {milestone.description && (
+                            <p className="text-xs text-gray-600 font-light mt-1 mb-2">
+                              {milestone.description}
+                            </p>
+                          )}
+                          {milestone.fileUrl && (
+                            <div className="mt-2 flex items-center gap-2 bg-white p-2 rounded border border-gray-200">
+                              <FileText className="w-4 h-4 text-blue-600" />
+                              <span className="text-xs font-light text-gray-700 flex-1">
+                                {milestone.fileName}
+                              </span>
+                              <a
+                                href={milestone.fileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 hover:bg-blue-50 rounded transition-colors"
+                                title="Download attachment"
+                              >
+                                <Download className="w-4 h-4 text-blue-600" />
+                              </a>
+                            </div>
+                          )}
                         </div>
                       ))}
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Client Work Submissions */}
+              <div>
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Client Work Submissions</h3>
+                <WorkSubmissionsList projectId={selectedProject._id} />
               </div>
             </div>
           </motion.div>

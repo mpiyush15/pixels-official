@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, FileText, Download, Eye, X, Calendar, IndianRupee, Printer, Mail } from 'lucide-react';
+import { Plus, FileText, Download, Eye, X, Calendar, IndianRupee, Printer, Mail, XCircle } from 'lucide-react';
 
 interface Client {
   _id: string;
@@ -35,6 +35,7 @@ interface Invoice {
   issueDate: string;
   dueDate: string;
   paidAt?: string;
+  cancelledAt?: string;
   paymentMethod?: string;
   paymentDetails?: string;
   paymentLink?: string;
@@ -42,6 +43,9 @@ interface Invoice {
   paymentSessionId?: string;
   paymentLinkCreatedAt?: string;
   createdAt: string;
+  s3Key?: string;
+  s3Url?: string;
+  s3UploadedAt?: string;
 }
 
 const defaultServices = [
@@ -83,6 +87,25 @@ export default function InvoicesPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  // ESC key to close modals
+  useEffect(() => {
+    const handleEscKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        if (showPaymentModal) {
+          setShowPaymentModal(false);
+          setPaymentData({ method: 'bank_transfer', details: '' });
+        } else if (selectedInvoice) {
+          setSelectedInvoice(null);
+        } else if (showCreateModal) {
+          setShowCreateModal(false);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleEscKey);
+    return () => document.removeEventListener('keydown', handleEscKey);
+  }, [showPaymentModal, selectedInvoice, showCreateModal]);
 
   // Auto-fetch client details when client is selected
   useEffect(() => {
@@ -487,6 +510,12 @@ export default function InvoicesPage() {
                       <span style="color: #2e7d32;">${new Date(selectedInvoice.paidAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
                     </div>
                     ` : ''}
+                    ${selectedInvoice.cancelledAt ? `
+                    <div class="info-row">
+                      <span class="info-label">Cancelled Date:</span>
+                      <span style="color: #c62828;">${new Date(selectedInvoice.cancelledAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' })}</span>
+                    </div>
+                    ` : ''}
                     ${selectedInvoice.paymentMethod ? `
                     <div class="info-row">
                       <span class="info-label">Payment Method:</span>
@@ -666,7 +695,7 @@ export default function InvoicesPage() {
     .reduce((sum, inv) => sum + inv.total, 0);
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-gray-50 min-h-screen">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
@@ -677,7 +706,7 @@ export default function InvoicesPage() {
           onClick={() => setShowCreateModal(true)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="bg-black text-white px-6 py-3 rounded-xl flex items-center gap-2 font-light"
+          className="bg-black text-white px-6 py-3 rounded-xl flex items-center gap-2 font-light hover:bg-gray-900"
         >
           <Plus className="w-5 h-5" strokeWidth={1.5} />
           <span>Create Invoice</span>
@@ -771,12 +800,39 @@ export default function InvoicesPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4">
-                      <button
-                        onClick={() => setSelectedInvoice(invoice)}
-                        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                      >
-                        <Eye className="w-4 h-4 text-gray-600" />
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => setSelectedInvoice(invoice)}
+                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="View Invoice"
+                        >
+                          <Eye className="w-4 h-4 text-gray-600" />
+                        </button>
+                        {invoice.s3Url && (
+                          <a
+                            href={invoice.s3Url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2 hover:bg-green-50 rounded-lg transition-colors"
+                            title="Download Invoice"
+                          >
+                            <Download className="w-4 h-4 text-green-600" />
+                          </a>
+                        )}
+                        {invoice.status !== 'cancelled' && invoice.status !== 'paid' && (
+                          <button
+                            onClick={() => {
+                              if (confirm(`Are you sure you want to cancel invoice ${invoice.invoiceNumber}?`)) {
+                                updateInvoiceStatus(invoice._id, 'cancelled');
+                              }
+                            }}
+                            className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Cancel Invoice"
+                          >
+                            <XCircle className="w-4 h-4 text-red-600" />
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -1042,44 +1098,20 @@ export default function InvoicesPage() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {selectedInvoice.status === 'draft' && (
-                  <>
-                    <button
-                      onClick={() => updateInvoiceStatus(selectedInvoice._id, 'sent')}
-                      className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-light whitespace-nowrap"
-                    >
-                      ✓ Mark as Sent
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm('Are you sure you want to cancel this invoice?')) {
-                          updateInvoiceStatus(selectedInvoice._id, 'cancelled');
-                        }
-                      }}
-                      className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-light whitespace-nowrap"
-                    >
-                      ✕ Cancel Invoice
-                    </button>
-                  </>
+                  <button
+                    onClick={() => updateInvoiceStatus(selectedInvoice._id, 'sent')}
+                    className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-light whitespace-nowrap"
+                  >
+                    ✓ Mark as Sent
+                  </button>
                 )}
                 {selectedInvoice.status === 'sent' && (
-                  <>
-                    <button
-                      onClick={handleMarkAsPaid}
-                      className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-light whitespace-nowrap"
-                    >
-                      ✓ Mark as Paid
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (confirm('Are you sure you want to cancel this invoice?')) {
-                          updateInvoiceStatus(selectedInvoice._id, 'cancelled');
-                        }
-                      }}
-                      className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-light whitespace-nowrap"
-                    >
-                      ✕ Cancel Invoice
-                    </button>
-                  </>
+                  <button
+                    onClick={handleMarkAsPaid}
+                    className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-light whitespace-nowrap"
+                  >
+                    ✓ Mark as Paid
+                  </button>
                 )}
                 {selectedInvoice.status === 'paid' && (
                   <div className="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-xs font-light">
@@ -1196,6 +1228,12 @@ export default function InvoicesPage() {
                         <span className="text-xs md:text-sm font-light text-green-600">{new Date(selectedInvoice.paidAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                       </div>
                     )}
+                    {selectedInvoice.cancelledAt && (
+                      <div className="flex justify-between">
+                        <span className="text-xs md:text-sm text-gray-600 font-light">Cancelled Date:</span>
+                        <span className="text-xs md:text-sm font-light text-red-600">{new Date(selectedInvoice.cancelledAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                      </div>
+                    )}
                     {selectedInvoice.paymentMethod && (
                       <div className="flex justify-between">
                         <span className="text-xs md:text-sm text-gray-600 font-light">Payment Method:</span>
@@ -1225,19 +1263,25 @@ export default function InvoicesPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {selectedInvoice.services.map((service, index) => (
-                        <tr key={index} className="border-b border-gray-200">
-                          <td className="py-3">
-                            <p className="font-light text-black text-xs md:text-sm">{service.name}</p>
-                            {service.description && (
-                              <p className="text-xs text-gray-600 font-light mt-0.5">{service.description}</p>
-                            )}
-                          </td>
-                          <td className="text-center font-light text-gray-700 text-xs md:text-sm">{service.quantity}</td>
-                          <td className="text-right font-light text-gray-700 text-xs md:text-sm">₹{service.price.toLocaleString('en-IN')}</td>
-                          <td className="text-right font-light text-black text-xs md:text-sm">₹{(service.quantity * service.price).toLocaleString('en-IN')}</td>
+                      {selectedInvoice.services && Array.isArray(selectedInvoice.services) && selectedInvoice.services.length > 0 ? (
+                        selectedInvoice.services.map((service, index) => (
+                          <tr key={index} className="border-b border-gray-200">
+                            <td className="py-3">
+                              <p className="font-light text-black text-xs md:text-sm">{service.name}</p>
+                              {service.description && (
+                                <p className="text-xs text-gray-600 font-light mt-0.5">{service.description}</p>
+                              )}
+                            </td>
+                            <td className="text-center font-light text-gray-700 text-xs md:text-sm">{service.quantity}</td>
+                            <td className="text-right font-light text-gray-700 text-xs md:text-sm">₹{service.price.toLocaleString('en-IN')}</td>
+                            <td className="text-right font-light text-black text-xs md:text-sm">₹{(service.quantity * service.price).toLocaleString('en-IN')}</td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={4} className="py-4 text-center text-gray-500 text-xs md:text-sm">No services added</td>
                         </tr>
-                      ))}
+                      )}
                     </tbody>
                   </table>
                 </div>

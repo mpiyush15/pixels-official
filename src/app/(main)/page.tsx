@@ -3,8 +3,10 @@
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { ArrowRight, Code, Video, Users, TrendingUp, Star, CheckCircle2, Phone, MapPin, Sparkles, Zap, Target, Rocket } from 'lucide-react';
 import { useRef } from 'react';
+import { usePageTracking } from '@/lib/analytics';
 
 export default function Home() {
+  usePageTracking();
   const containerRef = useRef(null);
   const { scrollYProgress } = useScroll({
     target: containerRef,

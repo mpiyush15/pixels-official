@@ -141,25 +141,25 @@ export default function PaymentsPage() {
     .reduce((sum, payment) => sum + payment.amount, 0);
 
   const filteredPayments = payments.filter(payment => {
-    const matchesSearch = payment.clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payment.invoiceNumber.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (payment.clientName || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (payment.invoiceNumber || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = filterStatus === 'all' || payment.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
 
   return (
-    <div className="p-8">
+    <div className="p-8 dark:bg-gray-900 min-h-screen">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-light text-black mb-2">Payments</h1>
-          <p className="text-gray-600 font-light">Track and manage all payment transactions</p>
+          <h1 className="text-4xl font-light text-black dark:text-white mb-2">Payments</h1>
+          <p className="text-gray-600 dark:text-gray-400 font-light">Track and manage all payment transactions</p>
         </div>
         <motion.button
           onClick={() => setShowAddModal(true)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="bg-black text-white px-6 py-3 rounded-xl flex items-center gap-2 font-light"
+          className="bg-black dark:bg-gray-700 text-white px-6 py-3 rounded-xl flex items-center gap-2 font-light hover:bg-gray-900 dark:hover:bg-gray-600"
         >
           <Plus className="w-5 h-5" strokeWidth={1.5} />
           <span>Record Payment</span>
@@ -168,42 +168,42 @@ export default function PaymentsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Total Payments</p>
-          <p className="text-3xl font-light text-black mt-2">{payments.filter(p => p.status !== 'cancelled').length}</p>
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-600 dark:text-gray-400 font-light">Total Payments</p>
+          <p className="text-3xl font-light text-black dark:text-white mt-2">{payments.filter(p => p.status !== 'cancelled').length}</p>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Total Received</p>
-          <p className="text-3xl font-light text-green-600 mt-2">
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-600 dark:text-gray-400 font-light">Total Received</p>
+          <p className="text-3xl font-light text-green-600 dark:text-green-400 mt-2">
             ₹{totalReceived.toLocaleString('en-IN')}
           </p>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Cancelled</p>
-          <p className="text-3xl font-light text-red-600 mt-2">{payments.filter(p => p.status === 'cancelled').length}</p>
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-600 dark:text-gray-400 font-light">Cancelled</p>
+          <p className="text-3xl font-light text-red-600 dark:text-red-400 mt-2">{payments.filter(p => p.status === 'cancelled').length}</p>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Pending Invoices</p>
-          <p className="text-3xl font-light text-orange-600 mt-2">{invoices.length}</p>
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
+          <p className="text-sm text-gray-600 dark:text-gray-400 font-light">Pending Invoices</p>
+          <p className="text-3xl font-light text-orange-600 dark:text-orange-400 mt-2">{invoices.length}</p>
         </div>
       </div>
 
       {/* Search and Filters */}
       <div className="grid md:grid-cols-2 gap-4 mb-6">
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-5 h-5" />
           <input
             type="text"
             placeholder="Search by client name or invoice number..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+            className="w-full pl-12 pr-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:border-black dark:focus:border-gray-500 font-light text-black dark:text-white"
           />
         </div>
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+          className="px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl focus:outline-none focus:border-black dark:focus:border-gray-500 font-light text-black dark:text-white"
         >
           <option value="all">All Payments</option>
           <option value="completed">Completed</option>
@@ -212,10 +212,10 @@ export default function PaymentsPage() {
       </div>
 
       {/* Payments Table */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Date</th>
                 <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Invoice</th>

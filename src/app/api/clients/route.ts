@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
+import { sendWelcomeEmail } from '@/lib/email';
 
 export async function GET(request: NextRequest) {
   try {
@@ -39,6 +40,16 @@ export async function POST(request: NextRequest) {
     };
 
     const result = await db.collection('clients').insertOne(client);
+
+    // Send welcome email if client has email and portal access enabled
+    if (client.email && client.portalAccessEnabled) {
+      const loginUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/client-portal/login`;
+      sendWelcomeEmail(
+        client.email,
+        client.name,
+        loginUrl
+      ).catch(err => console.error('Failed to send welcome email:', err));
+    }
 
     return NextResponse.json({
       success: true,

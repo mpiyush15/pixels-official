@@ -2,8 +2,10 @@
 
 import { motion } from 'framer-motion';
 import { ExternalLink, Sparkles, Code, ShoppingCart } from 'lucide-react';
+import { usePageTracking } from '@/lib/analytics';
 
 export default function PortfolioPage() {
+  usePageTracking();
   return (
     <div className="min-h-screen bg-white pt-32 pb-20 px-4">
       <div className="max-w-7xl mx-auto">

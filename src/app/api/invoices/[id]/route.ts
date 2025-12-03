@@ -28,6 +28,11 @@ export async function PATCH(
           updateData.paymentDetails = body.paymentDetails;
         }
       }
+      
+      // If marking as cancelled, add cancelled date
+      if (body.status === 'cancelled') {
+        updateData.cancelledAt = new Date();
+      }
     }
 
     await db.collection('invoices').updateOne(

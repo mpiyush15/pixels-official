@@ -14,6 +14,9 @@ function PaymentCallbackContent() {
 
   useEffect(() => {
     const orderId = searchParams.get('order_id');
+    const paymentType = searchParams.get('type');
+    const projectId = searchParams.get('project_id');
+    const milestoneIndex = searchParams.get('milestone_index');
     
     if (!orderId) {
       setStatus('failed');
@@ -28,8 +31,24 @@ function PaymentCallbackContent() {
         const data = await response.json();
 
         if (data.success && data.order_status === 'PAID') {
+          // If it's a milestone payment, update the milestone
+          if (paymentType === 'milestone' && projectId && milestoneIndex !== null) {
+            await fetch('/api/payments/milestone/complete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                projectId,
+                milestoneIndex: parseInt(milestoneIndex),
+                orderId: data.order_id,
+                amount: data.order_amount,
+              }),
+            });
+            setMessage('Payment successful! Milestone unlocked.');
+          } else {
+            setMessage('Payment successful! Your subscription is now active.');
+          }
+          
           setStatus('success');
-          setMessage('Payment successful! Your subscription is now active.');
           setOrderDetails(data);
         } else {
           setStatus('failed');
