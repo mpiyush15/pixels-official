@@ -305,13 +305,8 @@ export default function ClientProjectsPage() {
                     Milestones:
                   </p>
                   <div className="space-y-3">
-                    {project.milestones.map((milestone, idx) => {
-                      const isLocked = milestone.amount && milestone.amount > 0 && milestone.paymentStatus !== 'paid';
-                      
-                      return (
-                        <div key={idx} className={`bg-white p-3 rounded-lg border ${
-                          isLocked ? 'border-red-200 bg-red-50/30' : 'border-gray-200'
-                        }`}>
+                    {project.milestones.map((milestone, idx) => (
+                        <div key={idx} className="bg-white p-3 rounded-lg border border-gray-200">
                           <div className="flex items-center justify-between mb-2">
                             <div className="flex items-center gap-2 flex-wrap">
                               {milestone.status === 'completed' ? (
@@ -324,27 +319,6 @@ export default function ClientProjectsPage() {
                               <span className="font-light text-gray-700 text-sm">
                                 {milestone.name}
                               </span>
-                              
-                              {/* Lock/Unlock Status */}
-                              {milestone.amount && milestone.amount > 0 && (
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-light flex items-center gap-1 ${
-                                  isLocked 
-                                    ? 'bg-red-100 text-red-700' 
-                                    : 'bg-green-100 text-green-700'
-                                }`}>
-                                  {isLocked ? (
-                                    <>
-                                      <Lock className="w-3 h-3" />
-                                      Locked
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Unlock className="w-3 h-3" />
-                                      Unlocked
-                                    </>
-                                  )}
-                                </span>
-                              )}
                             </div>
                             <span className="text-xs text-gray-500 font-light">
                               {new Date(milestone.dueDate).toLocaleDateString('en-IN')}
@@ -386,8 +360,7 @@ export default function ClientProjectsPage() {
                           </div>
                         )}
                       </div>
-                    );
-                    })}
+                    ))}
                   </div>
                 </div>
               )}
