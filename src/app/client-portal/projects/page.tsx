@@ -357,32 +357,11 @@ export default function ClientProjectsPage() {
                             </p>
                           )}
 
-                          {/* Payment Required Message */}
-                          {isLocked && (
-                            <div className="bg-red-100 border border-red-200 rounded-lg p-3 mb-2">
-                              <div className="flex items-center justify-between">
-                                <div>
-                                  <p className="text-sm font-medium text-red-800 flex items-center gap-1">
-                                    <Lock className="w-4 h-4" />
-                                    Payment Required
-                                  </p>
-                                  <p className="text-xs text-red-700 mt-1">
-                                    Pay ₹{milestone.amount?.toLocaleString('en-IN')} to unlock this milestone
-                                  </p>
-                                </div>
-                                <button
-                                  onClick={() => handleMilestonePayment(project._id, idx, milestone.amount!)}
-                                  className="px-4 py-2 bg-red-600 text-white rounded-lg text-xs font-light hover:bg-red-700 transition-colors flex items-center gap-1"
-                                >
-                                  <IndianRupee className="w-3 h-3" />
-                                  Pay Now
-                                </button>
-                              </div>
-                            </div>
-                          )}
+                          {/* Payment Required Message - DISABLED FOR NOW */}
+                          {/* We'll test invoice payments first, then add milestone payments later */}
 
-                          {/* File - Only show if unlocked */}
-                          {!isLocked && milestone.fileUrl && (
+                          {/* File */}
+                          {milestone.fileUrl && (
                           <div className="mt-2 flex items-center gap-2 bg-gray-50 p-2 rounded border border-gray-200">
                             <FileText className="w-4 h-4 text-blue-600 flex-shrink-0" />
                             <div className="flex-1 min-w-0">
