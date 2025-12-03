@@ -44,13 +44,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Only allow development clients to access portal
-    if (client.clientType && client.clientType !== 'development') {
-      return NextResponse.json(
-        { error: 'Portal access is only available for development clients. Please contact support for assistance.' },
-        { status: 403 }
-      );
-    }
+    // Client type restriction removed - all clients can access portal
 
     // Create session (simple token for now)
     const response = NextResponse.json({
