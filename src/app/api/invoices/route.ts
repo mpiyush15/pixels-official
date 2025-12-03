@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
         discount: body.discount || 0,
         total: body.total,
         notes: body.notes || '',
+        status: 'draft' as const,
       };
 
       const uploadResult = await createAndUploadInvoice(invoiceData);
@@ -114,12 +115,11 @@ export async function POST(request: NextRequest) {
       // Continue even if S3 upload fails
     }
 
-    // Update client's total revenue and project count
+    // Only increment project count, not revenue (revenue added when invoice is paid)
     await db.collection('clients').updateOne(
       { _id: new ObjectId(body.clientId) },
       { 
         $inc: { 
-          totalRevenue: body.total,
           projectsCount: 1
         }
       }

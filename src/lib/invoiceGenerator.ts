@@ -21,6 +21,7 @@ export interface InvoiceData {
   discount?: number;
   total: number;
   notes?: string;
+  status?: 'draft' | 'sent' | 'paid' | 'cancelled' | 'overdue';
 }
 
 /**
@@ -65,6 +66,7 @@ export function generateInvoiceHTML(invoice: InvoiceData): string {
           color: #333;
           background: #f5f5f5;
           padding: 20px;
+          position: relative;
         }
         .invoice-container {
           max-width: 900px;
@@ -72,6 +74,57 @@ export function generateInvoiceHTML(invoice: InvoiceData): string {
           background: white;
           padding: 60px;
           box-shadow: 0 0 20px rgba(0,0,0,0.1);
+          position: relative;
+        }
+        .status-watermark {
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%) rotate(-45deg);
+          font-size: 120px;
+          font-weight: 900;
+          opacity: 0.08;
+          pointer-events: none;
+          z-index: 1;
+          white-space: nowrap;
+        }
+        .status-watermark.paid {
+          color: #10b981;
+        }
+        .status-watermark.draft {
+          color: #6b7280;
+        }
+        .status-badge {
+          position: absolute;
+          top: 30px;
+          right: 30px;
+          padding: 12px 24px;
+          border-radius: 8px;
+          font-weight: 700;
+          font-size: 16px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
+          z-index: 10;
+        }
+        .status-badge.paid {
+          background: #10b981;
+          color: white;
+          box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3);
+        }
+        .status-badge.draft {
+          background: #6b7280;
+          color: white;
+          box-shadow: 0 4px 6px rgba(107, 114, 128, 0.3);
+        }
+        .status-badge.sent {
+          background: #3b82f6;
+          color: white;
+          box-shadow: 0 4px 6px rgba(59, 130, 246, 0.3);
+        }
+        .status-badge.overdue {
+          background: #ef4444;
+          color: white;
+          box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
         }
         .header {
           display: flex;
@@ -80,6 +133,8 @@ export function generateInvoiceHTML(invoice: InvoiceData): string {
           margin-bottom: 50px;
           padding-bottom: 30px;
           border-bottom: 3px solid #667eea;
+          position: relative;
+          z-index: 5;
         }
         .company-info h1 {
           font-size: 36px;
@@ -217,12 +272,18 @@ export function generateInvoiceHTML(invoice: InvoiceData): string {
     </head>
     <body>
       <div class="invoice-container">
+        <!-- Status Watermark -->
+        ${invoice.status ? `<div class="status-watermark ${invoice.status}">${invoice.status.toUpperCase()}</div>` : ''}
+        
+        <!-- Status Badge -->
+        ${invoice.status ? `<div class="status-badge ${invoice.status}">${invoice.status.toUpperCase()}</div>` : ''}
+        
         <!-- Header -->
         <div class="header">
           <div class="company-info">
-            <h1>PIXELS DIGITAL</h1>
-            <p>Creating Top Digital Solutions</p>
-            <p>support@pixelsdigital.tech</p>
+            <h1>PIXELS DIGITAL SOLUTIONS</h1>
+            <p>Web Development Company</p>
+            <p>info@pixelsdigital.tech</p>
             <p>www.pixelsdigital.tech</p>
           </div>
           <div class="invoice-details">
@@ -237,10 +298,10 @@ export function generateInvoiceHTML(invoice: InvoiceData): string {
         <div class="parties">
           <div class="party-box">
             <h3>Bill From</h3>
-            <p><strong>Pixels Digital</strong></p>
-            <p>Digital Marketing Agency</p>
-            <p>Mumbai, India</p>
-            <p>support@pixelsdigital.tech</p>
+            <p><strong>Pixels Digital Solutions</strong></p>
+            <p>Web Development Company</p>
+            <p>Akola, India</p>
+            <p>info@pixelsdigital.tech</p>
           </div>
           <div class="party-box">
             <h3>Bill To</h3>

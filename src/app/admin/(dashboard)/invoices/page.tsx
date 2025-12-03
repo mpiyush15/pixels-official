@@ -694,6 +694,10 @@ export default function InvoicesPage() {
     .filter(inv => inv.status === 'paid')
     .reduce((sum, inv) => sum + inv.total, 0);
 
+  const pendingAmount = (invoices || [])
+    .filter(inv => inv.status === 'sent')
+    .reduce((sum, inv) => sum + inv.total, 0);
+
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
       {/* Header */}
@@ -716,17 +720,23 @@ export default function InvoicesPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
         <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Total Invoices</p>
-          <p className="text-3xl font-light text-black mt-2">{invoices?.length || 0}</p>
+          <p className="text-sm text-gray-600 font-light">Total Revenue</p>
+          <p className="text-3xl font-light text-green-600 mt-2">₹{totalRevenue.toLocaleString()}</p>
         </div>
         <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Paid</p>
+          <p className="text-sm text-gray-600 font-light">Paid Invoices</p>
           <p className="text-3xl font-light text-green-600 mt-2">
             {invoices?.filter(inv => inv.status === 'paid').length || 0}
           </p>
         </div>
         <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Pending</p>
+          <p className="text-sm text-gray-600 font-light">Pending Amount</p>
+          <p className="text-3xl font-light text-orange-600 mt-2">
+            ₹{pendingAmount.toLocaleString()}
+          </p>
+        </div>
+        <div className="bg-white rounded-xl p-6 border border-gray-200">
+          <p className="text-sm text-gray-600 font-light">Pending Invoices</p>
           <p className="text-3xl font-light text-blue-600 mt-2">
             {invoices?.filter(inv => inv.status === 'sent').length || 0}
           </p>
@@ -736,10 +746,6 @@ export default function InvoicesPage() {
           <p className="text-3xl font-light text-red-600 mt-2">
             {invoices?.filter(inv => inv.status === 'cancelled').length || 0}
           </p>
-        </div>
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Total Revenue</p>
-          <p className="text-3xl font-light text-black mt-2">₹{totalRevenue.toLocaleString()}</p>
         </div>
       </div>
 

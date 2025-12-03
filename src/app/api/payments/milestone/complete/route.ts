@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
 
     const db = await getDatabase();
 
-    // Update milestone payment status to paid
+    // Update milestone payment status to paid and set status to in-progress
     const result = await db.collection('projects').updateOne(
       { _id: new ObjectId(projectId) },
       {
@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
           [`milestones.${milestoneIndex}.paidAt`]: new Date(),
           [`milestones.${milestoneIndex}.paidAmount`]: amount,
           [`milestones.${milestoneIndex}.cashfreeOrderId`]: orderId,
+          [`milestones.${milestoneIndex}.status`]: 'in-progress',
         },
       }
     );

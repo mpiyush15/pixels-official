@@ -24,18 +24,33 @@ export async function POST(req: NextRequest) {
     const clientId = clientAuth.value;
     const db = await getDatabase();
 
-    // Get project and verify client ownership
-    const project = await db.collection('projects').findOne({
-      _id: new ObjectId(projectId),
+    console.log('Milestone payment request:', {
+      projectId,
+      milestoneIndex,
+      amount,
       clientId,
     });
 
+    // Get project and verify client ownership
+    const project = await db.collection('projects').findOne({
+      _id: new ObjectId(projectId),
+    });
+
     if (!project) {
+      console.error('Project not found:', projectId);
       return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    // Verify client ownership - compare as strings
+    const projectClientId = project.clientId?.toString() || project.clientId;
+    if (projectClientId !== clientId) {
+      console.error('Client ID mismatch:', { projectClientId, clientId });
+      return NextResponse.json({ error: 'Unauthorized access to project' }, { status: 403 });
     }
 
     const milestone = project.milestones?.[milestoneIndex];
     if (!milestone) {
+      console.error('Milestone not found at index:', milestoneIndex);
       return NextResponse.json({ error: 'Milestone not found' }, { status: 404 });
     }
 

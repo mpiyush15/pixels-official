@@ -21,6 +21,8 @@ import {
   Download,
   Lock,
   Unlock,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 import WorkSubmissionsList from '@/components/WorkSubmissionsList';
 
@@ -47,6 +49,7 @@ interface Project {
     name: string;
     description?: string;
     status: 'pending' | 'in-progress' | 'completed';
+    startDate?: string;
     dueDate: string;
     amount?: number;
     paymentStatus?: 'unpaid' | 'paid';
@@ -86,6 +89,7 @@ export default function ProjectsPage() {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState<{ [key: number]: boolean }>({});
+  const [expandedMilestones, setExpandedMilestones] = useState<{ [key: string]: boolean }>({});
 
   const [formData, setFormData] = useState({
     clientId: '',
@@ -100,7 +104,8 @@ export default function ProjectsPage() {
     milestones: [] as Array<{ 
       name: string;
       description?: string;
-      status: 'pending' | 'in-progress' | 'completed'; 
+      status: 'pending' | 'in-progress' | 'completed';
+      startDate?: string;
       dueDate: string;
       amount?: number;
       paymentStatus?: 'unpaid' | 'paid';
@@ -117,6 +122,13 @@ export default function ProjectsPage() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const toggleMilestones = (projectId: string) => {
+    setExpandedMilestones(prev => ({
+      ...prev,
+      [projectId]: !prev[projectId]
+    }));
+  };
 
   const fetchData = async () => {
     try {
@@ -525,10 +537,10 @@ export default function ProjectsPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-6 md:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
           >
-            <div className="flex justify-between items-center mb-6 sticky top-0 bg-white pb-4 border-b border-gray-100">
-              <h2 className="text-2xl font-light text-black">
+            <div className="flex justify-between items-center p-6 md:p-8 pb-4 sticky top-0 bg-gray-900 rounded-t-2xl border-b border-gray-700 z-10">
+              <h2 className="text-2xl font-light text-white">
                 {editingProject ? 'Edit Project' : 'Create New Project'}
               </h2>
               <button
@@ -536,13 +548,13 @@ export default function ProjectsPage() {
                   setShowAddModal(false);
                   setEditingProject(null);
                 }}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5 text-white" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-6 p-6 md:p-8 pt-6">
               {/* Client Selection */}
               <div>
                 <label className="block text-sm text-gray-600 font-light mb-2">Client *</label>
@@ -670,13 +682,13 @@ export default function ProjectsPage() {
               </div>
 
               {/* Milestones */}
-              <div>
+              <div className="bg-gray-900 p-6 rounded-xl">
                 <div className="flex justify-between items-center mb-4">
-                  <label className="block text-sm text-gray-600 font-light">Milestones</label>
+                  <label className="block text-sm text-white font-medium">Milestones</label>
                   <button
                     type="button"
                     onClick={addMilestone}
-                    className="text-sm text-black hover:underline font-light"
+                    className="text-sm text-white hover:text-gray-300 font-light transition-colors"
                   >
                     + Add Milestone
                   </button>
@@ -684,30 +696,50 @@ export default function ProjectsPage() {
                 {formData.milestones.length > 0 && (
                   <div className="space-y-4">
                     {formData.milestones.map((milestone, index) => (
-                      <div key={index} className="bg-gray-50 p-4 rounded-xl space-y-3">
-                        <div className="grid md:grid-cols-3 gap-3">
+                      <div key={index} className="bg-gray-800 p-4 rounded-xl space-y-3 border border-gray-700">
+                        <div className="grid md:grid-cols-2 gap-3">
                           <input
                             type="text"
                             placeholder="Milestone name"
                             value={milestone.name}
                             onChange={(e) => updateMilestone(index, 'name', e.target.value)}
-                            className="px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black font-light text-sm"
+                            className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 font-light text-sm text-white placeholder-gray-400"
                           />
                           <select
                             value={milestone.status}
                             onChange={(e) => updateMilestone(index, 'status', e.target.value)}
-                            className="px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black font-light text-sm"
+                            className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 font-light text-sm text-white"
                           >
                             <option value="pending">Pending</option>
                             <option value="in-progress">In Progress</option>
                             <option value="completed">Completed</option>
                           </select>
-                          <input
-                            type="date"
-                            value={milestone.dueDate}
-                            onChange={(e) => updateMilestone(index, 'dueDate', e.target.value)}
-                            className="px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black font-light text-sm"
-                          />
+                        </div>
+                        
+                        {/* Start Date and Due Date */}
+                        <div className="grid md:grid-cols-2 gap-3">
+                          <div>
+                            <label className="block text-xs text-gray-300 font-light mb-1">
+                              Start Date
+                            </label>
+                            <input
+                              type="date"
+                              value={milestone.startDate || milestone.dueDate}
+                              onChange={(e) => updateMilestone(index, 'startDate', e.target.value)}
+                              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 font-light text-sm text-white"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-xs text-gray-300 font-light mb-1">
+                              Due Date
+                            </label>
+                            <input
+                              type="date"
+                              value={milestone.dueDate}
+                              onChange={(e) => updateMilestone(index, 'dueDate', e.target.value)}
+                              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 font-light text-sm text-white"
+                            />
+                          </div>
                         </div>
 
                         {/* Description Field */}
@@ -716,7 +748,7 @@ export default function ProjectsPage() {
                             placeholder="Milestone description (optional)"
                             value={milestone.description || ''}
                             onChange={(e) => updateMilestone(index, 'description', e.target.value)}
-                            className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black font-light text-sm resize-none"
+                            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 font-light text-sm resize-none text-white placeholder-gray-400"
                             rows={2}
                           />
                         </div>
@@ -724,7 +756,7 @@ export default function ProjectsPage() {
                         {/* Amount Field */}
                         <div className="grid md:grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs text-gray-600 font-light mb-1">
+                            <label className="block text-xs text-gray-300 font-light mb-1">
                               Amount (₹) - Leave 0 for free access
                             </label>
                             <input
@@ -732,18 +764,18 @@ export default function ProjectsPage() {
                               placeholder="Milestone amount"
                               value={milestone.amount || 0}
                               onChange={(e) => updateMilestone(index, 'amount', parseFloat(e.target.value) || 0)}
-                              className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black font-light text-sm"
+                              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 font-light text-sm text-white placeholder-gray-400"
                               min="0"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs text-gray-600 font-light mb-1">
+                            <label className="block text-xs text-gray-300 font-light mb-1">
                               Payment Status
                             </label>
                             <select
                               value={milestone.paymentStatus || 'unpaid'}
                               onChange={(e) => updateMilestone(index, 'paymentStatus', e.target.value)}
-                              className="w-full px-3 py-2 bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-black font-light text-sm"
+                              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 font-light text-sm text-white"
                             >
                               <option value="unpaid">Unpaid (Locked)</option>
                               <option value="paid">Paid (Unlocked)</option>
@@ -752,16 +784,16 @@ export default function ProjectsPage() {
                         </div>
                         
                         {/* File Upload Section */}
-                        <div className="border-t border-gray-200 pt-3">
-                          <label className="block text-xs text-gray-600 font-light mb-2">
+                        <div className="border-t border-gray-700 pt-3">
+                          <label className="block text-xs text-gray-300 font-light mb-2">
                             Attach Document (Report, PDF, etc.)
                           </label>
                           {milestone.fileUrl ? (
-                            <div className="flex items-center gap-2 bg-white p-2 rounded-lg border border-gray-200">
-                              <FileText className="w-4 h-4 text-green-600" />
+                            <div className="flex items-center gap-2 bg-gray-700 p-2 rounded-lg border border-gray-600">
+                              <FileText className="w-4 h-4 text-green-400" />
                               <div className="flex-1">
-                                <p className="text-sm font-light text-gray-700">{milestone.fileName}</p>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-sm font-light text-gray-200">{milestone.fileName}</p>
+                                <p className="text-xs text-gray-400">
                                   {milestone.fileSize ? `${(milestone.fileSize / 1024).toFixed(1)} KB` : ''}
                                 </p>
                               </div>
@@ -769,15 +801,15 @@ export default function ProjectsPage() {
                                 href={milestone.fileUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="p-1 hover:bg-green-50 rounded"
+                                className="p-1 hover:bg-gray-600 rounded"
                                 title="Download"
                               >
-                                <Download className="w-4 h-4 text-green-600" />
+                                <Download className="w-4 h-4 text-green-400" />
                               </a>
                               <button
                                 type="button"
                                 onClick={() => removeFile(index)}
-                                className="p-1 hover:bg-red-50 rounded text-red-600"
+                                className="p-1 hover:bg-gray-600 rounded text-red-400"
                                 title="Remove file"
                               >
                                 <X className="w-4 h-4" />
@@ -798,23 +830,23 @@ export default function ProjectsPage() {
                               />
                               <label
                                 htmlFor={`file-upload-${index}`}
-                                className={`flex items-center justify-center gap-2 px-3 py-2 bg-white border border-gray-300 border-dashed rounded-lg cursor-pointer hover:border-black transition-colors text-sm font-light ${
+                                className={`flex items-center justify-center gap-2 px-3 py-2 bg-gray-700 border border-gray-600 border-dashed rounded-lg cursor-pointer hover:border-gray-400 transition-colors text-sm font-light ${
                                   uploadingFiles[index] ? 'opacity-50 cursor-not-allowed' : ''
                                 }`}
                               >
                                 {uploadingFiles[index] ? (
                                   <>
-                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-black"></div>
-                                    <span className="text-gray-600">Uploading...</span>
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                                    <span className="text-gray-300">Uploading...</span>
                                   </>
                                 ) : (
                                   <>
-                                    <Upload className="w-4 h-4 text-gray-600" />
-                                    <span className="text-gray-600">Choose file to upload</span>
+                                    <Upload className="w-4 h-4 text-gray-300" />
+                                    <span className="text-gray-300">Choose file to upload</span>
                                   </>
                                 )}
                               </label>
-                              <p className="text-xs text-gray-500 mt-1">
+                              <p className="text-xs text-gray-400 mt-1">
                                 PDF, Word, Excel, Images (max 10MB)
                               </p>
                             </div>
@@ -825,7 +857,7 @@ export default function ProjectsPage() {
                           <button
                             type="button"
                             onClick={() => removeMilestone(index)}
-                            className="px-3 py-1 text-red-600 hover:bg-red-50 rounded-lg text-sm font-light"
+                            className="px-3 py-1 text-red-400 hover:bg-gray-700 rounded-lg text-sm font-light transition-colors"
                           >
                             Remove Milestone
                           </button>
@@ -917,7 +949,19 @@ export default function ProjectsPage() {
 
                 {selectedProject.milestones && selectedProject.milestones.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-2">Milestones</h3>
+                    <button
+                      onClick={() => toggleMilestones(selectedProject._id)}
+                      className="flex items-center justify-between w-full text-sm font-medium text-gray-600 mb-2 hover:text-gray-900 transition-colors"
+                    >
+                      <span>Milestones ({selectedProject.milestones.length})</span>
+                      {expandedMilestones[selectedProject._id] ? (
+                        <ChevronUp className="w-4 h-4" />
+                      ) : (
+                        <ChevronDown className="w-4 h-4" />
+                      )}
+                    </button>
+                    
+                    {expandedMilestones[selectedProject._id] && (
                     <div className="space-y-3">
                       {selectedProject.milestones.map((milestone, idx) => (
                         <div key={idx} className="bg-gray-50 p-3 rounded-lg">
@@ -962,6 +1006,51 @@ export default function ProjectsPage() {
                               {milestone.description}
                             </p>
                           )}
+                          
+                          {/* Admin Log Payment Button */}
+                          {milestone.amount && milestone.amount > 0 && milestone.paymentStatus !== 'paid' && (
+                            <div className="mt-2 mb-2">
+                              <button
+                                onClick={async () => {
+                                  if (confirm(`Log payment of ₹${milestone.amount?.toLocaleString('en-IN')} for milestone "${milestone.name}"?`)) {
+                                    try {
+                                      const response = await fetch(`/api/projects/${selectedProject._id}/milestone-payment`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' },
+                                        body: JSON.stringify({
+                                          milestoneIndex: idx,
+                                          amount: milestone.amount,
+                                          paymentMethod: 'offline',
+                                          paymentDetails: 'Logged by admin',
+                                        }),
+                                      });
+
+                                      const data = await response.json();
+
+                                      if (data.success) {
+                                        alert('Payment logged successfully! Milestone is now in-progress.');
+                                        // Refresh project details
+                                        const refreshResponse = await fetch(`/api/projects/${selectedProject._id}`);
+                                        const refreshedProject = await refreshResponse.json();
+                                        setSelectedProject(refreshedProject);
+                                        fetchData();
+                                      } else {
+                                        alert('Failed to log payment: ' + (data.error || 'Unknown error'));
+                                      }
+                                    } catch (error) {
+                                      console.error('Error logging payment:', error);
+                                      alert('Failed to log payment. Please try again.');
+                                    }
+                                  }
+                                }}
+                                className="px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-xs font-light flex items-center gap-1"
+                              >
+                                <IndianRupee className="w-3 h-3" />
+                                Log Payment
+                              </button>
+                            </div>
+                          )}
+
                           {milestone.fileUrl && (
                             <div className="mt-2 flex items-center gap-2 bg-white p-2 rounded border border-gray-200">
                               <FileText className="w-4 h-4 text-blue-600" />
@@ -982,6 +1071,7 @@ export default function ProjectsPage() {
                         </div>
                       ))}
                     </div>
+                    )}
                   </div>
                 )}
               </div>

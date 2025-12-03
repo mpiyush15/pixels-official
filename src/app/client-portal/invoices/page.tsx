@@ -226,7 +226,7 @@ export default function ClientInvoicesPage() {
             >
               <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
+                  <div className="flex items-center gap-3 mb-2 flex-wrap">
                     <h3 className="text-lg font-light text-black">
                       {invoice.invoiceNumber}
                     </h3>
@@ -238,6 +238,12 @@ export default function ClientInvoicesPage() {
                       {getStatusIcon(invoice.status)}
                       {invoice.status.toUpperCase()}
                     </span>
+                    {invoice.status === 'paid' && (
+                      <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-600 text-white flex items-center gap-1">
+                        <CheckCircle className="w-3 h-3" />
+                        PAID
+                      </span>
+                    )}
                   </div>
                   <div className="space-y-1 text-sm text-gray-600 font-light mb-3">
                     <div className="flex items-center gap-2">
