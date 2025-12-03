@@ -112,10 +112,18 @@ export async function POST(req: NextRequest) {
 
     const orderData = await orderResponse.json();
 
+    console.log('Cashfree order created successfully:', {
+      order_id: orderData.order_id,
+      payment_session_id: orderData.payment_session_id,
+      payment_session_id_length: orderData.payment_session_id?.length,
+    });
+
     // Generate payment URL
     const paymentUrl = isProduction
       ? `https://payments.cashfree.com/pg/view/order/${orderData.payment_session_id}`
       : `https://sandbox.cashfree.com/pg/view/order/${orderData.payment_session_id}`;
+
+    console.log('Generated payment URL:', paymentUrl);
 
     // Store order info in milestone for tracking
     await db.collection('projects').updateOne(
