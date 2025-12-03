@@ -116,12 +116,14 @@ export async function POST(req: NextRequest) {
       order_id: orderData.order_id,
       payment_session_id: orderData.payment_session_id,
       payment_session_id_length: orderData.payment_session_id?.length,
+      full_response: orderData,
     });
 
-    // Generate payment URL
+    // For Cashfree API v2023-08-01, use the payment_session_id directly
+    // The correct payment URL format is: https://payments.cashfree.com/pay/{payment_session_id}
     const paymentUrl = isProduction
-      ? `https://payments.cashfree.com/pg/view/order/${orderData.payment_session_id}`
-      : `https://sandbox.cashfree.com/pg/view/order/${orderData.payment_session_id}`;
+      ? `https://payments.cashfree.com/pay/${orderData.payment_session_id}`
+      : `https://sandbox.cashfree.com/pay/${orderData.payment_session_id}`;
 
     console.log('Generated payment URL:', paymentUrl);
 

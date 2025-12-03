@@ -64,10 +64,10 @@ export async function POST(
 
     const orderData = await orderResponse.json();
 
-    // Generate payment URL based on mode
+    // Generate payment URL based on mode - using Cashfree API v2023-08-01 format
     const paymentUrl = process.env.CASHFREE_MODE === 'production'
-      ? `https://payments.cashfree.com/order/${orderData.payment_session_id}`
-      : `https://sandbox.cashfree.com/pg/view/order/${orderData.payment_session_id}`;
+      ? `https://payments.cashfree.com/pay/${orderData.payment_session_id}`
+      : `https://sandbox.cashfree.com/pay/${orderData.payment_session_id}`;
 
     // Update invoice with payment link details
     await db.collection('invoices').updateOne(
