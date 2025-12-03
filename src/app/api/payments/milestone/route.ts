@@ -49,11 +49,13 @@ export async function POST(req: NextRequest) {
     }
 
     // Create Cashfree order
-    const isProduction = process.env.CASHFREE_MODE?.toUpperCase() === 'PRODUCTION' || 
-                         process.env.CASHFREE_MODE?.toUpperCase() === 'PROD';
+    const isProduction =
+      process.env.CASHFREE_MODE === "PROD" ||
+      process.env.CASHFREE_MODE === "PRODUCTION";
+
     const baseUrl = isProduction
-      ? 'https://api.cashfree.com'
-      : 'https://sandbox.cashfree.com';
+      ? "https://api.cashfree.com/pg/orders"
+      : "https://sandbox.cashfree.com/pg/orders";
 
     const orderId = `MILESTONE_${projectId}_${milestoneIndex}_${Date.now()}`;
 
@@ -66,26 +68,25 @@ export async function POST(req: NextRequest) {
       clientId: process.env.CASHFREE_CLIENT_ID?.substring(0, 8) + '...',
     });
 
-    const orderResponse = await fetch(`${baseUrl}/pg/orders`, {
-      method: 'POST',
+    const orderResponse = await fetch(baseUrl, {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'x-client-id': process.env.CASHFREE_CLIENT_ID!,
-        'x-client-secret': process.env.CASHFREE_CLIENT_SECRET!,
-        'x-api-version': '2023-08-01',
+        "Content-Type": "application/json",
+        "x-client-id": process.env.CASHFREE_CLIENT_ID!,
+        "x-client-secret": process.env.CASHFREE_CLIENT_SECRET!,
       },
       body: JSON.stringify({
         order_id: orderId,
         order_amount: amount,
-        order_currency: 'INR',
+        order_currency: "INR",
         customer_details: {
           customer_id: clientId,
           customer_name: client.name,
           customer_email: client.email,
-          customer_phone: client.phone || '9999999999',
+          customer_phone: client.phone || "9999999999",
         },
         order_meta: {
-          return_url: `${(process.env.NEXT_PUBLIC_BASE_URL || 'https://www.pixelsdigital.tech').replace(/\/$/, '')}/payment/callback?type=milestone&project_id=${projectId}&milestone_index=${milestoneIndex}`,
+          return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/callback?type=milestone&project_id=${projectId}&milestone_index=${milestoneIndex}`,
         },
         order_note: `Payment for ${project.projectName} - ${milestone.name}`,
       }),
@@ -115,31 +116,14 @@ export async function POST(req: NextRequest) {
     console.log('Cashfree order created successfully:', {
       order_id: orderData.order_id,
       payment_session_id: orderData.payment_session_id,
-      payment_session_id_length: orderData.payment_session_id?.length,
-      payment_session_id_type: typeof orderData.payment_session_id,
-      payment_session_id_raw: JSON.stringify(orderData.payment_session_id),
-      full_response: orderData,
     });
 
-    // CRITICAL FIX: Cashfree is returning corrupted session IDs ending with "payment"
-    // This appears to be a bug in their API response
-    // We need to strip the "payment" suffix if present
-    let sessionId = orderData.payment_session_id;
-    
-    if (sessionId && sessionId.endsWith('payment')) {
-      console.warn('Removing corrupted "payment" suffix from session ID');
-      sessionId = sessionId.slice(0, -7); // Remove "payment" (7 characters)
-      console.log('Cleaned session ID:', sessionId);
-    }
-
-    // For Cashfree API v2023-08-01, use the payment_session_id directly
-    // The correct payment URL format is: https://payments.cashfree.com/pay/{payment_session_id}
+    // Generate payment URL using Cashfree V2 format
     const paymentUrl = isProduction
-      ? `https://payments.cashfree.com/pay/${sessionId}`
-      : `https://sandbox.cashfree.com/pay/${sessionId}`;
+      ? `https://payments.cashfree.com/pay/${orderData.payment_session_id}`
+      : `https://sandbox.cashfree.com/pay/${orderData.payment_session_id}`;
 
     console.log('Generated payment URL:', paymentUrl);
-    console.log('Payment URL length:', paymentUrl.length);
 
     // Store order info in milestone for tracking
     await db.collection('projects').updateOne(
