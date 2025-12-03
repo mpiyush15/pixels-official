@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
           customer_phone: client.phone || '9999999999',
         },
         order_meta: {
-          return_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.pixelsdigital.tech'}/payment/callback?type=milestone&project_id=${projectId}&milestone_index=${milestoneIndex}`,
+          return_url: `${(process.env.NEXT_PUBLIC_BASE_URL || 'https://www.pixelsdigital.tech').replace(/\/$/, '')}/payment/callback?type=milestone&project_id=${projectId}&milestone_index=${milestoneIndex}`,
         },
         order_note: `Payment for ${project.projectName} - ${milestone.name}`,
       }),
