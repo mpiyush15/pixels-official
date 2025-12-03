@@ -55,6 +55,14 @@ export async function POST(req: NextRequest) {
 
     const orderId = `MILESTONE_${projectId}_${milestoneIndex}_${Date.now()}`;
 
+    console.log('Creating Cashfree order:', {
+      orderId,
+      amount,
+      mode: process.env.CASHFREE_MODE,
+      baseUrl,
+      clientId: process.env.CASHFREE_CLIENT_ID?.substring(0, 8) + '...',
+    });
+
     const orderResponse = await fetch(`${baseUrl}/pg/orders`, {
       method: 'POST',
       headers: {
@@ -74,7 +82,7 @@ export async function POST(req: NextRequest) {
           customer_phone: client.phone || '9999999999',
         },
         order_meta: {
-          return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/callback?type=milestone&project_id=${projectId}&milestone_index=${milestoneIndex}`,
+          return_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.pixelsdigital.tech'}/payment/callback?type=milestone&project_id=${projectId}&milestone_index=${milestoneIndex}`,
         },
         order_note: `Payment for ${project.projectName} - ${milestone.name}`,
       }),
@@ -82,9 +90,19 @@ export async function POST(req: NextRequest) {
 
     if (!orderResponse.ok) {
       const error = await orderResponse.json();
-      console.error('Cashfree order creation error:', error);
+      console.error('Cashfree order creation error:', {
+        status: orderResponse.status,
+        statusText: orderResponse.statusText,
+        error,
+        mode: process.env.CASHFREE_MODE,
+        clientId: process.env.CASHFREE_CLIENT_ID?.substring(0, 8) + '...',
+      });
       return NextResponse.json(
-        { error: 'Failed to create payment order' },
+        { 
+          error: 'Failed to create payment order',
+          details: error.message || 'Cashfree API error',
+          cashfreeError: error,
+        },
         { status: 500 }
       );
     }
