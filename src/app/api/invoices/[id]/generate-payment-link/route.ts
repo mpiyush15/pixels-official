@@ -20,42 +20,50 @@ export async function POST(
       );
     }
 
-    // Create Cashfree order
-    const baseUrl = process.env.CASHFREE_MODE === 'production'
-      ? 'https://api.cashfree.com'
-      : 'https://sandbox.cashfree.com';
+    // Create Cashfree order using V2 API (Payment Link)
+    const isProduction =
+      process.env.CASHFREE_MODE === "PROD" ||
+      process.env.CASHFREE_MODE === "PRODUCTION";
 
-    const orderResponse = await fetch(
-      `${baseUrl}/pg/orders`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-client-id': process.env.CASHFREE_CLIENT_ID!,
-          'x-client-secret': process.env.CASHFREE_CLIENT_SECRET!,
-          'x-api-version': '2023-08-01',
-        },
-        body: JSON.stringify({
-          order_id: `INV_${invoice.invoiceNumber}_${Date.now()}`,
-          order_amount: invoice.total,
-          order_currency: 'INR',
-          customer_details: {
-            customer_id: invoice.clientId,
-            customer_name: invoice.clientName,
-            customer_email: invoice.clientEmail,
-            customer_phone: invoice.clientPhone || '9999999999',
-          },
-          order_meta: {
-            return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/callback?invoice_id=${id}`,
-          },
-          order_note: `Payment for Invoice ${invoice.invoiceNumber}`,
-        }),
-      }
-    );
+    const apiUrl = isProduction
+      ? "https://api.cashfree.com/api/v2/order/create"
+      : "https://sandbox.cashfree.com/api/v2/order/create";
+
+    const orderId = `INV_${invoice.invoiceNumber}_${Date.now()}`;
+
+    console.log('Creating Cashfree V2 invoice payment order:', {
+      orderId,
+      amount: invoice.total,
+      mode: process.env.CASHFREE_MODE,
+      isProduction,
+      apiUrl,
+    });
+
+    const orderResponse = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-client-id': process.env.CASHFREE_CLIENT_ID!,
+        'x-client-secret': process.env.CASHFREE_CLIENT_SECRET!,
+      },
+      body: JSON.stringify({
+        orderId: orderId,
+        orderAmount: invoice.total,
+        orderCurrency: 'INR',
+        customerName: invoice.clientName,
+        customerEmail: invoice.clientEmail,
+        customerPhone: invoice.clientPhone || '9999999999',
+        returnUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/callback?invoice_id=${id}`,
+        orderNote: `Payment for Invoice ${invoice.invoiceNumber}`,
+      }),
+    });
 
     if (!orderResponse.ok) {
       const error = await orderResponse.json();
-      console.error('Cashfree order creation error:', error);
+      console.error('Cashfree V2 invoice order creation error:', {
+        status: orderResponse.status,
+        error,
+      });
       return NextResponse.json(
         { error: 'Failed to create payment link' },
         { status: 500 }
@@ -64,10 +72,22 @@ export async function POST(
 
     const orderData = await orderResponse.json();
 
-    // Generate payment URL based on mode - using Cashfree API v2023-08-01 format
-    const paymentUrl = process.env.CASHFREE_MODE === 'production'
-      ? `https://payments.cashfree.com/pay/${orderData.payment_session_id}`
-      : `https://sandbox.cashfree.com/pay/${orderData.payment_session_id}`;
+    console.log('Cashfree V2 invoice order created:', {
+      status: orderData.status,
+      orderId: orderData.orderId,
+      paymentLink: orderData.paymentLink,
+    });
+
+    // V2 API returns paymentLink directly
+    const paymentUrl = orderData.paymentLink;
+
+    if (!paymentUrl) {
+      console.error('No payment link in Cashfree response:', orderData);
+      return NextResponse.json(
+        { error: 'Failed to generate payment link' },
+        { status: 500 }
+      );
+    }
 
     // Update invoice with payment link details
     await db.collection('invoices').updateOne(
@@ -75,8 +95,7 @@ export async function POST(
       {
         $set: {
           paymentLink: paymentUrl,
-          cashfreeOrderId: orderData.order_id,
-          paymentSessionId: orderData.payment_session_id,
+          cashfreeOrderId: orderData.orderId,
           paymentLinkCreatedAt: new Date(),
         },
       }
@@ -85,8 +104,7 @@ export async function POST(
     return NextResponse.json({
       success: true,
       paymentLink: paymentUrl,
-      orderId: orderData.order_id,
-      sessionId: orderData.payment_session_id,
+      orderId: orderData.orderId,
     });
   } catch (error) {
     console.error('Generate payment link error:', error);
