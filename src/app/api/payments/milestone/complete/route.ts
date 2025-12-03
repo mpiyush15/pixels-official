@@ -71,11 +71,60 @@ export async function POST(req: NextRequest) {
         type: 'milestone',
         createdAt: new Date(),
       });
+
+      // Auto-generate invoice for this payment
+      const milestone = updatedMilestones[milestoneIndex];
+      const invoiceNumber = `INV-${Date.now()}`;
+      const issueDate = new Date().toISOString().split('T')[0];
+      
+      await db.collection('invoices').insertOne({
+        clientId: project.clientId,
+        clientName: project.clientName,
+        clientEmail: project.clientEmail,
+        projectId,
+        projectName: project.title || project.projectName || 'Project',
+        invoiceNumber,
+        issueDate,
+        dueDate: issueDate, // Already paid, so due date is same as issue date
+        status: 'paid',
+        paidDate: issueDate,
+        items: [
+          {
+            description: milestone.title || milestone.name || `Milestone ${milestoneIndex + 1}`,
+            quantity: 1,
+            rate: amount,
+            amount: amount,
+          },
+        ],
+        subtotal: amount,
+        tax: 0,
+        taxRate: 0,
+        total: amount,
+        notes: `Payment for ${milestone.title || milestone.name || 'milestone'} - Order ID: ${orderId}`,
+        milestoneIndex,
+        cashfreeOrderId: orderId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // If this is the first milestone (deposit), unlock the project
+      if (project.requiresDepositPayment && !project.depositPaid && milestoneIndex === 0) {
+        await db.collection('projects').updateOne(
+          { _id: new ObjectId(projectId) },
+          {
+            $set: {
+              depositPaid: true,
+              updatedAt: new Date(),
+            },
+          }
+        );
+      }
     }
 
     return NextResponse.json({
       success: true,
       message: 'Milestone unlocked successfully',
+      invoiceGenerated: true,
     });
   } catch (error) {
     console.error('Complete milestone payment error:', error);

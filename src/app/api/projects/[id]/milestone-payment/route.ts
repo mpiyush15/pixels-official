@@ -68,9 +68,74 @@ export async function POST(
       }
     );
 
+    // Create payment record
+    await db.collection('payments').insertOne({
+      projectId: id,
+      clientId: project.clientId,
+      milestoneIndex,
+      milestoneName: milestone.title || milestone.name || `Milestone ${milestoneIndex + 1}`,
+      amount: amount || milestone.amount || 0,
+      paymentMethod: paymentMethod || 'offline',
+      paymentDate: new Date(),
+      status: 'completed',
+      type: 'milestone',
+      loggedBy: 'admin',
+      paymentDetails: paymentDetails || 'Logged by admin',
+      createdAt: new Date(),
+    });
+
+    // Auto-generate invoice for this payment
+    const invoiceNumber = `INV-${Date.now()}`;
+    const issueDate = new Date().toISOString().split('T')[0];
+    const paidAmount = amount || milestone.amount || 0;
+    
+    await db.collection('invoices').insertOne({
+      clientId: project.clientId,
+      clientName: project.clientName,
+      clientEmail: project.clientEmail,
+      projectId: id,
+      projectName: project.title || project.projectName || 'Project',
+      invoiceNumber,
+      issueDate,
+      dueDate: issueDate, // Already paid, so due date is same as issue date
+      status: 'paid',
+      paidDate: issueDate,
+      items: [
+        {
+          description: milestone.title || milestone.name || `Milestone ${milestoneIndex + 1}`,
+          quantity: 1,
+          rate: paidAmount,
+          amount: paidAmount,
+        },
+      ],
+      subtotal: paidAmount,
+      tax: 0,
+      taxRate: 0,
+      total: paidAmount,
+      notes: `Admin logged payment - ${paymentDetails || 'Payment received'}`,
+      milestoneIndex,
+      paymentMethod: paymentMethod || 'offline',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    });
+
+    // If this is the first milestone (deposit), unlock the project
+    if (project.requiresDepositPayment && !project.depositPaid && milestoneIndex === 0) {
+      await db.collection('projects').updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            depositPaid: true,
+            updatedAt: new Date(),
+          },
+        }
+      );
+    }
+
     return NextResponse.json({ 
       success: true,
-      message: 'Payment logged successfully and milestone set to in-progress'
+      message: 'Payment logged successfully and milestone set to in-progress',
+      invoiceGenerated: true,
     });
   } catch (error) {
     console.error('Error logging milestone payment:', error);
