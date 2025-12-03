@@ -17,7 +17,8 @@ import {
   ExternalLink,
   UserCog,
   Image,
-  MessageCircle
+  MessageCircle,
+  Upload
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -26,6 +27,7 @@ const menuItems = [
   { icon: Mail, label: 'Leads', path: '/admin/leads' },
   { icon: Users, label: 'Clients', path: '/admin/clients' },
   { icon: FolderKanban, label: 'Projects', path: '/admin/projects' },
+  { icon: Upload, label: 'Submitted Work', path: '/admin/submitted-work' },
   { icon: MessageCircle, label: 'Project Chats', path: '/admin/chats' },
   { icon: FileText, label: 'Invoices', path: '/admin/invoices' },
   { icon: CreditCard, label: 'Payments', path: '/admin/payments' },

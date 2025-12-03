@@ -40,6 +40,13 @@ export async function PATCH(
     const body = await request.json();
     const db = await getDatabase();
 
+    // Auto-calculate progress based on milestones if milestones are provided
+    if (body.milestones && Array.isArray(body.milestones)) {
+      const totalMilestones = body.milestones.length;
+      const completedMilestones = body.milestones.filter((m: any) => m.status === 'completed').length;
+      body.progress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
+    }
+
     await db.collection('projects').updateOne(
       { _id: new ObjectId(id) },
       {

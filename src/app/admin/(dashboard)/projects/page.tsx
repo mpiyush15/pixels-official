@@ -193,17 +193,24 @@ export default function ProjectsPage() {
 
   const handleEdit = (project: Project) => {
     setEditingProject(project);
+    
+    // Auto-calculate progress from current milestones
+    const milestones = project.milestones || [];
+    const totalMilestones = milestones.length;
+    const completedMilestones = milestones.filter(m => m.status === 'completed').length;
+    const calculatedProgress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
+    
     setFormData({
       clientId: project.clientId,
       projectName: project.projectName,
       projectType: project.projectType,
       description: project.description,
       status: project.status,
-      progress: project.progress,
+      progress: calculatedProgress,
       startDate: project.startDate.split('T')[0],
       endDate: project.endDate.split('T')[0],
       budget: project.budget,
-      milestones: project.milestones || [],
+      milestones: milestones,
       tasks: project.tasks || [],
     });
     setShowAddModal(true);
@@ -243,16 +250,30 @@ export default function ProjectsPage() {
   };
 
   const removeMilestone = (index: number) => {
+    const updated = formData.milestones.filter((_, i) => i !== index);
+    
+    // Auto-calculate progress based on completed milestones
+    const totalMilestones = updated.length;
+    const completedMilestones = updated.filter(m => m.status === 'completed').length;
+    const calculatedProgress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
+    
     setFormData({
       ...formData,
-      milestones: formData.milestones.filter((_, i) => i !== index),
+      milestones: updated,
+      progress: calculatedProgress
     });
   };
 
   const updateMilestone = (index: number, field: string, value: any) => {
     const updated = [...formData.milestones];
     updated[index] = { ...updated[index], [field]: value };
-    setFormData({ ...formData, milestones: updated });
+    
+    // Auto-calculate progress based on completed milestones
+    const totalMilestones = updated.length;
+    const completedMilestones = updated.filter(m => m.status === 'completed').length;
+    const calculatedProgress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
+    
+    setFormData({ ...formData, milestones: updated, progress: calculatedProgress });
   };
 
   const handleFileUpload = async (index: number, file: File) => {
@@ -633,16 +654,12 @@ export default function ProjectsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">Progress (%) *</label>
-                  <input
-                    type="number"
-                    value={formData.progress}
-                    onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) || 0 })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
-                    min="0"
-                    max="100"
-                    required
-                  />
+                  <label className="block text-sm text-gray-600 font-light mb-2">
+                    Progress (Auto-calculated)
+                  </label>
+                  <div className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl font-light text-gray-700">
+                    {formData.progress}% ({formData.milestones.filter(m => m.status === 'completed').length} of {formData.milestones.length} milestones completed)
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm text-gray-600 font-light mb-2">Budget (₹)</label>

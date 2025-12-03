@@ -41,16 +41,29 @@ export async function POST(
     }
 
     // Mark milestone as paid and set to in-progress
+    const updatedMilestones = [...project.milestones];
+    updatedMilestones[milestoneIndex] = {
+      ...milestone,
+      paymentStatus: 'paid',
+      paidAt: new Date(),
+      paymentMethod: paymentMethod || 'offline',
+      paymentDetails: paymentDetails || 'Logged by admin',
+      paidAmount: amount || milestone.amount || 0,
+      status: 'in-progress'
+    };
+
+    // Auto-calculate progress based on completed milestones
+    const totalMilestones = updatedMilestones.length;
+    const completedMilestones = updatedMilestones.filter((m: any) => m.status === 'completed').length;
+    const calculatedProgress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
+
     await db.collection('projects').updateOne(
       { _id: new ObjectId(id) },
       {
         $set: {
-          [`milestones.${milestoneIndex}.paymentStatus`]: 'paid',
-          [`milestones.${milestoneIndex}.paidAt`]: new Date(),
-          [`milestones.${milestoneIndex}.paymentMethod`]: paymentMethod || 'offline',
-          [`milestones.${milestoneIndex}.paymentDetails`]: paymentDetails || 'Logged by admin',
-          [`milestones.${milestoneIndex}.paidAmount`]: amount || milestone.amount || 0,
-          [`milestones.${milestoneIndex}.status`]: 'in-progress',
+          milestones: updatedMilestones,
+          progress: calculatedProgress,
+          updatedAt: new Date()
         },
       }
     );

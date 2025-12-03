@@ -43,13 +43,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const db = await getDatabase();
 
+    // Auto-calculate progress based on milestones
+    const milestones = body.milestones || [];
+    const totalMilestones = milestones.length;
+    const completedMilestones = milestones.filter((m: any) => m.status === 'completed').length;
+    const calculatedProgress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
+
     const project = {
       ...body,
       status: body.status || 'planning',
-      progress: body.progress || 0,
+      progress: calculatedProgress,
       createdAt: new Date(),
       updatedAt: new Date(),
-      milestones: body.milestones || [],
+      milestones: milestones,
       tasks: body.tasks || [],
       // Phase-based project support (Web Dev, E-commerce, etc.)
       phases: body.phases || [],

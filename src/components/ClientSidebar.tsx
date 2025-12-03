@@ -11,12 +11,14 @@ import {
   FolderKanban,
   Receipt,
   MessageCircle,
+  Upload,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/client-portal/dashboard' },
   { icon: FolderKanban, label: 'Projects', path: '/client-portal/projects' },
+  { icon: Upload, label: 'Submit Work', path: '/client-portal/submit-work' },
   { icon: MessageCircle, label: 'Chats', path: '/client-portal/chats' },
   { icon: FileText, label: 'Invoices', path: '/client-portal/invoices' },
   { icon: Receipt, label: 'Payments', path: '/client-portal/payments' },

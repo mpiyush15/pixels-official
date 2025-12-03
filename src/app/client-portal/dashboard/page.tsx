@@ -37,11 +37,20 @@ interface Project {
   endDate: string;
   budget: number;
   milestones: Array<{
-    name: string;
-    status: 'pending' | 'in-progress' | 'completed';
+    _id?: string;
+    name?: string;
+    title?: string;
+    status?: 'pending' | 'in-progress' | 'completed';
+    paymentStatus?: 'unpaid' | 'paid';
+    completed?: boolean;
     dueDate: string;
+    amount?: number;
   }>;
   createdAt: string;
+  requiresDepositPayment?: boolean;
+  depositPaid?: boolean;
+  amount?: number;
+  title?: string;
 }
 
 interface Invoice {
@@ -54,11 +63,26 @@ interface Invoice {
   services: Array<{ name: string; quantity: number; price: number }>;
 }
 
+interface WorkSubmission {
+  _id: string;
+  title: string;
+  description: string;
+  workType: string;
+  fileUrl?: string;
+  fileName?: string;
+  fileKey?: string;
+  fileSize?: number;
+  notes?: string;
+  status: 'pending' | 'reviewed' | 'approved' | 'needs-revision';
+  submittedAt: string;
+}
+
 export default function ClientDashboard() {
   const router = useRouter();
   const [client, setClient] = useState<Client | null>(null);
   const [projects, setProjects] = useState<Project[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [submissions, setSubmissions] = useState<WorkSubmission[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'invoices'>('overview');
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -93,26 +117,51 @@ export default function ClientDashboard() {
 
   const fetchData = async () => {
     try {
-      const [projectsRes, invoicesRes] = await Promise.all([
+      const [projectsRes, invoicesRes, submissionsRes] = await Promise.all([
         fetch('/api/client-portal/projects'),
         fetch('/api/client-portal/invoices'),
+        fetch('/api/client-portal/submit-work'),
       ]);
 
       // Check for unauthorized access
-      if (projectsRes.status === 401 || invoicesRes.status === 401) {
+      if (projectsRes.status === 401 || invoicesRes.status === 401 || submissionsRes.status === 401) {
         router.push('/client-portal/login');
         return;
       }
 
       const projectsData = await projectsRes.json();
       const invoicesData = await invoicesRes.json();
+      const submissionsData = await submissionsRes.json();
 
       setProjects(projectsData);
       setInvoices(invoicesData);
+      setSubmissions(submissionsData);
     } catch (error) {
       console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteSubmission = async (submissionId: string) => {
+    if (!confirm('Are you sure you want to delete this submission? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/client-portal/submit-work/${submissionId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        // Refresh submissions
+        fetchData();
+      } else {
+        alert('Failed to delete submission');
+      }
+    } catch (error) {
+      console.error('Error deleting submission:', error);
+      alert('Failed to delete submission');
     }
   };
 
@@ -392,6 +441,94 @@ export default function ClientDashboard() {
                   </div>
                 </div>
               </div>
+
+              {/* Submitted Work Section */}
+              <div className="bg-white rounded-xl p-6 border border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-light text-black">Your Submitted Work</h3>
+                  <button
+                    onClick={() => router.push('/client-portal/submit-work')}
+                    className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors text-sm font-light"
+                  >
+                    + Submit New Work
+                  </button>
+                </div>
+                
+                {submissions.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <p className="text-gray-500 font-light text-sm">
+                      No work submitted yet. Submit your work to get started!
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {submissions.slice(0, 5).map((submission) => (
+                      <div
+                        key={submission._id}
+                        className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      >
+                        <div
+                          className={`w-2 h-2 rounded-full mt-2 flex-shrink-0 ${
+                            submission.status === 'approved'
+                              ? 'bg-green-500'
+                              : submission.status === 'needs-revision'
+                              ? 'bg-yellow-500'
+                              : submission.status === 'reviewed'
+                              ? 'bg-blue-500'
+                              : 'bg-gray-400'
+                          }`}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex-1">
+                              <h4 className="text-sm font-medium text-black truncate">
+                                {submission.title}
+                              </h4>
+                              <p className="text-xs text-gray-600 font-light mt-0.5">
+                                {submission.workType.charAt(0).toUpperCase() + submission.workType.slice(1).replace('-', ' ')}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={`px-2 py-1 rounded-full text-xs font-light whitespace-nowrap ${
+                                  submission.status === 'approved'
+                                    ? 'bg-green-100 text-green-700'
+                                    : submission.status === 'needs-revision'
+                                    ? 'bg-yellow-100 text-yellow-700'
+                                    : submission.status === 'reviewed'
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : 'bg-gray-100 text-gray-700'
+                                }`}
+                              >
+                                {submission.status.replace('-', ' ').charAt(0).toUpperCase() + submission.status.slice(1).replace('-', ' ')}
+                              </span>
+                              <button
+                                onClick={() => handleDeleteSubmission(submission._id)}
+                                className="text-red-500 hover:text-red-700 transition-colors p-1"
+                                title="Delete submission"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-xs text-gray-500 font-light mt-1">
+                            Submitted {new Date(submission.submittedAt).toLocaleDateString('en-IN', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric'
+                            })}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    {submissions.length > 5 && (
+                      <p className="text-xs text-gray-500 font-light text-center pt-2">
+                        + {submissions.length - 5} more submissions
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
@@ -404,99 +541,142 @@ export default function ClientDashboard() {
                   <p className="text-gray-500 font-light">No projects yet</p>
                 </div>
               ) : (
-                projects.map((project) => (
-                  <motion.div
-                    key={project._id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-gray-50 rounded-xl p-6"
-                  >
-                    <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="text-xl font-light text-black">
-                            {project.projectName}
-                          </h3>
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-light flex items-center gap-1 ${getStatusColor(
-                              project.status
-                            )}`}
-                          >
-                            {getStatusIcon(project.status)}
-                            {project.status.replace('-', ' ').toUpperCase()}
-                          </span>
+                projects.map((project) => {
+                  const projectName = project.projectName || project.title || 'Untitled Project';
+                  const requiresPayment = project.requiresDepositPayment && !project.depositPaid;
+                  const depositMilestone = requiresPayment ? project.milestones?.find(m => m.paymentStatus === 'unpaid') : null;
+                  
+                  return (
+                    <motion.div
+                      key={project._id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`bg-gray-50 rounded-xl p-6 ${requiresPayment ? 'border-2 border-orange-300' : ''}`}
+                    >
+                      {requiresPayment && (
+                        <div className="mb-4 bg-orange-50 border border-orange-200 rounded-lg p-3">
+                          <p className="text-sm text-orange-800 font-light">
+                            <strong>Payment Required:</strong> This project requires a deposit payment of ₹{depositMilestone?.amount?.toLocaleString('en-IN')} to unlock access.
+                          </p>
                         </div>
-                        <p className="text-sm text-gray-600 font-light mb-3">
-                          {project.projectType}
-                        </p>
-                        <p className="text-sm text-gray-700 font-light">
-                          {project.description}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-light text-black">
-                          {project.progress}%
-                        </p>
-                        <p className="text-xs text-gray-600 font-light">Complete</p>
-                      </div>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="mb-4">
-                      <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-black transition-all duration-500"
-                          style={{ width: `${project.progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-
-                    {/* Milestones */}
-                    {project.milestones && project.milestones.length > 0 && (
-                      <div className="border-t border-gray-200 pt-4">
-                        <p className="text-sm font-medium text-gray-700 mb-3">
-                          Milestones:
-                        </p>
-                        <div className="space-y-2">
-                          {project.milestones.map((milestone, idx) => (
-                            <div
-                              key={idx}
-                              className="flex items-center justify-between text-sm"
+                      )}
+                      
+                      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-4">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="text-xl font-light text-black">
+                              {projectName}
+                            </h3>
+                            <span
+                              className={`px-3 py-1 rounded-full text-xs font-light flex items-center gap-1 ${getStatusColor(
+                                project.status
+                              )}`}
                             >
-                              <div className="flex items-center gap-2">
-                                {milestone.status === 'completed' ? (
-                                  <CheckCircle className="w-4 h-4 text-green-600" />
-                                ) : milestone.status === 'in-progress' ? (
-                                  <Clock className="w-4 h-4 text-yellow-600" />
-                                ) : (
-                                  <div className="w-4 h-4 border-2 border-gray-300 rounded-full"></div>
-                                )}
-                                <span className="font-light text-gray-700">
-                                  {milestone.name}
-                                </span>
-                              </div>
-                              <span className="text-xs text-gray-500 font-light">
-                                {new Date(milestone.dueDate).toLocaleDateString('en-IN')}
-                              </span>
-                            </div>
-                          ))}
+                              {getStatusIcon(project.status)}
+                              {project.status.replace('-', ' ').toUpperCase()}
+                            </span>
+                          </div>
+                          {project.projectType && (
+                            <p className="text-sm text-gray-600 font-light mb-3">
+                              {project.projectType}
+                            </p>
+                          )}
+                          <p className="text-sm text-gray-700 font-light">
+                            {project.description}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-light text-black">
+                            {project.progress}%
+                          </p>
+                          <p className="text-xs text-gray-600 font-light">Complete</p>
                         </div>
                       </div>
-                    )}
 
-                    {/* Dates */}
-                    <div className="flex items-center gap-6 mt-4 pt-4 border-t border-gray-200 text-sm">
-                      <div className="flex items-center gap-2 text-gray-600 font-light">
-                        <Calendar className="w-4 h-4" />
-                        Start: {new Date(project.startDate).toLocaleDateString('en-IN')}
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-600 font-light">
-                        <Calendar className="w-4 h-4" />
-                        End: {new Date(project.endDate).toLocaleDateString('en-IN')}
-                      </div>
-                    </div>
-                  </motion.div>
-                ))
+                      {requiresPayment ? (
+                        <div className="bg-white rounded-lg p-4 border border-gray-200">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-black mb-1">Deposit Payment Required</p>
+                              <p className="text-xs text-gray-600 font-light">
+                                Amount: ₹{depositMilestone?.amount?.toLocaleString('en-IN')}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => router.push(`/client-portal/projects?project=${project._id}`)}
+                              className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-light"
+                            >
+                              Pay Now
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <>
+                          {/* Progress Bar */}
+                          <div className="mb-4">
+                            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-black transition-all duration-500"
+                                style={{ width: `${project.progress}%` }}
+                              ></div>
+                            </div>
+                          </div>
+
+                          {/* Milestones */}
+                          {project.milestones && project.milestones.length > 0 && (
+                            <div className="border-t border-gray-200 pt-4">
+                              <p className="text-sm font-medium text-gray-700 mb-3">
+                                Milestones:
+                              </p>
+                              <div className="space-y-2">
+                                {project.milestones.map((milestone, idx) => {
+                                  const milestoneName = milestone.name || milestone.title || `Milestone ${idx + 1}`;
+                                  const isCompleted = milestone.status === 'completed' || milestone.completed;
+                                  const isInProgress = milestone.status === 'in-progress';
+                                  
+                                  return (
+                                    <div
+                                      key={milestone._id || idx}
+                                      className="flex items-center justify-between text-sm"
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        {isCompleted ? (
+                                          <CheckCircle className="w-4 h-4 text-green-600" />
+                                        ) : isInProgress ? (
+                                          <Clock className="w-4 h-4 text-yellow-600" />
+                                        ) : (
+                                          <div className="w-4 h-4 border-2 border-gray-300 rounded-full"></div>
+                                        )}
+                                        <span className="font-light text-gray-700">
+                                          {milestoneName}
+                                        </span>
+                                      </div>
+                                      <span className="text-xs text-gray-500 font-light">
+                                        {new Date(milestone.dueDate).toLocaleDateString('en-IN')}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Dates */}
+                          <div className="flex items-center gap-6 mt-4 pt-4 border-t border-gray-200 text-sm">
+                            <div className="flex items-center gap-2 text-gray-600 font-light">
+                              <Calendar className="w-4 h-4" />
+                              Start: {new Date(project.startDate).toLocaleDateString('en-IN')}
+                            </div>
+                            <div className="flex items-center gap-2 text-gray-600 font-light">
+                              <Calendar className="w-4 h-4" />
+                              End: {new Date(project.endDate).toLocaleDateString('en-IN')}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </motion.div>
+                  );
+                })
               )}
             </div>
           )}

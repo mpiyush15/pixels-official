@@ -15,16 +15,39 @@ export async function POST(req: NextRequest) {
 
     const db = await getDatabase();
 
+    // Get the project first
+    const project = await db.collection('projects').findOne({
+      _id: new ObjectId(projectId),
+    });
+
+    if (!project) {
+      return NextResponse.json({ error: 'Project not found' }, { status: 404 });
+    }
+
+    // Update milestone in array
+    const updatedMilestones = [...project.milestones];
+    updatedMilestones[milestoneIndex] = {
+      ...updatedMilestones[milestoneIndex],
+      paymentStatus: 'paid',
+      paidAt: new Date(),
+      paidAmount: amount,
+      cashfreeOrderId: orderId,
+      status: 'in-progress'
+    };
+
+    // Auto-calculate progress based on completed milestones
+    const totalMilestones = updatedMilestones.length;
+    const completedMilestones = updatedMilestones.filter((m: any) => m.status === 'completed').length;
+    const calculatedProgress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
+
     // Update milestone payment status to paid and set status to in-progress
     const result = await db.collection('projects').updateOne(
       { _id: new ObjectId(projectId) },
       {
         $set: {
-          [`milestones.${milestoneIndex}.paymentStatus`]: 'paid',
-          [`milestones.${milestoneIndex}.paidAt`]: new Date(),
-          [`milestones.${milestoneIndex}.paidAmount`]: amount,
-          [`milestones.${milestoneIndex}.cashfreeOrderId`]: orderId,
-          [`milestones.${milestoneIndex}.status`]: 'in-progress',
+          milestones: updatedMilestones,
+          progress: calculatedProgress,
+          updatedAt: new Date()
         },
       }
     );
@@ -34,10 +57,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Create payment record
-    const project = await db.collection('projects').findOne({
-      _id: new ObjectId(projectId),
-    });
-
     if (project) {
       await db.collection('payments').insertOne({
         projectId,

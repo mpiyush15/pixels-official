@@ -464,60 +464,20 @@ export default function ClientProjectsPage() {
                   End: {new Date(project.endDate).toLocaleDateString('en-IN')}
                 </div>
                 <div className="ml-auto flex gap-2">
-                  {(() => {
-                    // Check if any milestone is locked (has amount > 0 and unpaid)
-                    const hasLockedMilestone = project.milestones?.some(
-                      m => m.amount && m.amount > 0 && m.paymentStatus !== 'paid'
-                    );
-
-                    if (hasLockedMilestone) {
-                      return (
-                        <div className="flex flex-col items-end gap-2">
-                          <div className="flex gap-2 opacity-50">
-                            <button
-                              disabled
-                              className="px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed flex items-center gap-2 text-sm font-light"
-                              title="Complete milestone payments to unlock"
-                            >
-                              <Lock className="w-4 h-4" />
-                              Submit Work
-                            </button>
-                            <button
-                              disabled
-                              className="px-4 py-2 bg-gray-400 text-white rounded-lg cursor-not-allowed flex items-center gap-2 text-sm font-light"
-                              title="Complete milestone payments to unlock"
-                            >
-                              <Lock className="w-4 h-4" />
-                              Chat
-                            </button>
-                          </div>
-                          <p className="text-xs text-red-600 font-light flex items-center gap-1">
-                            <Lock className="w-3 h-3" />
-                            Pay for locked milestones to unlock features
-                          </p>
-                        </div>
-                      );
-                    }
-
-                    return (
-                      <>
-                        <button
-                          onClick={() => setActiveSubmissionProject(project)}
-                          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 text-sm font-light"
-                        >
-                          <Upload className="w-4 h-4" />
-                          Submit Work
-                        </button>
-                        <button
-                          onClick={() => setActiveChatProject(project)}
-                          className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 text-sm font-light"
-                        >
-                          <MessageCircle className="w-4 h-4" />
-                          Chat
-                        </button>
-                      </>
-                    );
-                  })()}
+                  <button
+                    onClick={() => setActiveSubmissionProject(project)}
+                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 text-sm font-light"
+                  >
+                    <Upload className="w-4 h-4" />
+                    Submit Work
+                  </button>
+                  <button
+                    onClick={() => setActiveChatProject(project)}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 text-sm font-light"
+                  >
+                    <MessageCircle className="w-4 h-4" />
+                    Chat
+                  </button>
                 </div>
               </div>
             </motion.div>
