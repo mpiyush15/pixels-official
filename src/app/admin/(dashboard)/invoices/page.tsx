@@ -808,6 +808,19 @@ export default function InvoicesPage() {
                         >
                           <Eye className="w-4 h-4 text-gray-600" />
                         </button>
+                        {invoice.status === 'draft' && (
+                          <button
+                            onClick={() => {
+                              if (confirm(`Send invoice ${invoice.invoiceNumber} to client?`)) {
+                                updateInvoiceStatus(invoice._id, 'sent');
+                              }
+                            }}
+                            className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
+                            title="Send to Client"
+                          >
+                            Send to Client
+                          </button>
+                        )}
                         {invoice.s3Url && (
                           <a
                             href={invoice.s3Url}

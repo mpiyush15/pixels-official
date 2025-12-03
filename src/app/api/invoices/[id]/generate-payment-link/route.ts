@@ -23,13 +23,16 @@ export async function POST(
     // Create Cashfree order using V2 API (Payment Link)
     const isProduction =
       process.env.CASHFREE_MODE === "PROD" ||
-      process.env.CASHFREE_MODE === "PRODUCTION";
+      process.env.CASHFREE_MODE === "PRODUCTION" ||
+      process.env.CASHFREE_MODE === "production";
 
     const apiUrl = isProduction
       ? "https://api.cashfree.com/api/v2/order/create"
       : "https://sandbox.cashfree.com/api/v2/order/create";
 
     const orderId = `INV_${invoice.invoiceNumber}_${Date.now()}`;
+    
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.pixelsdigital.tech';
 
     console.log('Creating Cashfree V2 invoice payment order:', {
       orderId,
@@ -37,6 +40,8 @@ export async function POST(
       mode: process.env.CASHFREE_MODE,
       isProduction,
       apiUrl,
+      baseUrl,
+      clientId: process.env.CASHFREE_CLIENT_ID?.substring(0, 8) + '...',
     });
 
     const orderResponse = await fetch(apiUrl, {
@@ -53,7 +58,7 @@ export async function POST(
         customerName: invoice.clientName,
         customerEmail: invoice.clientEmail,
         customerPhone: invoice.clientPhone || '9999999999',
-        returnUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/callback?invoice_id=${id}`,
+        returnUrl: `${baseUrl}/payment/callback?invoice_id=${id}`,
         orderNote: `Payment for Invoice ${invoice.invoiceNumber}`,
       }),
     });

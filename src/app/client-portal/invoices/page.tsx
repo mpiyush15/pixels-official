@@ -31,6 +31,7 @@ export default function ClientInvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'pending' | 'paid'>('all');
+  const [payingInvoiceId, setPayingInvoiceId] = useState<string | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -88,14 +89,39 @@ export default function ClientInvoicesPage() {
     return <FileText className="w-4 h-4" />;
   };
 
+  const handlePayNow = async (invoiceId: string) => {
+    try {
+      setPayingInvoiceId(invoiceId);
+      
+      // Generate payment link
+      const response = await fetch(`/api/invoices/${invoiceId}/generate-payment-link`, {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (data.success && data.paymentLink) {
+        // Redirect to Cashfree payment page
+        window.location.href = data.paymentLink;
+      } else {
+        alert('Failed to generate payment link: ' + (data.error || 'Unknown error'));
+        setPayingInvoiceId(null);
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert('Failed to initiate payment. Please try again.');
+      setPayingInvoiceId(null);
+    }
+  };
+
   const filteredInvoices = invoices.filter(invoice => {
-    if (filter === 'pending') return invoice.status === 'sent';
+    if (filter === 'pending') return invoice.status === 'sent' || invoice.status === 'overdue';
     if (filter === 'paid') return invoice.status === 'paid';
     return true;
   });
 
   const totalPaid = invoices.filter(i => i.status === 'paid').reduce((sum, i) => sum + i.total, 0);
-  const pendingPayments = invoices.filter(i => i.status === 'sent').reduce((sum, i) => sum + i.total, 0);
+  const pendingPayments = invoices.filter(i => i.status === 'sent' || i.status === 'overdue').reduce((sum, i) => sum + i.total, 0);
 
   if (loading) {
     return (
@@ -258,26 +284,51 @@ export default function ClientInvoicesPage() {
                       <p className="text-xs text-green-600 font-light">Paid</p>
                     )}
                   </div>
-                  {invoice.s3Url ? (
-                    <a
-                      href={invoice.s3Url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-xl font-light hover:bg-gray-900 transition-colors text-sm justify-center"
-                    >
-                      <Download className="w-4 h-4" />
-                      Download Invoice
-                    </a>
-                  ) : (
-                    <button
-                      className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-500 rounded-xl font-light text-sm justify-center cursor-not-allowed"
-                      disabled
-                      title="Invoice file not available"
-                    >
-                      <Download className="w-4 h-4" />
-                      Not Available
-                    </button>
-                  )}
+                  
+                  <div className="flex flex-col gap-2">
+                    {/* Pay Now button for unpaid invoices */}
+                    {(invoice.status === 'sent' || invoice.status === 'overdue') && (
+                      <button
+                        onClick={() => handlePayNow(invoice._id)}
+                        disabled={payingInvoiceId === invoice._id}
+                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-xl font-light hover:bg-green-700 transition-colors text-sm justify-center disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {payingInvoiceId === invoice._id ? (
+                          <>
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            <IndianRupee className="w-4 h-4" />
+                            Pay Now
+                          </>
+                        )}
+                      </button>
+                    )}
+                    
+                    {/* Download Invoice button */}
+                    {invoice.s3Url ? (
+                      <a
+                        href={invoice.s3Url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-xl font-light hover:bg-gray-900 transition-colors text-sm justify-center"
+                      >
+                        <Download className="w-4 h-4" />
+                        Download Invoice
+                      </a>
+                    ) : (
+                      <button
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-200 text-gray-500 rounded-xl font-light text-sm justify-center cursor-not-allowed"
+                        disabled
+                        title="Invoice file not available"
+                      >
+                        <Download className="w-4 h-4" />
+                        Not Available
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </motion.div>
