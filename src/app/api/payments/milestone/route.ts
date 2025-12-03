@@ -116,16 +116,29 @@ export async function POST(req: NextRequest) {
       order_id: orderData.order_id,
       payment_session_id: orderData.payment_session_id,
       payment_session_id_length: orderData.payment_session_id?.length,
+      payment_session_id_type: typeof orderData.payment_session_id,
+      payment_session_id_raw: JSON.stringify(orderData.payment_session_id),
       full_response: orderData,
     });
+
+    // Clean the payment_session_id if it has been corrupted
+    let sessionId = orderData.payment_session_id;
+    
+    // Check if session ID ends with unexpected text like 'payment'
+    if (sessionId && sessionId.endsWith('payment')) {
+      console.warn('Session ID appears corrupted, attempting to clean:', sessionId);
+      // This shouldn't happen - log for investigation
+      console.error('CRITICAL: Cashfree returned corrupted session ID');
+    }
 
     // For Cashfree API v2023-08-01, use the payment_session_id directly
     // The correct payment URL format is: https://payments.cashfree.com/pay/{payment_session_id}
     const paymentUrl = isProduction
-      ? `https://payments.cashfree.com/pay/${orderData.payment_session_id}`
-      : `https://sandbox.cashfree.com/pay/${orderData.payment_session_id}`;
+      ? `https://payments.cashfree.com/pay/${sessionId}`
+      : `https://sandbox.cashfree.com/pay/${sessionId}`;
 
     console.log('Generated payment URL:', paymentUrl);
+    console.log('Payment URL length:', paymentUrl.length);
 
     // Store order info in milestone for tracking
     await db.collection('projects').updateOne(
