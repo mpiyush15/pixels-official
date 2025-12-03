@@ -69,8 +69,8 @@ curl -X POST http://localhost:3000/api/email/send-test \
 # AWS SES SMTP Credentials
 SMTP_HOST=email-smtp.us-east-1.amazonaws.com
 SMTP_PORT=587
-SMTP_USER=AKIAQXXZQE6UBDQIW6JR
-SMTP_PASSWORD=BAlSo3USCpkbB5snnbM9Er8mGIdOmJl+MLGojoczx9k/
+SMTP_USER=YOUR_SMTP_USERNAME_HERE
+SMTP_PASSWORD=YOUR_SMTP_PASSWORD_HERE
 EMAIL_FROM=noreply@pixelsdigital.tech
 ```
 
@@ -90,11 +90,11 @@ Value: 587
 Environment: Production, Preview, Development
 
 Variable: SMTP_USER
-Value: AKIAQXXZQE6UBDQIW6JR
+Value: YOUR_SMTP_USERNAME_HERE
 Environment: Production, Preview, Development
 
 Variable: SMTP_PASSWORD
-Value: BAlSo3USCpkbB5snnbM9Er8mGIdOmJl+MLGojoczx9k/
+Value: YOUR_SMTP_PASSWORD_HERE
 Environment: Production, Preview, Development
 
 Variable: EMAIL_FROM

@@ -100,11 +100,11 @@ Value: 587
 Environment: Production, Preview, Development
 
 Variable Name: SMTP_USER
-Value: AKIAQXXZQE6UBDQIW6JR
+Value: YOUR_SMTP_USERNAME_HERE
 Environment: Production, Preview, Development
 
 Variable Name: SMTP_PASSWORD
-Value: BAlSo3USCpkbB5snnbM9Er8mGIdOmJl+MLGojoczx9k/
+Value: YOUR_SMTP_PASSWORD_HERE
 Environment: Production, Preview, Development
 
 Variable Name: EMAIL_FROM
@@ -148,8 +148,8 @@ Environment: Production
 - [ ] Add: NEXTAUTH_URL = https://www.pixelsdigital.tech
 - [ ] Add: SMTP_HOST = email-smtp.us-east-1.amazonaws.com (for email)
 - [ ] Add: SMTP_PORT = 587 (for email)
-- [ ] Add: SMTP_USER = AKIAQXXZQE6UBDQIW6JR (for email)
-- [ ] Add: SMTP_PASSWORD = BAlSo3USCpkbB5snnbM9Er8mGIdOmJl+MLGojoczx9k/ (for email)
+- [ ] Add: SMTP_USER = YOUR_SMTP_USERNAME_HERE (for email)
+- [ ] Add: SMTP_PASSWORD = YOUR_SMTP_PASSWORD_HERE (for email)
 - [ ] Add: EMAIL_FROM = noreply@pixelsdigital.tech (for email)
 
 ### Step 4: Verify These Are Set
