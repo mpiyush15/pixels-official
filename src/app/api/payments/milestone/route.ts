@@ -76,13 +76,16 @@ export async function POST(req: NextRequest) {
         "x-client-secret": process.env.CASHFREE_CLIENT_SECRET!,
       },
       body: JSON.stringify({
+        appId: process.env.CASHFREE_CLIENT_ID!,
+        secretKey: process.env.CASHFREE_CLIENT_SECRET!,
         orderId: orderId,
         orderAmount: amount,
         orderCurrency: "INR",
         customerName: client.name,
         customerEmail: client.email,
         customerPhone: client.phone || "9999999999",
-        returnUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/callback?type=milestone&project_id=${projectId}&milestone_index=${milestoneIndex}`,
+        returnUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.pixelsdigital.tech'}/payment/callback?type=milestone&project_id=${projectId}&milestone_index=${milestoneIndex}`,
+        notifyUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.pixelsdigital.tech'}/api/cashfree/webhook`,
         orderNote: `Payment for ${project.projectName} - ${milestone.name}`,
       }),
     });
