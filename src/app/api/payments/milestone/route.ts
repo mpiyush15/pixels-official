@@ -48,54 +48,48 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Client not found' }, { status: 404 });
     }
 
-    // Create Cashfree order
+    // Create Cashfree order using V2 API (Payment Link)
     const isProduction =
       process.env.CASHFREE_MODE === "PROD" ||
       process.env.CASHFREE_MODE === "PRODUCTION";
 
-    const baseUrl = isProduction
-      ? "https://api.cashfree.com/pg/orders"
-      : "https://sandbox.cashfree.com/pg/orders";
+    const apiUrl = isProduction
+      ? "https://api.cashfree.com/api/v2/order/create"
+      : "https://sandbox.cashfree.com/api/v2/order/create";
 
     const orderId = `MILESTONE_${projectId}_${milestoneIndex}_${Date.now()}`;
 
-    console.log('Creating Cashfree order:', {
+    console.log('Creating Cashfree V2 order:', {
       orderId,
       amount,
       mode: process.env.CASHFREE_MODE,
       isProduction,
-      baseUrl,
+      apiUrl,
       clientId: process.env.CASHFREE_CLIENT_ID?.substring(0, 8) + '...',
     });
 
-    const orderResponse = await fetch(baseUrl, {
+    const orderResponse = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-client-id": process.env.CASHFREE_CLIENT_ID!,
         "x-client-secret": process.env.CASHFREE_CLIENT_SECRET!,
-        "x-api-version": "2023-08-01",
       },
       body: JSON.stringify({
-        order_id: orderId,
-        order_amount: amount,
-        order_currency: "INR",
-        customer_details: {
-          customer_id: clientId,
-          customer_name: client.name,
-          customer_email: client.email,
-          customer_phone: client.phone || "9999999999",
-        },
-        order_meta: {
-          return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/callback?type=milestone&project_id=${projectId}&milestone_index=${milestoneIndex}`,
-        },
-        order_note: `Payment for ${project.projectName} - ${milestone.name}`,
+        orderId: orderId,
+        orderAmount: amount,
+        orderCurrency: "INR",
+        customerName: client.name,
+        customerEmail: client.email,
+        customerPhone: client.phone || "9999999999",
+        returnUrl: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/callback?type=milestone&project_id=${projectId}&milestone_index=${milestoneIndex}`,
+        orderNote: `Payment for ${project.projectName} - ${milestone.name}`,
       }),
     });
 
     if (!orderResponse.ok) {
       const error = await orderResponse.json();
-      console.error('Cashfree order creation error:', {
+      console.error('Cashfree V2 order creation error:', {
         status: orderResponse.status,
         statusText: orderResponse.statusText,
         error,
@@ -114,25 +108,32 @@ export async function POST(req: NextRequest) {
 
     const orderData = await orderResponse.json();
 
-    console.log('Cashfree order created successfully:', {
-      order_id: orderData.order_id,
-      payment_session_id: orderData.payment_session_id,
+    console.log('Cashfree V2 order created successfully:', {
+      status: orderData.status,
+      order_id: orderData.orderId,
+      payment_link: orderData.paymentLink,
     });
 
-    // Generate payment URL using Cashfree V2 format
-    const paymentUrl = isProduction
-      ? `https://payments.cashfree.com/pay/${orderData.payment_session_id}`
-      : `https://sandbox.cashfree.com/pay/${orderData.payment_session_id}`;
+    // V2 API returns payment_link directly - no session ID needed!
+    const paymentUrl = orderData.paymentLink;
 
-    console.log('Generated payment URL:', paymentUrl);
+    if (!paymentUrl) {
+      console.error('No payment link in Cashfree response:', orderData);
+      return NextResponse.json(
+        { error: 'Failed to generate payment link' },
+        { status: 500 }
+      );
+    }
+
+    console.log('Payment URL from Cashfree V2:', paymentUrl);
 
     // Store order info in milestone for tracking
     await db.collection('projects').updateOne(
       { _id: new ObjectId(projectId) },
       {
         $set: {
-          [`milestones.${milestoneIndex}.cashfreeOrderId`]: orderData.order_id,
-          [`milestones.${milestoneIndex}.paymentSessionId`]: orderData.payment_session_id,
+          [`milestones.${milestoneIndex}.cashfreeOrderId`]: orderData.orderId,
+          [`milestones.${milestoneIndex}.paymentLink`]: paymentUrl,
           [`milestones.${milestoneIndex}.paymentInitiatedAt`]: new Date(),
         },
       }
@@ -141,7 +142,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       paymentUrl,
-      orderId: orderData.order_id,
+      orderId: orderData.orderId,
     });
   } catch (error) {
     console.error('Milestone payment error:', error);
