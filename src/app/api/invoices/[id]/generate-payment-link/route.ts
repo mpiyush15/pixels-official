@@ -52,6 +52,8 @@ export async function POST(
         'x-client-secret': process.env.CASHFREE_CLIENT_SECRET!,
       },
       body: JSON.stringify({
+        appId: process.env.CASHFREE_CLIENT_ID!,
+        secretKey: process.env.CASHFREE_CLIENT_SECRET!,
         orderId: orderId,
         orderAmount: invoice.total,
         orderCurrency: 'INR',
@@ -59,6 +61,7 @@ export async function POST(
         customerEmail: invoice.clientEmail,
         customerPhone: invoice.clientPhone || '9999999999',
         returnUrl: `${baseUrl}/payment/callback?invoice_id=${id}`,
+        notifyUrl: `${baseUrl}/api/cashfree/webhook`,
         orderNote: `Payment for Invoice ${invoice.invoiceNumber}`,
       }),
     });
