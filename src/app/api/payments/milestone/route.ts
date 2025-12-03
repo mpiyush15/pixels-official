@@ -121,14 +121,15 @@ export async function POST(req: NextRequest) {
       full_response: orderData,
     });
 
-    // Clean the payment_session_id if it has been corrupted
+    // CRITICAL FIX: Cashfree is returning corrupted session IDs ending with "payment"
+    // This appears to be a bug in their API response
+    // We need to strip the "payment" suffix if present
     let sessionId = orderData.payment_session_id;
     
-    // Check if session ID ends with unexpected text like 'payment'
     if (sessionId && sessionId.endsWith('payment')) {
-      console.warn('Session ID appears corrupted, attempting to clean:', sessionId);
-      // This shouldn't happen - log for investigation
-      console.error('CRITICAL: Cashfree returned corrupted session ID');
+      console.warn('Removing corrupted "payment" suffix from session ID');
+      sessionId = sessionId.slice(0, -7); // Remove "payment" (7 characters)
+      console.log('Cleaned session ID:', sessionId);
     }
 
     // For Cashfree API v2023-08-01, use the payment_session_id directly
