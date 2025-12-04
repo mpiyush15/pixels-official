@@ -8,7 +8,7 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 const smtpTransporter = process.env.SMTP_HOST ? nodemailer.createTransport({
   host: process.env.SMTP_HOST,
   port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false, // Use TLS
+  secure: process.env.SMTP_PORT === '465', // true for 465 (SSL), false for 587 (TLS)
   auth: {
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASSWORD,
@@ -16,9 +16,9 @@ const smtpTransporter = process.env.SMTP_HOST ? nodemailer.createTransport({
 }) : null;
 
 // Email configuration
-const FROM_EMAIL = process.env.EMAIL_FROM || 'noreply@pixelsdigital.tech';
-const COMPANY_NAME = 'Pixels Digital';
-const SUPPORT_EMAIL = 'support@pixelsdigital.tech';
+const FROM_EMAIL = process.env.EMAIL_FROM || 'noreply@enromatics.com';
+const COMPANY_NAME = 'Pixels Digital Solutions';
+const SUPPORT_EMAIL = 'info@pixelsdigital.tech';
 
 export interface EmailOptions {
   to: string | string[];
