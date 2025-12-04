@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, FileText, Download, Eye, X, Calendar, IndianRupee, Printer, Mail, XCircle } from 'lucide-react';
+import { Plus, FileText, Download, Eye, X, Calendar, IndianRupee, Printer, Mail, XCircle, Bell } from 'lucide-react';
 
 interface Client {
   _id: string;
@@ -74,6 +74,7 @@ export default function InvoicesPage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [generatingPaymentLink, setGeneratingPaymentLink] = useState(false);
+  const [sendingReminder, setSendingReminder] = useState<string | null>(null);
   const [paymentData, setPaymentData] = useState({
     method: 'bank_transfer',
     details: '',
@@ -669,6 +670,38 @@ export default function InvoicesPage() {
     setShowPaymentModal(true);
   };
 
+  const sendPaymentReminder = async (invoice: Invoice) => {
+    try {
+      setSendingReminder(invoice._id);
+      
+      const response = await fetch('/api/invoices/send-reminder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          invoiceId: invoice._id,
+          clientEmail: invoice.clientEmail,
+          clientName: invoice.clientName,
+          invoiceNumber: invoice.invoiceNumber,
+          amount: invoice.total,
+          dueDate: invoice.dueDate,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Payment reminder sent successfully!');
+      } else {
+        alert('Failed to send reminder: ' + (result.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error sending reminder:', error);
+      alert('Failed to send payment reminder. Please try again.');
+    } finally {
+      setSendingReminder(null);
+    }
+  };
+
   const handlePaymentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedInvoice) {
@@ -864,6 +897,16 @@ export default function InvoicesPage() {
                           >
                             <Download className="w-4 h-4 text-green-600" />
                           </a>
+                        )}
+                        {(invoice.status === 'sent' || invoice.status === 'overdue') && (
+                          <button
+                            onClick={() => sendPaymentReminder(invoice)}
+                            disabled={sendingReminder === invoice._id}
+                            className="p-2 hover:bg-orange-50 rounded-lg transition-colors disabled:opacity-50"
+                            title="Send Payment Reminder"
+                          >
+                            <Bell className={`w-4 h-4 ${sendingReminder === invoice._id ? 'text-gray-400' : 'text-orange-600'}`} />
+                          </button>
                         )}
                         {invoice.status !== 'cancelled' && invoice.status !== 'paid' && (
                           <button

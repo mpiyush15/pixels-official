@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { createAndUploadInvoice } from '@/lib/invoiceGenerator';
+import { sendInvoiceEmail } from '@/lib/email';
+import { getPresignedDownloadUrl } from '@/lib/s3';
 
 export async function PATCH(
   request: NextRequest,
@@ -114,6 +116,34 @@ export async function PATCH(
         } catch (regenerateError) {
           console.error('Error regenerating invoice PDF:', regenerateError);
           // Continue with status update even if PDF regeneration fails
+        }
+      }
+
+      // Send email notification when invoice is marked as 'sent'
+      if (newStatus === 'sent' && previousStatus !== 'sent') {
+        try {
+          // Get presigned URL for invoice download
+          let invoiceUrl;
+          if (updateData.s3Key || invoice.s3Key) {
+            invoiceUrl = await getPresignedDownloadUrl(updateData.s3Key || invoice.s3Key, 604800); // 7 days
+          }
+
+          await sendInvoiceEmail(
+            invoice.clientEmail,
+            invoice.clientName,
+            invoice.invoiceNumber,
+            invoice.total,
+            new Date(invoice.dueDate),
+            invoice.services.map((service: any) => ({
+              description: service.name || service.description,
+              amount: service.quantity * service.price,
+            })),
+            invoiceUrl
+          );
+          console.log('Invoice email sent to:', invoice.clientEmail);
+        } catch (emailError) {
+          console.error('Error sending invoice email:', emailError);
+          // Continue with status update even if email fails
         }
       }
     }

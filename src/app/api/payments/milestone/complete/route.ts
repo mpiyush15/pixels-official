@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { sendPaymentConfirmationEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -118,6 +119,21 @@ export async function POST(req: NextRequest) {
             },
           }
         );
+      }
+
+      // Send payment confirmation email
+      try {
+        await sendPaymentConfirmationEmail(
+          project.clientEmail,
+          project.clientName,
+          amount,
+          orderId,
+          new Date()
+        );
+        console.log('Payment confirmation email sent to:', project.clientEmail);
+      } catch (emailError) {
+        console.error('Error sending payment confirmation email:', emailError);
+        // Continue even if email fails
       }
     }
 
