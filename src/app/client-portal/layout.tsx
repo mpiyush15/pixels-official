@@ -3,6 +3,7 @@
 import { usePathname } from 'next/navigation';
 import ClientSidebar from '@/components/ClientSidebar';
 import TopBar from '@/components/TopBar';
+import { useAutoLogout } from '@/hooks/useAutoLogout';
 
 export default function ClientPortalLayout({
   children,
@@ -13,6 +14,14 @@ export default function ClientPortalLayout({
   
   // Don't show sidebar/topbar on login and forgot-password pages
   const isAuthPage = pathname === '/client-portal/login' || pathname === '/client-portal/forgot-password';
+
+  // Auto logout after 5 minutes of inactivity (only when logged in)
+  useAutoLogout({
+    timeout: 5 * 60 * 1000, // 5 minutes
+    logoutEndpoint: '/api/client-auth/logout',
+    redirectPath: '/client-portal/login',
+    enabled: !isAuthPage,
+  });
 
   if (isAuthPage) {
     return <>{children}</>;

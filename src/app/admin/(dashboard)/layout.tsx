@@ -2,12 +2,21 @@
 
 import AdminSidebar from '@/components/AdminSidebar';
 import TopBar from '@/components/TopBar';
+import { useAutoLogout } from '@/hooks/useAutoLogout';
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Auto logout after 5 minutes of inactivity
+  useAutoLogout({
+    timeout: 5 * 60 * 1000, // 5 minutes
+    logoutEndpoint: '/api/auth/logout',
+    redirectPath: '/admin/login',
+    enabled: true,
+  });
+
   return (
     <div className="flex h-screen bg-gray-50">
       <AdminSidebar />
