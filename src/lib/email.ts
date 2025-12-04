@@ -22,9 +22,11 @@ const smtpTransporter = process.env.SMTP_HOST ? nodemailer.createTransport({
 }) : null;
 
 // Email configuration
-const FROM_EMAIL = process.env.EMAIL_FROM || 'noreply@enromatics.com';
+const FROM_EMAIL = process.env.EMAIL_FROM || 'noreply@pixelsdigital.tech';
+const FROM_NAME = 'Pixels Digital';
 const COMPANY_NAME = 'Pixels Digital Solutions';
 const SUPPORT_EMAIL = 'info@pixelsdigital.tech';
+const LOGO_URL = 'https://pixels-official.s3.ap-south-1.amazonaws.com/images/logo.png';
 
 export interface EmailOptions {
   to: string | string[];
@@ -55,7 +57,7 @@ export async function sendEmail(options: EmailOptions): Promise<{ success: boole
         });
         
         const info = await smtpTransporter.sendMail({
-          from: FROM_EMAIL,
+          from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
           to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
           subject: options.subject,
           html: options.html,
@@ -87,7 +89,7 @@ export async function sendEmail(options: EmailOptions): Promise<{ success: boole
     // Priority 2: Use Resend if SMTP failed or not configured
     if (resend) {
       const { data, error } = await resend.emails.send({
-        from: FROM_EMAIL,
+        from: `${FROM_NAME} <${FROM_EMAIL}>`,
         to: Array.isArray(options.to) ? options.to : [options.to],
         subject: options.subject,
         html: options.html,

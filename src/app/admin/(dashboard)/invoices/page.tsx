@@ -75,6 +75,7 @@ export default function InvoicesPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [generatingPaymentLink, setGeneratingPaymentLink] = useState(false);
   const [sendingReminder, setSendingReminder] = useState<string | null>(null);
+  const [sendingInvoice, setSendingInvoice] = useState<string | null>(null);
   const [paymentData, setPaymentData] = useState({
     method: 'bank_transfer',
     details: '',
@@ -702,6 +703,29 @@ export default function InvoicesPage() {
     }
   };
 
+  const sendInvoiceToClient = async (invoice: Invoice) => {
+    try {
+      setSendingInvoice(invoice._id);
+
+      const response = await fetch(`/api/invoices/${invoice._id}/send`, {
+        method: 'POST',
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Invoice email sent successfully!');
+      } else {
+        alert('Failed to send invoice email: ' + (result.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Error sending invoice email:', error);
+      alert('Failed to send invoice email. Please try again.');
+    } finally {
+      setSendingInvoice(null);
+    }
+  };
+
   const handlePaymentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedInvoice) {
@@ -1296,16 +1320,13 @@ export default function InvoicesPage() {
                   Print/PDF
                 </button>
                 <button
-                  onClick={() => {
-                    const subject = `Invoice ${selectedInvoice.invoiceNumber} - Pixels Digital Solutions`;
-                    const body = `Dear ${selectedInvoice.clientName},\n\nPlease find attached the invoice ${selectedInvoice.invoiceNumber} for the amount of ₹${selectedInvoice.total.toLocaleString('en-IN')}.\n\nDue Date: ${new Date(selectedInvoice.dueDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'long', day: 'numeric' })}\n\nFor any queries, please contact us at info@pixelsdigital.tech\n\nBest regards,\nPixels Digital Solutions\npixelsdigital.tech`;
-                    window.location.href = `mailto:${selectedInvoice.clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-                  }}
-                  className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center gap-2 text-xs font-light whitespace-nowrap"
-                  title="Send Email to Client"
+                  onClick={() => sendInvoiceToClient(selectedInvoice)}
+                  disabled={sendingInvoice === selectedInvoice._id}
+                  className="px-3 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-lg flex items-center gap-2 text-xs font-light whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Send Invoice Email to Client"
                 >
                   <Mail className="w-4 h-4" />
-                  Email Client
+                  {sendingInvoice === selectedInvoice._id ? 'Sending...' : 'Email Client'}
                 </button>
                 {/* Generate Payment Link Button - Available for all statuses except cancelled */}
                 {selectedInvoice.status !== 'cancelled' && (
