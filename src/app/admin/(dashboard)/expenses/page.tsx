@@ -48,6 +48,7 @@ const expenseCategories = [
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
@@ -57,19 +58,31 @@ export default function ExpensesPage() {
   const [filterCategory, setFilterCategory] = useState<string>('all');
 
   const [formData, setFormData] = useState({
+    vendorId: '',
     category: '',
     businessType: 'both' as 'saas' | 'pixels' | 'both',
     description: '',
     amount: 0,
     date: new Date().toISOString().split('T')[0],
     paymentMethod: 'bank_transfer',
-    vendor: '',
+    vendorName: '',
     notes: '',
   });
 
   useEffect(() => {
     fetchExpenses();
+    fetchVendors();
   }, []);
+
+  const fetchVendors = async () => {
+    try {
+      const response = await fetch('/api/vendors');
+      const data = await response.json();
+      setVendors(data);
+    } catch (error) {
+      console.error('Error fetching vendors:', error);
+    }
+  };
 
   const fetchExpenses = async () => {
     try {
@@ -99,13 +112,14 @@ export default function ExpensesPage() {
       setShowAddModal(false);
       setEditingExpense(null);
       setFormData({
+        vendorId: '',
         category: '',
         businessType: 'both',
         description: '',
         amount: 0,
         date: new Date().toISOString().split('T')[0],
         paymentMethod: 'bank_transfer',
-        vendor: '',
+        vendorName: '',
         notes: '',
       });
       fetchExpenses();
@@ -118,13 +132,14 @@ export default function ExpensesPage() {
   const handleEdit = (expense: Expense) => {
     setEditingExpense(expense);
     setFormData({
+      vendorId: expense.vendorId || '',
       category: expense.category,
       businessType: expense.businessType || 'both',
       description: expense.description,
       amount: expense.amount,
       date: expense.date.split('T')[0],
       paymentMethod: expense.paymentMethod,
-      vendor: expense.vendorName || '',
+      vendorName: expense.vendorName || '',
       notes: expense.notes || '',
     });
     setShowAddModal(true);
@@ -185,13 +200,14 @@ export default function ExpensesPage() {
           onClick={() => {
             setEditingExpense(null);
             setFormData({
+              vendorId: '',
               category: '',
               businessType: 'both',
               description: '',
               amount: 0,
               date: new Date().toISOString().split('T')[0],
               paymentMethod: 'bank_transfer',
-              vendor: '',
+              vendorName: '',
               notes: '',
             });
             setShowAddModal(true);
@@ -479,16 +495,44 @@ export default function ExpensesPage() {
 
                 <div>
                   <label className="block text-sm text-gray-600 font-light mb-2">
-                    Vendor / Supplier
+                    Vendor (Optional - Select from list or enter manually below)
                   </label>
-                  <input
-                    type="text"
-                    value={formData.vendor}
-                    onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                    placeholder="e.g., AWS, Google, etc."
+                  <select
+                    value={formData.vendorId}
+                    onChange={(e) => {
+                      const vendorId = e.target.value;
+                      const vendor = vendors.find(v => v._id === vendorId);
+                      setFormData({ 
+                        ...formData, 
+                        vendorId,
+                        vendorName: vendor ? vendor.name : formData.vendorName
+                      });
+                    }}
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
-                  />
+                  >
+                    <option value="">-- Select Vendor --</option>
+                    {vendors.map((vendor) => (
+                      <option key={vendor._id} value={vendor._id}>
+                        {vendor.name} {vendor.company && `(${vendor.company})`}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+
+                {!formData.vendorId && (
+                  <div>
+                    <label className="block text-sm text-gray-600 font-light mb-2">
+                      Or Enter Vendor Name Manually
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.vendorName}
+                      onChange={(e) => setFormData({ ...formData, vendorName: e.target.value })}
+                      placeholder="e.g., AWS, Google, Meta Business"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                    />
+                  </div>
+                )}
               </div>
 
               <div>
