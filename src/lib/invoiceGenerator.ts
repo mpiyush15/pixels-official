@@ -19,6 +19,9 @@ export interface InvoiceData {
   subtotal: number;
   tax?: number;
   discount?: number;
+  discountType?: 'percentage' | 'fixed';
+  discountAmount?: number;
+  advancePayment?: number;
   total: number;
   notes?: string;
   status?: 'draft' | 'sent' | 'paid' | 'cancelled' | 'overdue';
@@ -44,10 +47,21 @@ export function generateInvoiceHTML(invoice: InvoiceData): string {
     </tr>
   ` : '';
 
-  const discountHtml = invoice.discount ? `
+  const discountHtml = invoice.discountAmount && invoice.discountAmount > 0 ? `
     <tr>
-      <td colspan="3" style="padding: 12px; text-align: right; font-weight: 500; color: #10b981;">Discount:</td>
-      <td style="padding: 12px; text-align: right; color: #10b981;">-₹${invoice.discount.toLocaleString('en-IN')}</td>
+      <td colspan="3" style="padding: 12px; text-align: right; font-weight: 500; color: #10b981;">
+        Discount ${invoice.discountType === 'percentage' ? `(${invoice.discount}%)` : `(₹${invoice.discount})`}:
+      </td>
+      <td style="padding: 12px; text-align: right; color: #10b981;">-₹${invoice.discountAmount.toLocaleString('en-IN')}</td>
+    </tr>
+  ` : '';
+
+  const advancePaymentHtml = invoice.advancePayment && invoice.advancePayment > 0 ? `
+    <tr>
+      <td colspan="3" style="padding: 12px; text-align: right; font-weight: 500; color: #3b82f6;">
+        Advance Payment:
+      </td>
+      <td style="padding: 12px; text-align: right; color: #3b82f6;">-₹${invoice.advancePayment.toLocaleString('en-IN')}</td>
     </tr>
   ` : '';
 
@@ -125,6 +139,23 @@ export function generateInvoiceHTML(invoice: InvoiceData): string {
           background: #ef4444;
           color: white;
           box-shadow: 0 4px 6px rgba(239, 68, 68, 0.3);
+        }
+        .paid-stamp {
+          position: absolute;
+          bottom: 80px;
+          left: 50%;
+          transform: translateX(-50%) rotate(-15deg);
+          padding: 20px 40px;
+          border: 6px solid #10b981;
+          border-radius: 12px;
+          font-weight: 900;
+          font-size: 48px;
+          color: #10b981;
+          text-transform: uppercase;
+          letter-spacing: 4px;
+          opacity: 0.7;
+          pointer-events: none;
+          z-index: 100;
         }
         .header {
           display: flex;
@@ -272,11 +303,11 @@ export function generateInvoiceHTML(invoice: InvoiceData): string {
     </head>
     <body>
       <div class="invoice-container">
-        <!-- Status Watermark -->
-        ${invoice.status ? `<div class="status-watermark ${invoice.status}">${invoice.status.toUpperCase()}</div>` : ''}
-        
         <!-- Status Badge -->
-        ${invoice.status ? `<div class="status-badge ${invoice.status}">${invoice.status.toUpperCase()}</div>` : ''}
+        ${invoice.status && invoice.status !== 'paid' ? `<div class="status-badge ${invoice.status}">${invoice.status.toUpperCase()}</div>` : ''}
+        
+        <!-- Paid Stamp (only for paid invoices) -->
+        ${invoice.status === 'paid' ? '<div class="paid-stamp">PAID</div>' : ''}
         
         <!-- Header -->
         <div class="header">
@@ -336,6 +367,7 @@ export function generateInvoiceHTML(invoice: InvoiceData): string {
             </tr>
             ${taxHtml}
             ${discountHtml}
+            ${advancePaymentHtml}
             <tr class="total-row">
               <td style="text-align: right;">TOTAL:</td>
               <td style="text-align: right;">₹${invoice.total.toLocaleString('en-IN')}</td>
@@ -355,7 +387,7 @@ export function generateInvoiceHTML(invoice: InvoiceData): string {
         <div class="footer">
           <p><strong>Thank you for your business!</strong></p>
           <p>This is a computer-generated invoice and does not require a signature.</p>
-          <p>© ${new Date().getFullYear()} Pixels Digital. All rights reserved.</p>
+          <p>© ${new Date().getFullYear()} Pixels Digital Solutions. All rights reserved.</p>
         </div>
       </div>
     </body>

@@ -29,6 +29,10 @@ interface Invoice {
     price: number;
   }>;
   subtotal: number;
+  discount?: number;
+  discountType?: 'percentage' | 'fixed';
+  discountAmount?: number;
+  advancePayment?: number;
   tax: number;
   total: number;
   status: 'draft' | 'sent' | 'paid' | 'cancelled' | 'overdue';
@@ -79,6 +83,9 @@ export default function InvoicesPage() {
   const [formData, setFormData] = useState({
     clientId: '',
     services: [{ name: '', description: '', quantity: 1, price: 0 }],
+    discount: 0,
+    discountType: 'percentage' as 'percentage' | 'fixed',
+    advancePayment: 0,
     tax: 18,
     issueDate: new Date().toISOString().split('T')[0],
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -145,8 +152,21 @@ export default function InvoicesPage() {
     if (!selectedClient) return;
 
     const subtotal = formData.services.reduce((sum, s) => sum + (s.quantity * s.price), 0);
-    const taxAmount = (subtotal * formData.tax) / 100;
-    const total = subtotal + taxAmount;
+    
+    // Calculate discount
+    let discountAmount = 0;
+    if (formData.discount > 0) {
+      if (formData.discountType === 'percentage') {
+        discountAmount = (subtotal * formData.discount) / 100;
+      } else {
+        discountAmount = formData.discount;
+      }
+    }
+    
+    const amountAfterDiscount = subtotal - discountAmount;
+    const taxAmount = (amountAfterDiscount * formData.tax) / 100;
+    const totalBeforeAdvance = amountAfterDiscount + taxAmount;
+    const total = totalBeforeAdvance - (formData.advancePayment || 0);
 
     try {
       await fetch('/api/invoices', {
@@ -161,6 +181,10 @@ export default function InvoicesPage() {
           clientAddress: selectedClient.address || '',
           services: formData.services,
           subtotal,
+          discount: formData.discount,
+          discountType: formData.discountType,
+          discountAmount,
+          advancePayment: formData.advancePayment || 0,
           tax: taxAmount,
           total,
           issueDate: formData.issueDate,
@@ -172,6 +196,9 @@ export default function InvoicesPage() {
       setFormData({
         clientId: '',
         services: [{ name: '', description: '', quantity: 1, price: 0 }],
+        discount: 0,
+        discountType: 'percentage' as 'percentage' | 'fixed',
+        advancePayment: 0,
         tax: 18,
         issueDate: new Date().toISOString().split('T')[0],
         dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -1059,19 +1086,94 @@ export default function InvoicesPage() {
                 />
               </div>
 
+              {/* Discount */}
+              <div>
+                <label className="block text-sm text-gray-600 font-light mb-2">Discount (Optional)</label>
+                <div className="flex gap-3">
+                  <div className="flex-1">
+                    <input
+                      type="number"
+                      value={formData.discount}
+                      onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                      min="0"
+                      step="0.01"
+                      placeholder="Enter discount"
+                    />
+                  </div>
+                  <select
+                    value={formData.discountType}
+                    onChange={(e) => setFormData({ ...formData, discountType: e.target.value as 'percentage' | 'fixed' })}
+                    className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                  >
+                    <option value="percentage">%</option>
+                    <option value="fixed">₹</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Advance Payment */}
+              <div>
+                <label className="block text-sm text-gray-600 font-light mb-2">Advance Payment (Optional)</label>
+                <input
+                  type="number"
+                  value={formData.advancePayment}
+                  onChange={(e) => setFormData({ ...formData, advancePayment: parseFloat(e.target.value) || 0 })}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                  min="0"
+                  step="0.01"
+                  placeholder="Enter advance payment received"
+                />
+              </div>
+
               {/* Summary */}
               <div className="bg-gray-50 rounded-xl p-6 space-y-2">
                 <div className="flex justify-between text-gray-600 font-light">
                   <span>Subtotal:</span>
                   <span>₹{formData.services.reduce((sum, s) => sum + (s.quantity * s.price), 0).toLocaleString()}</span>
                 </div>
+                {formData.discount > 0 && (
+                  <div className="flex justify-between text-green-600 font-light">
+                    <span>Discount ({formData.discountType === 'percentage' ? `${formData.discount}%` : '₹' + formData.discount}):</span>
+                    <span>-₹{(() => {
+                      const subtotal = formData.services.reduce((sum, s) => sum + (s.quantity * s.price), 0);
+                      const discountAmount = formData.discountType === 'percentage' 
+                        ? (subtotal * formData.discount) / 100 
+                        : formData.discount;
+                      return discountAmount.toLocaleString();
+                    })()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-gray-600 font-light">
                   <span>Tax ({formData.tax}%):</span>
-                  <span>₹{((formData.services.reduce((sum, s) => sum + (s.quantity * s.price), 0) * formData.tax) / 100).toLocaleString()}</span>
+                  <span>₹{(() => {
+                    const subtotal = formData.services.reduce((sum, s) => sum + (s.quantity * s.price), 0);
+                    const discountAmount = formData.discount > 0
+                      ? (formData.discountType === 'percentage' ? (subtotal * formData.discount) / 100 : formData.discount)
+                      : 0;
+                    const amountAfterDiscount = subtotal - discountAmount;
+                    return ((amountAfterDiscount * formData.tax) / 100).toLocaleString();
+                  })()}</span>
                 </div>
+                {formData.advancePayment > 0 && (
+                  <div className="flex justify-between text-blue-600 font-light">
+                    <span>Advance Payment:</span>
+                    <span>-₹{formData.advancePayment.toLocaleString()}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-xl text-black font-light pt-2 border-t border-gray-200">
                   <span>Total:</span>
-                  <span>₹{(formData.services.reduce((sum, s) => sum + (s.quantity * s.price), 0) * (1 + formData.tax / 100)).toLocaleString()}</span>
+                  <span>₹{(() => {
+                    const subtotal = formData.services.reduce((sum, s) => sum + (s.quantity * s.price), 0);
+                    const discountAmount = formData.discount > 0
+                      ? (formData.discountType === 'percentage' ? (subtotal * formData.discount) / 100 : formData.discount)
+                      : 0;
+                    const amountAfterDiscount = subtotal - discountAmount;
+                    const taxAmount = (amountAfterDiscount * formData.tax) / 100;
+                    const totalBeforeAdvance = amountAfterDiscount + taxAmount;
+                    const total = totalBeforeAdvance - (formData.advancePayment || 0);
+                    return total.toLocaleString();
+                  })()}</span>
                 </div>
               </div>
 
@@ -1314,10 +1416,24 @@ export default function InvoicesPage() {
                       <span className="text-gray-600 font-light text-xs md:text-sm">Subtotal:</span>
                       <span className="font-light text-black text-xs md:text-sm">₹{selectedInvoice.subtotal.toLocaleString('en-IN')}</span>
                     </div>
+                    {selectedInvoice.discountAmount && selectedInvoice.discountAmount > 0 && (
+                      <div className="flex justify-between py-1.5">
+                        <span className="text-green-600 font-light text-xs md:text-sm">
+                          Discount ({selectedInvoice.discountType === 'percentage' ? `${selectedInvoice.discount}%` : '₹' + selectedInvoice.discount}):
+                        </span>
+                        <span className="font-light text-green-600 text-xs md:text-sm">-₹{selectedInvoice.discountAmount.toLocaleString('en-IN')}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between py-1.5">
                       <span className="text-gray-600 font-light text-xs md:text-sm">Tax (GST):</span>
                       <span className="font-light text-black text-xs md:text-sm">₹{selectedInvoice.tax.toLocaleString('en-IN')}</span>
                     </div>
+                    {selectedInvoice.advancePayment && selectedInvoice.advancePayment > 0 && (
+                      <div className="flex justify-between py-1.5">
+                        <span className="text-blue-600 font-light text-xs md:text-sm">Advance Payment:</span>
+                        <span className="font-light text-blue-600 text-xs md:text-sm">-₹{selectedInvoice.advancePayment.toLocaleString('en-IN')}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between py-3 border-t-2 border-black">
                       <span className="text-lg md:text-xl font-light text-black">Total Amount:</span>
                       <span className="text-xl md:text-2xl font-light text-black">₹{selectedInvoice.total.toLocaleString('en-IN')}</span>
@@ -1328,22 +1444,7 @@ export default function InvoicesPage() {
 
               {/* Footer */}
               <div className="border-t border-gray-200 pt-8 mt-12">
-                <div className="grid md:grid-cols-2 gap-8">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-600 mb-2">Payment Details:</h4>
-                    <p className="text-sm text-gray-600 font-light">Bank Name: Your Bank Name</p>
-                    <p className="text-sm text-gray-600 font-light">Account No: XXXX XXXX XXXX</p>
-                    <p className="text-sm text-gray-600 font-light">IFSC Code: XXXXXX</p>
-                    <p className="text-sm text-gray-600 font-light">UPI: pixelsdigital@upi</p>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-600 mb-2">Terms & Conditions:</h4>
-                    <p className="text-xs text-gray-600 font-light">1. Payment is due within 30 days of invoice date.</p>
-                    <p className="text-xs text-gray-600 font-light">2. Late payments may incur additional charges.</p>
-                    <p className="text-xs text-gray-600 font-light">3. Please include invoice number in payment reference.</p>
-                  </div>
-                </div>
-                <div className="text-center mt-8 pt-6 border-t border-gray-100">
+                <div className="text-center">
                   <p className="text-sm font-medium text-black mb-1">PIXELS DIGITAL SOLUTIONS</p>
                   <p className="text-xs text-gray-500 font-light">info@pixelsdigital.tech | pixelsdigital.tech</p>
                   <p className="text-xs text-gray-500 font-light mt-2">Thank you for your business!</p>
