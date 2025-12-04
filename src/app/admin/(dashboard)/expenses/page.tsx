@@ -119,12 +119,12 @@ export default function ExpensesPage() {
     setEditingExpense(expense);
     setFormData({
       category: expense.category,
-      businessType: expense.businessType,
+      businessType: expense.businessType || 'both',
       description: expense.description,
       amount: expense.amount,
       date: expense.date.split('T')[0],
       paymentMethod: expense.paymentMethod,
-      vendor: expense.vendor || '',
+      vendor: expense.vendorName || '',
       notes: expense.notes || '',
     });
     setShowAddModal(true);
@@ -163,7 +163,7 @@ export default function ExpensesPage() {
   const filteredExpenses = expenses.filter(expense => {
     const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          expense.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (expense.vendor && expense.vendor.toLowerCase().includes(searchTerm.toLowerCase()));
+                         (expense.vendorName && expense.vendorName.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesBusiness = filterBusiness === 'all' || expense.businessType === filterBusiness;
     const matchesCategory = filterCategory === 'all' || expense.category === filterCategory;
     return matchesSearch && matchesBusiness && matchesCategory;
@@ -308,13 +308,13 @@ export default function ExpensesPage() {
                     </td>
                     <td className="px-6 py-4">
                       <p className="font-light text-black">{expense.description}</p>
-                      {expense.vendor && (
-                        <p className="text-xs text-gray-500 font-light">Vendor: {expense.vendor}</p>
+                      {expense.vendorName && (
+                        <p className="text-xs text-gray-500 font-light">Vendor: {expense.vendorName}</p>
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-light ${getBusinessTypeColor(expense.businessType)}`}>
-                        {getBusinessTypeLabel(expense.businessType)}
+                      <span className={`px-3 py-1 rounded-full text-xs font-light ${getBusinessTypeColor(expense.businessType || 'both')}`}>
+                        {getBusinessTypeLabel(expense.businessType || 'both')}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -560,8 +560,8 @@ export default function ExpensesPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 font-light mb-1">Business Type</p>
-                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-light ${getBusinessTypeColor(selectedExpense.businessType)}`}>
-                    {getBusinessTypeLabel(selectedExpense.businessType)}
+                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-light ${getBusinessTypeColor(selectedExpense.businessType || 'both')}`}>
+                    {getBusinessTypeLabel(selectedExpense.businessType || 'both')}
                   </span>
                 </div>
                 <div>
@@ -587,11 +587,11 @@ export default function ExpensesPage() {
                 </div>
               </div>
 
-              {selectedExpense.vendor && (
+              {selectedExpense.vendorName && (
                 <div>
                   <p className="text-sm text-gray-600 font-light mb-2">Vendor / Supplier</p>
                   <div className="bg-gray-50 rounded-xl p-4">
-                    <p className="font-light text-black">{selectedExpense.vendor}</p>
+                    <p className="font-light text-black">{selectedExpense.vendorName}</p>
                   </div>
                 </div>
               )}
