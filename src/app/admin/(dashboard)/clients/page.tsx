@@ -63,6 +63,7 @@ export default function ClientsPage() {
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
   const [passwordClient, setPasswordClient] = useState<Client | null>(null);
   const [clientInvoices, setClientInvoices] = useState<Invoice[]>([]);
+  const [sendingWelcomeEmail, setSendingWelcomeEmail] = useState<string | null>(null);
   
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -172,6 +173,32 @@ export default function ClientsPage() {
       fetchClients();
     } catch (err) {
       console.error("Error deleting:", err);
+    }
+  };
+
+  const sendWelcomeEmail = async (client: Client) => {
+    if (!client.email) {
+      alert("This client has no email address");
+      return;
+    }
+
+    try {
+      setSendingWelcomeEmail(client._id);
+      const response = await fetch(
+        `/api/test-welcome-email?email=${encodeURIComponent(client.email)}&name=${encodeURIComponent(client.name)}`
+      );
+      const result = await response.json();
+      
+      if (result.success) {
+        alert("Welcome email sent successfully!");
+      } else {
+        alert("Failed to send email: " + (result.error || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Error sending welcome email:", error);
+      alert("Failed to send welcome email");
+    } finally {
+      setSendingWelcomeEmail(null);
     }
   };
 
@@ -399,6 +426,14 @@ export default function ClientsPage() {
                   title={client.portalAccessEnabled ? 'Reset Portal Password' : 'Enable Portal Access'}
                 >
                   <Key className="w-4" />
+                </button>
+                <button
+                  onClick={() => sendWelcomeEmail(client)}
+                  disabled={!client.email || sendingWelcomeEmail === client._id}
+                  className="p-2 bg-indigo-100 text-indigo-600 rounded-xl hover:bg-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Send Welcome Email"
+                >
+                  <Send className="w-4" />
                 </button>
                 <button
                   onClick={() => toggleClientStatus(client)}
