@@ -13,6 +13,12 @@ const smtpTransporter = process.env.SMTP_HOST ? nodemailer.createTransport({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASSWORD,
   },
+  tls: {
+    rejectUnauthorized: false
+  },
+  connectionTimeout: 10000, // 10 seconds
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
 }) : null;
 
 // Email configuration
@@ -41,6 +47,13 @@ export async function sendEmail(options: EmailOptions): Promise<{ success: boole
     // Priority 1: Use AWS SES SMTP if configured
     if (smtpTransporter) {
       try {
+        console.log('Attempting to send email via SMTP to:', options.to);
+        console.log('SMTP Config:', {
+          host: process.env.SMTP_HOST,
+          port: process.env.SMTP_PORT,
+          from: FROM_EMAIL
+        });
+        
         const info = await smtpTransporter.sendMail({
           from: FROM_EMAIL,
           to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
@@ -49,16 +62,24 @@ export async function sendEmail(options: EmailOptions): Promise<{ success: boole
           text: options.text,
         });
 
-        console.log('Email sent via AWS SES SMTP:', info.messageId);
+        console.log('✅ Email sent successfully via SMTP:', info.messageId);
         return { success: true, messageId: info.messageId };
       } catch (smtpError: any) {
-        console.error('AWS SES SMTP error:', smtpError);
+        console.error('❌ SMTP Error Details:', {
+          message: smtpError.message,
+          code: smtpError.code,
+          command: smtpError.command,
+          response: smtpError.response
+        });
         
         // If Resend is available, fall back to it
         if (resend) {
           console.log('Falling back to Resend...');
         } else {
-          return { success: false, error: smtpError.message || 'Failed to send email via SMTP' };
+          return { 
+            success: false, 
+            error: `SMTP Error: ${smtpError.message || 'Failed to send email'}` 
+          };
         }
       }
     }
