@@ -21,7 +21,7 @@ export default function ClientPortalLayout({
   return (
     <div className="flex h-screen bg-gray-50">
       <ClientSidebar />
-      <main className="flex-1 overflow-y-auto flex flex-col">
+      <main className="flex-1 overflow-y-auto flex flex-col pt-[73px] lg:pt-0">
         <TopBar />
         <div className="flex-1">
           {children}

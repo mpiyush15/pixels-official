@@ -57,13 +57,24 @@ export default function ClientSidebar() {
 
   return (
     <>
-      {/* Mobile Menu Button */}
-      <button
-        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="lg:hidden fixed top-4 left-4 z-50 bg-black text-white p-3 rounded-xl border border-white/10"
-      >
-        {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-      </button>
+      {/* Mobile Header - Logo centered */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-black border-b border-white/10 px-4 py-4">
+        <div className="flex items-center justify-center relative">
+          {/* Hamburger Button - Absolute Left */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="absolute left-0 text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </button>
+          
+          {/* Logo/Title - Centered */}
+          <div className="text-center">
+            <h1 className="text-lg font-light text-white">Pixels Digital</h1>
+            <p className="text-gray-400 text-xs font-light">Client Portal</p>
+          </div>
+        </div>
+      </div>
 
       {/* Sidebar */}
       <motion.div
@@ -71,10 +82,10 @@ export default function ClientSidebar() {
         animate={{ x: 0 }}
         className={`fixed lg:static inset-y-0 left-0 z-40 w-72 bg-black border-r border-white/10 flex flex-col ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 transition-transform duration-300`}
+        } lg:translate-x-0 transition-transform duration-300 mt-[73px] lg:mt-0`}
       >
-        {/* Logo */}
-        <div className="p-8 border-b border-white/10 flex-shrink-0">
+        {/* Logo - Desktop Only */}
+        <div className="hidden lg:block p-8 border-b border-white/10 flex-shrink-0">
           <h1 className="text-2xl font-light text-white">Pixels Digital</h1>
           <p className="text-gray-400 text-sm font-light mt-1">Client Portal</p>
         </div>
