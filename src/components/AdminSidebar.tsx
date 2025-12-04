@@ -18,7 +18,8 @@ import {
   UserCog,
   Image,
   MessageCircle,
-  Upload
+  Upload,
+  Building
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -31,6 +32,7 @@ const menuItems = [
   { icon: MessageCircle, label: 'Project Chats', path: '/admin/chats' },
   { icon: FileText, label: 'Invoices', path: '/admin/invoices' },
   { icon: CreditCard, label: 'Payments', path: '/admin/payments' },
+  { icon: Building, label: 'Vendors', path: '/admin/vendors' },
   { icon: Receipt, label: 'Expenses', path: '/admin/expenses' },
   { icon: TrendingUp, label: 'Business Overview', path: '/admin/overview' },
   { icon: UserCog, label: 'Staff Management', path: '/admin/staff' },

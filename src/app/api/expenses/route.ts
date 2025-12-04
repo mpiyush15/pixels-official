@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
 
 export async function GET() {
   try {
@@ -26,13 +27,34 @@ export async function POST(request: Request) {
     const db = await getDatabase();
 
     const expense = {
-      ...body,
+      vendorId: body.vendorId || null,
+      vendorName: body.vendorName || '',
+      category: body.category, // hosting, domain, internet, social_media, communication, software, utilities, other
+      description: body.description,
       amount: parseFloat(body.amount),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      date: body.date,
+      paymentMethod: body.paymentMethod || 'bank_transfer', // bank_transfer, upi, cash, card, cheque
+      paymentStatus: body.paymentStatus || 'paid', // paid, pending, overdue
+      invoiceNumber: body.invoiceNumber || '',
+      notes: body.notes || '',
+      recurringType: body.recurringType || 'one_time', // one_time, monthly, quarterly, yearly
+      nextDueDate: body.nextDueDate || null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     const result = await db.collection('expenses').insertOne(expense);
+
+    // Update vendor totalPaid if vendorId exists
+    if (expense.vendorId && expense.paymentStatus === 'paid') {
+      await db.collection('vendors').updateOne(
+        { _id: new ObjectId(expense.vendorId) },
+        { 
+          $inc: { totalPaid: expense.amount },
+          $set: { updatedAt: new Date() }
+        }
+      );
+    }
 
     return NextResponse.json(
       { _id: result.insertedId, ...expense },
