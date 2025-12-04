@@ -295,6 +295,88 @@ export function generateInvoiceHTML(invoice: InvoiceData): string {
         .footer p {
           margin: 4px 0;
         }
+        
+        /* Mobile Responsive Styles */
+        @media screen and (max-width: 768px) {
+          body {
+            padding: 10px;
+          }
+          .invoice-container {
+            padding: 20px;
+            box-shadow: none;
+          }
+          .status-badge {
+            top: 10px;
+            right: 10px;
+            padding: 8px 16px;
+            font-size: 12px;
+          }
+          .paid-stamp {
+            bottom: 40px;
+            padding: 15px 30px;
+            font-size: 32px;
+            border: 4px solid #10b981;
+          }
+          .header {
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+          }
+          .company-info h1 {
+            font-size: 24px;
+          }
+          .company-info p {
+            font-size: 12px;
+          }
+          .invoice-details {
+            text-align: left;
+          }
+          .invoice-details h2 {
+            font-size: 22px;
+          }
+          .invoice-details p {
+            font-size: 12px;
+          }
+          .parties {
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+          }
+          .party-box {
+            margin: 0 !important;
+            padding: 15px;
+          }
+          .party-box h3 {
+            font-size: 12px;
+          }
+          .party-box p {
+            font-size: 12px;
+          }
+          .items-table {
+            font-size: 11px;
+          }
+          .items-table th,
+          .items-table td {
+            padding: 8px 4px;
+          }
+          .totals {
+            width: 100%;
+            margin: 15px 0;
+          }
+          .totals table {
+            width: 100%;
+          }
+          .totals td {
+            padding: 8px;
+            font-size: 12px;
+          }
+          .total-row td {
+            padding: 12px 8px;
+            font-size: 16px;
+          }
+        }
+        
         @media print {
           body { background: white; padding: 0; }
           .invoice-container { box-shadow: none; }
