@@ -29,6 +29,8 @@ yarn-error.log*
 # local env files
 .env*.local
 .env
+.env.new
+.env.old
 
 # vercel
 .vercel
@@ -36,3 +38,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Security and credential documentation
+ZEPTOMAIL_SETUP_COMPLETE.md
+AWS_CREDENTIAL_ROTATION_GUIDE.md
+SECURITY_CLEANUP_COMPLETE.md
+EMERGENCY_SECURITY_ROTATION.md
+ROTATION_CHECKLIST.txt
+rotate-credentials.sh
