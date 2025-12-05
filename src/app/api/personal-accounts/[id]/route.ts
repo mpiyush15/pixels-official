@@ -4,8 +4,9 @@ import { ObjectId } from 'mongodb';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const body = await request.json();
     const db = await getDatabase();
@@ -23,7 +24,7 @@ export async function PATCH(
     if (body.notes !== undefined) updateData.notes = body.notes;
 
     const result = await db.collection('personal_accounts').updateOne(
-      { _id: new ObjectId(params.id) },
+      { _id: new ObjectId(id) },
       { $set: updateData }
     );
 
