@@ -60,6 +60,54 @@ export async function PATCH(
           );
         }
       }
+
+      // Handle cash flow entries based on payment status change
+      if (oldExpense.paymentStatus !== 'paid' && body.paymentStatus === 'paid') {
+        // Changed from pending/overdue to paid - Create cash flow entry
+        const accountType = body.paymentMethod === 'cash' ? 'cash' : 'bank';
+        
+        const cashFlowEntry = {
+          type: 'expense',
+          category: 'expense',
+          amount: parseFloat(body.amount),
+          accountType: accountType,
+          paymentMethod: body.paymentMethod,
+          reference: body.invoiceNumber || `Expense #${id}`,
+          description: `${body.category} - ${body.description}`,
+          transactionDate: new Date(body.date),
+          vendorId: body.vendorId,
+          vendorName: body.vendorName,
+          expenseId: id,
+          expenseCategory: body.category,
+          createdAt: new Date(),
+        };
+
+        await db.collection('cashflow').insertOne(cashFlowEntry);
+      } else if (oldExpense.paymentStatus === 'paid' && body.paymentStatus !== 'paid') {
+        // Changed from paid to pending/overdue - Remove cash flow entry
+        await db.collection('cashflow').deleteOne({ expenseId: id });
+      } else if (oldExpense.paymentStatus === 'paid' && body.paymentStatus === 'paid') {
+        // Still paid but details changed - Update cash flow entry
+        const accountType = body.paymentMethod === 'cash' ? 'cash' : 'bank';
+        
+        await db.collection('cashflow').updateOne(
+          { expenseId: id },
+          {
+            $set: {
+              amount: parseFloat(body.amount),
+              accountType: accountType,
+              paymentMethod: body.paymentMethod,
+              reference: body.invoiceNumber || `Expense #${id}`,
+              description: `${body.category} - ${body.description}`,
+              transactionDate: new Date(body.date),
+              vendorId: body.vendorId,
+              vendorName: body.vendorName,
+              expenseCategory: body.category,
+              updatedAt: new Date(),
+            }
+          }
+        );
+      }
     }
 
     return NextResponse.json({ success: true });
@@ -96,6 +144,11 @@ export async function DELETE(
           $set: { updatedAt: new Date() }
         }
       );
+    }
+
+    // Delete associated cash flow entry
+    if (expense && expense.paymentStatus === 'paid') {
+      await db.collection('cashflow').deleteOne({ expenseId: id });
     }
 
     return NextResponse.json({ success: true });

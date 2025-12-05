@@ -19,24 +19,37 @@ import {
   Image,
   MessageCircle,
   Upload,
-  Building
+  Building,
+  DollarSign,
+  Wallet
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const menuItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard' },
-  { icon: Mail, label: 'Leads', path: '/admin/leads' },
-  { icon: Users, label: 'Clients', path: '/admin/clients' },
-  { icon: FolderKanban, label: 'Projects', path: '/admin/projects' },
-  { icon: Upload, label: 'Submitted Work', path: '/admin/submitted-work' },
-  { icon: MessageCircle, label: 'Project Chats', path: '/admin/chats' },
-  { icon: FileText, label: 'Invoices', path: '/admin/invoices' },
-  { icon: CreditCard, label: 'Payments', path: '/admin/payments' },
-  { icon: Building, label: 'Vendors', path: '/admin/vendors' },
-  { icon: Receipt, label: 'Expenses', path: '/admin/expenses' },
-  { icon: TrendingUp, label: 'Business Overview', path: '/admin/overview' },
-  { icon: UserCog, label: 'Staff Management', path: '/admin/staff' },
-  { icon: Image, label: 'Daily Content', path: '/admin/daily-content' },
+  // Dashboard
+  { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard', category: 'Dashboard' },
+  
+  // CRM - Customer Relationship Management
+  { icon: Mail, label: 'Leads', path: '/admin/leads', category: 'CRM' },
+  { icon: Users, label: 'Clients', path: '/admin/clients', category: 'CRM' },
+  { icon: FolderKanban, label: 'Projects', path: '/admin/projects', category: 'CRM' },
+  { icon: MessageCircle, label: 'Project Chats', path: '/admin/chats', category: 'CRM' },
+  { icon: Upload, label: 'Submitted Work', path: '/admin/submitted-work', category: 'CRM' },
+  
+  // Accounts & Finance
+  { icon: FileText, label: 'Invoices', path: '/admin/invoices', category: 'Accounts' },
+  { icon: CreditCard, label: 'Payments', path: '/admin/payments', category: 'Accounts' },
+  { icon: Building, label: 'Vendors', path: '/admin/vendors', category: 'Accounts' },
+  { icon: Receipt, label: 'Expenses', path: '/admin/expenses', category: 'Accounts' },
+  { icon: DollarSign, label: 'Salaries', path: '/admin/salaries', category: 'Accounts' },
+  
+  // Personal Accounts (separate section, not shown on dashboard)
+  { icon: Wallet, label: 'Personal Accounts', path: '/admin/personal-accounts', category: 'Personal' },
+  
+  // Business Management
+  { icon: TrendingUp, label: 'Business Overview', path: '/admin/overview', category: 'Business' },
+  { icon: UserCog, label: 'Staff Management', path: '/admin/staff', category: 'Business' },
+  { icon: Image, label: 'Daily Content', path: '/admin/daily-content', category: 'Business' },
 ];
 
 export default function AdminSidebar() {
@@ -72,6 +85,22 @@ export default function AdminSidebar() {
 
   return (
     <>
+      <style jsx>{`
+        nav::-webkit-scrollbar {
+          width: 6px;
+        }
+        nav::-webkit-scrollbar-track {
+          background: #111827;
+        }
+        nav::-webkit-scrollbar-thumb {
+          background: #374151;
+          border-radius: 10px;
+        }
+        nav::-webkit-scrollbar-thumb:hover {
+          background: #4b5563;
+        }
+      `}</style>
+      
       {/* Mobile Header - Logo centered */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-black border-b border-white/10 px-4 py-4">
         <div className="flex items-center justify-center relative">
@@ -106,12 +135,14 @@ export default function AdminSidebar() {
         </div>
 
         {/* Menu Items - Scrollable */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {menuItems.map((item) => {
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto" style={{
+          scrollbarWidth: 'thin',
+          scrollbarColor: '#374151 #111827'
+        }}>
+          {/* Dashboard Section */}
+          {menuItems.filter(item => item.category === 'Dashboard').map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;
-            const isChatsPage = item.path === '/admin/chats';
-            const showBadge = isChatsPage && unreadCount > 0;
 
             return (
               <motion.button
@@ -129,14 +160,136 @@ export default function AdminSidebar() {
               >
                 <Icon className="w-5 h-5" strokeWidth={1.5} />
                 <span className="font-light">{item.label}</span>
-                {showBadge && (
-                  <span className="ml-auto bg-red-500 text-white text-xs font-semibold rounded-full px-2 py-0.5 min-w-[20px] text-center">
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                  </span>
-                )}
               </motion.button>
             );
           })}
+
+          {/* CRM Section */}
+          <div className="pt-6">
+            <h3 className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              CRM
+            </h3>
+            {menuItems.filter(item => item.category === 'CRM').map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.path;
+              const isChatsPage = item.path === '/admin/chats';
+              const showBadge = isChatsPage && unreadCount > 0;
+
+              return (
+                <motion.button
+                  key={item.path}
+                  onClick={() => {
+                    router.push(item.path);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  whileHover={{ x: 4 }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors relative ${
+                    isActive
+                      ? 'bg-white text-black'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" strokeWidth={1.5} />
+                  <span className="font-light">{item.label}</span>
+                  {showBadge && (
+                    <span className="ml-auto bg-red-500 text-white text-xs font-semibold rounded-full px-2 py-0.5 min-w-[20px] text-center">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </motion.button>
+              );
+            })}
+          </div>
+
+          {/* Accounts Section */}
+          <div className="pt-6">
+            <h3 className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Accounts & Finance
+            </h3>
+            {menuItems.filter(item => item.category === 'Accounts').map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.path;
+
+              return (
+                <motion.button
+                  key={item.path}
+                  onClick={() => {
+                    router.push(item.path);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  whileHover={{ x: 4 }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors relative ${
+                    isActive
+                      ? 'bg-white text-black'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" strokeWidth={1.5} />
+                  <span className="font-light">{item.label}</span>
+                </motion.button>
+              );
+            })}
+          </div>
+
+          {/* Personal Accounts Section */}
+          <div className="pt-6">
+            <h3 className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Personal
+            </h3>
+            {menuItems.filter(item => item.category === 'Personal').map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.path;
+
+              return (
+                <motion.button
+                  key={item.path}
+                  onClick={() => {
+                    router.push(item.path);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  whileHover={{ x: 4 }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors relative ${
+                    isActive
+                      ? 'bg-white text-black'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" strokeWidth={1.5} />
+                  <span className="font-light">{item.label}</span>
+                </motion.button>
+              );
+            })}
+          </div>
+
+          {/* Business Management Section */}
+          <div className="pt-6">
+            <h3 className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Business
+            </h3>
+            {menuItems.filter(item => item.category === 'Business').map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.path;
+
+              return (
+                <motion.button
+                  key={item.path}
+                  onClick={() => {
+                    router.push(item.path);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  whileHover={{ x: 4 }}
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors relative ${
+                    isActive
+                      ? 'bg-white text-black'
+                      : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  }`}
+                >
+                  <Icon className="w-5 h-5" strokeWidth={1.5} />
+                  <span className="font-light">{item.label}</span>
+                </motion.button>
+              );
+            })}
+          </div>
           
           {/* Client Portal Link - Opens in new tab */}
           <motion.a
@@ -144,7 +297,7 @@ export default function AdminSidebar() {
             target="_blank"
             rel="noopener noreferrer"
             whileHover={{ x: 4 }}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-colors border border-blue-500/20 mt-4"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-colors border border-blue-500/20 mt-6"
           >
             <ExternalLink className="w-5 h-5" strokeWidth={1.5} />
             <span className="font-light">Client Portal</span>

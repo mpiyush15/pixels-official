@@ -38,38 +38,109 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Use provided amount or full invoice amount
+    const paymentAmount = body.amount ? parseFloat(body.amount) : invoice.total;
+
+    // Validate payment amount
+    if (paymentAmount <= 0) {
+      return NextResponse.json(
+        { error: 'Payment amount must be greater than 0' },
+        { status: 400 }
+      );
+    }
+
+    // Calculate total paid so far
+    const existingPayments = await db
+      .collection('payments')
+      .find({ invoiceId: body.invoiceId, status: 'completed' })
+      .toArray();
+
+    const totalPaid = existingPayments.reduce((sum, p) => sum + (p.amount || 0), 0) + paymentAmount;
+    const remainingAmount = invoice.total - totalPaid;
+
+    // Check if overpayment
+    if (totalPaid > invoice.total) {
+      return NextResponse.json(
+        { error: `Payment amount exceeds remaining balance. Remaining: ₹${remainingAmount + paymentAmount}` },
+        { status: 400 }
+      );
+    }
+
     // Create payment record
     const payment = {
       invoiceId: body.invoiceId,
       invoiceNumber: invoice.invoiceNumber,
       clientId: invoice.clientId,
       clientName: invoice.clientName,
-      amount: invoice.total,
+      amount: paymentAmount,
       paymentMethod: body.paymentMethod,
       paymentDetails: body.paymentDetails || '',
       paymentDate: new Date(body.paymentDate),
       status: 'completed',
+      isPartialPayment: paymentAmount < invoice.total,
       createdAt: new Date(),
     };
 
     const result = await db.collection('payments').insertOne(payment);
 
-    // Update invoice status to paid
+    // Determine new invoice status
+    let invoiceStatus = 'sent';
+    if (totalPaid >= invoice.total) {
+      invoiceStatus = 'paid';
+    } else if (totalPaid > 0) {
+      invoiceStatus = 'partially_paid';
+    }
+
+    // Update invoice with payment info and amount paid
+    const invoiceUpdate: any = {
+      status: invoiceStatus,
+      amountPaid: totalPaid,
+      remainingAmount: remainingAmount,
+      paymentMethod: body.paymentMethod,
+      paymentDetails: body.paymentDetails || '',
+      updatedAt: new Date(),
+    };
+
+    // Only set paidAt if fully paid
+    if (invoiceStatus === 'paid') {
+      invoiceUpdate.paidAt = new Date(body.paymentDate);
+    }
+
     await db.collection('invoices').updateOne(
       { _id: new ObjectId(body.invoiceId) },
-      {
-        $set: {
-          status: 'paid',
-          paidAt: new Date(body.paymentDate),
-          paymentMethod: body.paymentMethod,
-          paymentDetails: body.paymentDetails || '',
-        },
-      }
+      { $set: invoiceUpdate }
     );
+
+    // Auto-create cash flow entry
+    // Determine account type: cash payment method = cash, all others = bank
+    const accountType = body.paymentMethod === 'cash' ? 'cash' : 'bank';
+    
+    const cashFlowEntry = {
+      type: 'income',
+      category: 'revenue',
+      amount: paymentAmount,
+      accountType: accountType,
+      paymentMethod: body.paymentMethod,
+      bankName: body.paymentDetails || '',
+      reference: `Invoice #${invoice.invoiceNumber}${payment.isPartialPayment ? ' (Partial)' : ''}`,
+      description: `Payment received from ${invoice.clientName}${payment.isPartialPayment ? ` - Partial payment ₹${paymentAmount} of ₹${invoice.total}` : ''}`,
+      transactionDate: new Date(body.paymentDate),
+      clientId: invoice.clientId,
+      clientName: invoice.clientName,
+      invoiceId: body.invoiceId,
+      invoiceNumber: invoice.invoiceNumber,
+      paymentId: result.insertedId.toString(),
+      createdAt: new Date(),
+    };
+
+    await db.collection('cashflow').insertOne(cashFlowEntry);
 
     return NextResponse.json({
       success: true,
       paymentId: result.insertedId,
+      totalPaid: totalPaid,
+      remainingAmount: remainingAmount,
+      invoiceStatus: invoiceStatus,
     });
   } catch (error) {
     console.error('Error creating payment:', error);

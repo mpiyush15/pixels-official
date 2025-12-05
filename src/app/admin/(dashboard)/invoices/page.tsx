@@ -35,7 +35,9 @@ interface Invoice {
   advancePayment?: number;
   tax: number;
   total: number;
-  status: 'draft' | 'sent' | 'paid' | 'cancelled' | 'overdue';
+  amountPaid?: number;
+  remainingAmount?: number;
+  status: 'draft' | 'sent' | 'paid' | 'cancelled' | 'overdue' | 'partially_paid';
   issueDate: string;
   dueDate: string;
   paidAt?: string;
@@ -79,6 +81,8 @@ export default function InvoicesPage() {
   const [paymentData, setPaymentData] = useState({
     method: 'bank_transfer',
     details: '',
+    amount: '',
+    date: new Date().toISOString().split('T')[0],
   });
   const invoiceRef = useRef<HTMLDivElement>(null);
   
@@ -103,7 +107,7 @@ export default function InvoicesPage() {
       if (event.key === 'Escape') {
         if (showPaymentModal) {
           setShowPaymentModal(false);
-          setPaymentData({ method: 'bank_transfer', details: '' });
+          setPaymentData({ method: 'bank_transfer', details: '', amount: '', date: new Date().toISOString().split('T')[0] });
         } else if (selectedInvoice) {
           setSelectedInvoice(null);
         } else if (showCreateModal) {
@@ -247,8 +251,9 @@ export default function InvoicesPage() {
       case 'draft': return 'bg-gray-100 text-gray-700';
       case 'sent': return 'bg-blue-100 text-blue-700';
       case 'paid': return 'bg-green-100 text-green-700';
+      case 'partially_paid': return 'bg-orange-100 text-orange-700';
       case 'cancelled': return 'bg-red-100 text-red-700';
-      case 'overdue': return 'bg-orange-100 text-orange-700';
+      case 'overdue': return 'bg-red-100 text-red-700';
       default: return 'bg-gray-100 text-gray-700';
     }
   };
@@ -632,22 +637,33 @@ export default function InvoicesPage() {
     }
   };
 
-  const updateInvoiceStatus = async (invoiceId: string, status: string, paymentInfo?: { method: string; details: string }) => {
+  const updateInvoiceStatus = async (invoiceId: string, status: string, paymentInfo?: { method: string; details: string; amount: string; date: string }) => {
     try {
       const body: any = { status };
       
       if (paymentInfo && status === 'paid') {
         // Record payment in payments collection
-        await fetch('/api/payments', {
+        const response = await fetch('/api/payments', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             invoiceId: invoiceId,
+            amount: paymentInfo.amount ? parseFloat(paymentInfo.amount) : undefined,
             paymentMethod: paymentInfo.method,
             paymentDetails: paymentInfo.details,
-            paymentDate: new Date().toISOString().split('T')[0],
+            paymentDate: paymentInfo.date,
           }),
         });
+
+        const result = await response.json();
+
+        if (!result.success) {
+          alert(result.error || 'Failed to record payment');
+          return;
+        }
+
+        // Show success message with payment details
+        alert(`Payment recorded successfully!\nTotal Paid: ₹${result.totalPaid}\nRemaining: ₹${result.remainingAmount}\nStatus: ${result.invoiceStatus}`);
       } else {
         // Just update status for non-paid status changes
         await fetch(`/api/invoices/${invoiceId}`, {
@@ -660,7 +676,7 @@ export default function InvoicesPage() {
       fetchData();
       setSelectedInvoice(null);
       setShowPaymentModal(false);
-      setPaymentData({ method: 'bank_transfer', details: '' });
+      setPaymentData({ method: 'bank_transfer', details: '', amount: '', date: new Date().toISOString().split('T')[0] });
     } catch (error) {
       console.error('Error updating invoice status:', error);
       alert('Failed to update invoice status. Please try again.');
@@ -729,7 +745,44 @@ export default function InvoicesPage() {
   const handlePaymentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedInvoice) {
-      updateInvoiceStatus(selectedInvoice._id, 'paid', paymentData);
+      // Don't change status, just add payment - API will determine final status
+      addPayment(selectedInvoice._id, paymentData);
+    }
+  };
+
+  const addPayment = async (invoiceId: string, paymentInfo: { method: string; details: string; amount: string; date: string }) => {
+    try {
+      // Record payment in payments collection
+      const response = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          invoiceId: invoiceId,
+          amount: paymentInfo.amount ? parseFloat(paymentInfo.amount) : undefined,
+          paymentMethod: paymentInfo.method,
+          paymentDetails: paymentInfo.details,
+          paymentDate: paymentInfo.date,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        alert(result.error || 'Failed to record payment');
+        return;
+      }
+
+      // Show success message with payment details
+      const statusMessage = result.invoiceStatus === 'paid' ? '✓ Invoice Fully Paid!' : 'Partial Payment Added';
+      alert(`${statusMessage}\n\nPayment: ₹${paymentInfo.amount}\nTotal Paid: ₹${result.totalPaid.toLocaleString('en-IN')}\nRemaining: ₹${result.remainingAmount.toLocaleString('en-IN')}`);
+      
+      fetchData();
+      setSelectedInvoice(null);
+      setShowPaymentModal(false);
+      setPaymentData({ method: 'bank_transfer', details: '', amount: '', date: new Date().toISOString().split('T')[0] });
+    } catch (error) {
+      console.error('Error recording payment:', error);
+      alert('Failed to record payment. Please try again.');
     }
   };
 
@@ -774,13 +827,25 @@ export default function InvoicesPage() {
     }
   };
 
-  const totalRevenue = (invoices || [])
-    .filter(inv => inv.status === 'paid')
-    .reduce((sum, inv) => sum + inv.total, 0);
+  // Total Revenue = Fully paid invoices + Amount paid on partial invoices
+  const totalRevenue = (invoices || []).reduce((sum, inv) => {
+    if (inv.status === 'paid') {
+      return sum + inv.total;
+    } else if (inv.status === 'partially_paid') {
+      return sum + (inv.amountPaid || 0);
+    }
+    return sum;
+  }, 0);
 
-  const pendingAmount = (invoices || [])
-    .filter(inv => inv.status === 'sent')
-    .reduce((sum, inv) => sum + inv.total, 0);
+  // Pending Amount = Sent + Overdue + Remaining on partial invoices
+  const pendingAmount = (invoices || []).reduce((sum, inv) => {
+    if (inv.status === 'sent' || inv.status === 'overdue') {
+      return sum + inv.total;
+    } else if (inv.status === 'partially_paid') {
+      return sum + (inv.remainingAmount || (inv.total - (inv.amountPaid || 0)));
+    }
+    return sum;
+  }, 0);
 
   return (
     <div className="p-8 bg-gray-50 min-h-screen">
@@ -822,7 +887,7 @@ export default function InvoicesPage() {
         <div className="bg-white rounded-xl p-6 border border-gray-200">
           <p className="text-sm text-gray-600 font-light">Pending Invoices</p>
           <p className="text-3xl font-light text-blue-600 mt-2">
-            {invoices?.filter(inv => inv.status === 'sent').length || 0}
+            {invoices?.filter(inv => inv.status === 'sent' || inv.status === 'partially_paid' || inv.status === 'overdue').length || 0}
           </p>
         </div>
         <div className="bg-white rounded-xl p-6 border border-gray-200">
@@ -1293,17 +1358,24 @@ export default function InvoicesPage() {
                     ✓ Mark as Sent
                   </button>
                 )}
-                {selectedInvoice.status === 'sent' && (
-                  <button
-                    onClick={handleMarkAsPaid}
-                    className="px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg text-xs font-light whitespace-nowrap"
-                  >
-                    ✓ Mark as Paid
-                  </button>
+                {(selectedInvoice.status === 'sent' || selectedInvoice.status === 'partially_paid') && (
+                  <>
+                    <button
+                      onClick={handleMarkAsPaid}
+                      className="px-3 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded-lg text-xs font-light whitespace-nowrap"
+                    >
+                      + Add Payment
+                    </button>
+                    {selectedInvoice.status === 'partially_paid' && (
+                      <div className="px-3 py-2 bg-orange-100 text-orange-700 rounded-lg text-xs font-light">
+                        ₹{(selectedInvoice.amountPaid || 0).toLocaleString('en-IN')} / ₹{selectedInvoice.total.toLocaleString('en-IN')} Paid
+                      </div>
+                    )}
+                  </>
                 )}
                 {selectedInvoice.status === 'paid' && (
                   <div className="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-xs font-light">
-                    ✓ Payment Received
+                    ✓ Fully Paid
                   </div>
                 )}
                 {selectedInvoice.status === 'cancelled' && (
@@ -1328,8 +1400,8 @@ export default function InvoicesPage() {
                   <Mail className="w-4 h-4" />
                   {sendingInvoice === selectedInvoice._id ? 'Sending...' : 'Email Client'}
                 </button>
-                {/* Generate Payment Link Button - Available for all statuses except cancelled */}
-                {selectedInvoice.status !== 'cancelled' && (
+                {/* Generate Payment Link Button - Available for all statuses except cancelled and paid */}
+                {selectedInvoice.status !== 'cancelled' && selectedInvoice.status !== 'paid' && (
                   <button
                     onClick={handleGeneratePaymentLink}
                     disabled={generatingPaymentLink}
@@ -1337,7 +1409,7 @@ export default function InvoicesPage() {
                     title="Generate payment link with Cashfree"
                   >
                     <IndianRupee className="w-4 h-4" />
-                    {generatingPaymentLink ? 'Generating...' : 'Generate Payment Link'}
+                    {generatingPaymentLink ? 'Generating...' : 'Payment Link'}
                   </button>
                 )}
                 <button
@@ -1529,11 +1601,13 @@ export default function InvoicesPage() {
             className="bg-white rounded-2xl p-6 max-w-md w-full"
           >
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-xl font-light text-black">Record Payment</h3>
+              <h3 className="text-xl font-light text-black">
+                {(selectedInvoice.amountPaid || 0) > 0 ? 'Add Partial Payment' : 'Record Payment'}
+              </h3>
               <button
                 onClick={() => {
                   setShowPaymentModal(false);
-                  setPaymentData({ method: 'bank_transfer', details: '' });
+                  setPaymentData({ method: 'bank_transfer', details: '', amount: '', date: new Date().toISOString().split('T')[0] });
                 }}
                 className="p-2 hover:bg-gray-100 rounded-lg"
               >
@@ -1544,11 +1618,55 @@ export default function InvoicesPage() {
             <form onSubmit={handlePaymentSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm text-gray-600 font-light mb-2">
-                  Invoice Amount
+                  Invoice Total Amount
                 </label>
                 <div className="text-2xl font-light text-black">
                   ₹{selectedInvoice.total.toLocaleString('en-IN')}
                 </div>
+                {(selectedInvoice.amountPaid || 0) > 0 && (
+                  <div className="mt-2 space-y-1">
+                    <div className="text-sm text-gray-600">
+                      Already Paid: <span className="font-medium text-green-600">₹{(selectedInvoice.amountPaid || 0).toLocaleString('en-IN')}</span>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      Remaining: <span className="font-medium text-orange-600">₹{(selectedInvoice.total - (selectedInvoice.amountPaid || 0)).toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-600 font-light mb-2">
+                  Payment Amount *
+                </label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">₹</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max={selectedInvoice.total - (selectedInvoice.amountPaid || 0)}
+                    step="0.01"
+                    value={paymentData.amount || ''}
+                    onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+                    placeholder={`Max: ${(selectedInvoice.total - (selectedInvoice.amountPaid || 0)).toLocaleString('en-IN')}`}
+                    className="w-full pl-8 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                    required
+                  />
+                </div>
+                <p className="text-xs text-gray-500 mt-1">Enter full or partial payment amount</p>
+              </div>
+
+              <div>
+                <label className="block text-sm text-gray-600 font-light mb-2">
+                  Payment Date *
+                </label>
+                <input
+                  type="date"
+                  value={paymentData.date || new Date().toISOString().split('T')[0]}
+                  onChange={(e) => setPaymentData({ ...paymentData, date: e.target.value })}
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                  required
+                />
               </div>
 
               <div>
@@ -1588,7 +1706,7 @@ export default function InvoicesPage() {
                   type="button"
                   onClick={() => {
                     setShowPaymentModal(false);
-                    setPaymentData({ method: 'bank_transfer', details: '' });
+                    setPaymentData({ method: 'bank_transfer', details: '', amount: '', date: new Date().toISOString().split('T')[0] });
                   }}
                   className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-light"
                 >

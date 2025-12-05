@@ -56,6 +56,30 @@ export async function POST(request: Request) {
       );
     }
 
+    // Auto-create cash flow entry if expense is paid
+    if (expense.paymentStatus === 'paid') {
+      // Determine account type: cash payment method = cash, all others = bank
+      const accountType = expense.paymentMethod === 'cash' ? 'cash' : 'bank';
+      
+      const cashFlowEntry = {
+        type: 'expense',
+        category: 'expense',
+        amount: expense.amount,
+        accountType: accountType,
+        paymentMethod: expense.paymentMethod,
+        reference: expense.invoiceNumber || `Expense #${result.insertedId}`,
+        description: `${expense.category} - ${expense.description}`,
+        transactionDate: new Date(expense.date),
+        vendorId: expense.vendorId,
+        vendorName: expense.vendorName,
+        expenseId: result.insertedId.toString(),
+        expenseCategory: expense.category,
+        createdAt: new Date(),
+      };
+
+      await db.collection('cashflow').insertOne(cashFlowEntry);
+    }
+
     return NextResponse.json(
       { _id: result.insertedId, ...expense },
       { status: 201 }

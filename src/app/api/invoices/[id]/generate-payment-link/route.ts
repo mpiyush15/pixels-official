@@ -20,6 +20,18 @@ export async function POST(
       );
     }
 
+    // Calculate remaining amount to pay
+    const amountPaid = invoice.amountPaid || 0;
+    const remainingAmount = invoice.total - amountPaid;
+
+    // If already fully paid, don't generate link
+    if (remainingAmount <= 0) {
+      return NextResponse.json(
+        { error: 'Invoice is already fully paid' },
+        { status: 400 }
+      );
+    }
+
     // Create Cashfree order using V2 API (Payment Link)
     const isProduction =
       process.env.CASHFREE_MODE === "PROD" ||
@@ -36,7 +48,9 @@ export async function POST(
 
     console.log('Creating Cashfree V2 invoice payment order:', {
       orderId,
-      amount: invoice.total,
+      totalAmount: invoice.total,
+      amountPaid: amountPaid,
+      remainingAmount: remainingAmount,
       mode: process.env.CASHFREE_MODE,
       isProduction,
       apiUrl,
@@ -55,14 +69,16 @@ export async function POST(
         appId: process.env.CASHFREE_CLIENT_ID!,
         secretKey: process.env.CASHFREE_CLIENT_SECRET!,
         orderId: orderId,
-        orderAmount: invoice.total,
+        orderAmount: remainingAmount, // Use remaining amount instead of total
         orderCurrency: 'INR',
         customerName: invoice.clientName,
         customerEmail: invoice.clientEmail,
         customerPhone: invoice.clientPhone || '9999999999',
         returnUrl: `${baseUrl}/payment/callback?invoice_id=${id}`,
         notifyUrl: `${baseUrl}/api/cashfree/webhook`,
-        orderNote: `Payment for Invoice ${invoice.invoiceNumber}`,
+        orderNote: amountPaid > 0 
+          ? `Remaining payment for Invoice ${invoice.invoiceNumber} (₹${remainingAmount.toLocaleString('en-IN')} of ₹${invoice.total.toLocaleString('en-IN')})`
+          : `Payment for Invoice ${invoice.invoiceNumber}`,
       }),
     });
 

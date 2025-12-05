@@ -46,34 +46,50 @@ export async function GET(request: NextRequest) {
     // Get all invoices for detailed revenue analysis
     const allInvoices = await db.collection('invoices').find().toArray();
     
-    // Revenue from PAID invoices only
+    // Revenue from PAID and PARTIALLY PAID invoices
     const paidInvoices = allInvoices.filter(inv => inv.status === 'paid');
-    const totalRevenue = paidInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
+    const partiallyPaidInvoices = allInvoices.filter(inv => inv.status === 'partially_paid');
     
-    // Outstanding dues (sent + overdue invoices)
+    // Total revenue = fully paid invoices + amount paid on partial invoices
+    const fullyPaidRevenue = paidInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
+    const partialRevenue = partiallyPaidInvoices.reduce((sum, inv) => sum + (inv.amountPaid || 0), 0);
+    const totalRevenue = fullyPaidRevenue + partialRevenue;
+    
+    // Outstanding dues = (sent + overdue + partially paid remaining)
     const unpaidInvoices = allInvoices.filter(inv => 
       inv.status === 'sent' || inv.status === 'overdue'
     );
-    const totalDues = unpaidInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
+    const unpaidTotal = unpaidInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
+    const partiallyPaidRemaining = partiallyPaidInvoices.reduce((sum, inv) => 
+      sum + (inv.remainingAmount || (inv.total - (inv.amountPaid || 0))), 0
+    );
+    const totalDues = unpaidTotal + partiallyPaidRemaining;
     
     // Draft invoices value
     const draftInvoices = allInvoices.filter(inv => inv.status === 'draft');
     const draftValue = draftInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
     
-    // This month's revenue
-    const currentMonthRevenue = paidInvoices
-      .filter(inv => new Date(inv.paidAt || inv.createdAt) >= firstDayOfMonth)
-      .reduce((sum, inv) => sum + (inv.total || 0), 0);
-    const lastMonthRevenue = paidInvoices
-      .filter(inv => {
-        const date = new Date(inv.paidAt || inv.createdAt);
-        return date >= lastMonth && date < firstDayOfMonth;
-      })
-      .reduce((sum, inv) => sum + (inv.total || 0), 0);
+    // This month's revenue from payments
+    const payments = await db.collection('payments').find({
+      status: 'completed',
+      paymentDate: { $gte: firstDayOfMonth }
+    }).toArray();
+    const currentMonthRevenue = payments.reduce((sum, p) => sum + (p.amount || 0), 0);
     
-    // Overdue amount (critical)
+    const lastMonthPayments = await db.collection('payments').find({
+      status: 'completed',
+      paymentDate: { $gte: lastMonth, $lt: firstDayOfMonth }
+    }).toArray();
+    const lastMonthRevenue = lastMonthPayments.reduce((sum, p) => sum + (p.amount || 0), 0);
+    
+    // Overdue amount (critical) - full amount for overdue, remaining for partial overdue
     const overdueInvoices = allInvoices.filter(inv => inv.status === 'overdue');
-    const overdueAmount = overdueInvoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
+    const overdueAmount = overdueInvoices.reduce((sum, inv) => {
+      if (inv.status === 'partially_paid') {
+        return sum + (inv.remainingAmount || (inv.total - (inv.amountPaid || 0)));
+      }
+      return sum + (inv.total || 0);
+    }, 0);
     
     // Active projects
     const activeProjects = await db.collection('projects').countDocuments({
@@ -100,9 +116,10 @@ export async function GET(request: NextRequest) {
       // Invoice counts
       totalInvoices: allInvoices.length,
       paidInvoices: paidInvoices.length,
-      unpaidInvoices: unpaidInvoices.length,
+      unpaidInvoices: unpaidInvoices.length + partiallyPaidInvoices.length,
       overdueInvoices: overdueInvoices.length,
       draftInvoices: draftInvoices.length,
+      partiallyPaidInvoices: partiallyPaidInvoices.length,
       
       // Business metrics
       totalClients,
