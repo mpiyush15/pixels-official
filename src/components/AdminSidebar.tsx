@@ -21,7 +21,8 @@ import {
   Upload,
   Building,
   DollarSign,
-  Wallet
+  Wallet,
+  Calendar
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -33,6 +34,7 @@ const menuItems = [
   { icon: Mail, label: 'Leads', path: '/admin/leads', category: 'CRM' },
   { icon: Users, label: 'Clients', path: '/admin/clients', category: 'CRM' },
   { icon: FolderKanban, label: 'Projects', path: '/admin/projects', category: 'CRM' },
+  { icon: Calendar, label: 'Schedule', path: '/admin/schedule', category: 'CRM' },
   { icon: MessageCircle, label: 'Project Chats', path: '/admin/chats', category: 'CRM' },
   { icon: Upload, label: 'Submitted Work', path: '/admin/submitted-work', category: 'CRM' },
   
