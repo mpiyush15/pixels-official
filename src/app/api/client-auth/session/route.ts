@@ -15,18 +15,12 @@ export async function GET(request: NextRequest) {
       _id: new ObjectId(clientId),
     });
 
-    // Only allow development clients or clients without clientType (legacy) to access portal
+    // Check if client exists and is active
     if (!client || client.status === 'inactive') {
       return NextResponse.json({ authenticated: false }, { status: 401 });
     }
 
-    if (client.clientType && client.clientType !== 'development') {
-      return NextResponse.json({ 
-        authenticated: false, 
-        error: 'Portal access is only available for development clients'
-      }, { status: 403 });
-    }
-
+    // All clients can now access the portal
     return NextResponse.json({
       authenticated: true,
       client: {
