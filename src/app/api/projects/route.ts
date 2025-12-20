@@ -43,6 +43,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const db = await getDatabase();
 
+    // 🔥 CRITICAL: Fetch client email from clientId to ensure proper linking
+    let clientEmail = body.clientEmail;
+    if (body.clientId && !clientEmail) {
+      const client = await db.collection('clients').findOne({
+        _id: new ObjectId(body.clientId),
+      });
+      if (client) {
+        clientEmail = client.email;
+      }
+    }
+
     // Auto-calculate progress based on milestones
     const milestones = body.milestones || [];
     const totalMilestones = milestones.length;
@@ -51,6 +62,8 @@ export async function POST(request: NextRequest) {
 
     const project = {
       ...body,
+      clientId: body.clientId, // 🔥 Ensure clientId is set
+      clientEmail: clientEmail, // 🔥 Ensure clientEmail is set
       status: body.status || 'planning',
       progress: calculatedProgress,
       createdAt: new Date(),

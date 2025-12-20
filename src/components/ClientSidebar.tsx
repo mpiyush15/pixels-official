@@ -12,6 +12,7 @@ import {
   Receipt,
   MessageCircle,
   Upload,
+  User,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -22,6 +23,7 @@ const menuItems = [
   { icon: MessageCircle, label: 'Chats', path: '/client-portal/chats' },
   { icon: FileText, label: 'Invoices', path: '/client-portal/invoices' },
   { icon: Receipt, label: 'Payments', path: '/client-portal/payments' },
+  { icon: User, label: 'Profile', path: '/client-portal/profile' },
 ];
 
 export default function ClientSidebar() {

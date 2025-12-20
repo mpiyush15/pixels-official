@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Lock, Mail, LogIn } from 'lucide-react';
+import Link from 'next/link';
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -123,6 +124,16 @@ export default function AdminLogin() {
                 </>
               )}
             </motion.button>
+
+            {/* Forgot Password Link */}
+            <div className="text-center">
+              <Link
+                href="/admin/forgot-password"
+                className="text-gray-400 hover:text-white text-sm font-light transition-colors"
+              >
+                Forgot your password?
+              </Link>
+            </div>
           </form>
         </div>
 

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import ProjectChat from '@/components/ProjectChat';
 import WorkSubmissionForm from '@/components/WorkSubmissionForm';
+import ContractModal from '@/components/ContractModal';
 
 interface Project {
   _id: string;
@@ -34,6 +35,9 @@ interface Project {
   startDate: string;
   endDate: string;
   budget: number;
+  contractAccepted?: boolean;
+  contractAcceptedAt?: string;
+  contractAcceptedBy?: string;
   milestones: Array<{
     name: string;
     description?: string;
@@ -65,6 +69,8 @@ export default function ClientProjectsPage() {
   const [activeChatProject, setActiveChatProject] = useState<Project | null>(null);
   const [activeSubmissionProject, setActiveSubmissionProject] = useState<Project | null>(null);
   const [expandedProjects, setExpandedProjects] = useState<{ [key: string]: boolean }>({});
+  const [contractProject, setContractProject] = useState<Project | null>(null);
+  const [showContractModal, setShowContractModal] = useState(false);
 
   useEffect(() => {
     checkAuth();
@@ -114,6 +120,40 @@ export default function ClientProjectsPage() {
       console.error('Error fetching projects:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleContractAccept = async () => {
+    if (!contractProject) return;
+
+    try {
+      console.log('Accepting contract for project:', contractProject._id);
+      
+      const response = await fetch(
+        `/api/client-portal/projects/${contractProject._id}/accept-contract`,
+        { method: 'POST' }
+      );
+
+      const data = await response.json();
+      console.log('Contract acceptance response:', data);
+
+      if (response.ok && data.success) {
+        // Update local state
+        setProjects(projects.map(p =>
+          p._id === contractProject._id
+            ? { ...p, contractAccepted: true, contractAcceptedAt: new Date().toISOString() }
+            : p
+        ));
+        setShowContractModal(false);
+        setContractProject(null);
+        alert('Contract accepted successfully! You can now access all project features.');
+      } else {
+        console.error('Contract acceptance failed:', data);
+        alert('Failed to accept contract: ' + (data.error || 'Unknown error'));
+      }
+    } catch (error) {
+      console.error('Contract acceptance error:', error);
+      alert('Failed to accept contract. Please try again. Error: ' + (error instanceof Error ? error.message : 'Unknown'));
     }
   };
 
@@ -464,20 +504,35 @@ export default function ClientProjectsPage() {
                   End: {new Date(project.endDate).toLocaleDateString('en-IN')}
                 </div>
                 <div className="ml-auto flex gap-2">
-                  <button
-                    onClick={() => setActiveSubmissionProject(project)}
-                    className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 text-sm font-light"
-                  >
-                    <Upload className="w-4 h-4" />
-                    Submit Work
-                  </button>
-                  <button
-                    onClick={() => setActiveChatProject(project)}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 text-sm font-light"
-                  >
-                    <MessageCircle className="w-4 h-4" />
-                    Chat
-                  </button>
+                  {!project.contractAccepted ? (
+                    <button
+                      onClick={() => {
+                        setContractProject(project);
+                        setShowContractModal(true);
+                      }}
+                      className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 text-sm font-medium"
+                    >
+                      <FileText className="w-4 h-4" />
+                      Accept Contract to Start
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => setActiveSubmissionProject(project)}
+                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 text-sm font-light"
+                      >
+                        <Upload className="w-4 h-4" />
+                        Submit Work
+                      </button>
+                      <button
+                        onClick={() => setActiveChatProject(project)}
+                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 text-sm font-light"
+                      >
+                        <MessageCircle className="w-4 h-4" />
+                        Chat
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             </motion.div>
@@ -559,6 +614,22 @@ export default function ClientProjectsPage() {
           </>
         )}
       </AnimatePresence>
+
+      {/* Contract Modal */}
+      {contractProject && clientInfo && (
+        <ContractModal
+          isOpen={showContractModal}
+          onClose={() => {
+            setShowContractModal(false);
+            setContractProject(null);
+          }}
+          onAccept={handleContractAccept}
+          projectName={contractProject.projectName}
+          projectType={contractProject.projectType}
+          clientName={clientInfo.name}
+          companyName={clientInfo.name}
+        />
+      )}
     </div>
   );
 }

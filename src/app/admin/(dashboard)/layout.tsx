@@ -1,7 +1,7 @@
 'use client';
 
 import AdminSidebar from '@/components/AdminSidebar';
-import TopBar from '@/components/TopBar';
+import AdminTopBar from '@/components/AdminTopBar';
 import { useAutoLogout } from '@/hooks/useAutoLogout';
 
 export default function AdminLayout({
@@ -21,7 +21,7 @@ export default function AdminLayout({
     <div className="flex h-screen bg-gray-50">
       <AdminSidebar />
       <main className="flex-1 overflow-y-auto flex flex-col pt-[73px] lg:pt-0">
-        <TopBar />
+        <AdminTopBar />
         <div className="flex-1">
           {children}
         </div>
