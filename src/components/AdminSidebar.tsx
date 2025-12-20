@@ -38,6 +38,12 @@ const menuItems = [
   { icon: MessageCircle, label: 'Project Chats', path: '/admin/chats', category: 'CRM' },
   { icon: Upload, label: 'Submitted Work', path: '/admin/submitted-work', category: 'CRM' },
   
+  // Business Management
+  { icon: TrendingUp, label: 'Business Overview', path: '/admin/overview', category: 'Business' },
+  { icon: UserCog, label: 'Staff Management', path: '/admin/staff', category: 'Business' },
+  { icon: FileText, label: 'Task Management', path: '/admin/tasks', category: 'Business' },
+  { icon: Image, label: 'Daily Content', path: '/admin/daily-content', category: 'Business' },
+  
   // Accounts & Finance
   { icon: FileText, label: 'Invoices', path: '/admin/invoices', category: 'Accounts' },
   { icon: CreditCard, label: 'Payments', path: '/admin/payments', category: 'Accounts' },
@@ -45,13 +51,8 @@ const menuItems = [
   { icon: Receipt, label: 'Expenses', path: '/admin/expenses', category: 'Accounts' },
   { icon: DollarSign, label: 'Salaries', path: '/admin/salaries', category: 'Accounts' },
   
-  // Personal Accounts (separate section, not shown on dashboard)
+  // Personal Accounts
   { icon: Wallet, label: 'Personal Accounts', path: '/admin/personal-accounts', category: 'Personal' },
-  
-  // Business Management
-  { icon: TrendingUp, label: 'Business Overview', path: '/admin/overview', category: 'Business' },
-  { icon: UserCog, label: 'Staff Management', path: '/admin/staff', category: 'Business' },
-  { icon: Image, label: 'Daily Content', path: '/admin/daily-content', category: 'Business' },
 ];
 
 export default function AdminSidebar() {

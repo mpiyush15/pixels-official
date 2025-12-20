@@ -3,7 +3,7 @@ export interface Staff {
   name: string;
   email: string;
   password: string;
-  role: 'content-creator' | 'admin';
+  role: 'content-creator' | 'video-editor' | 'graphic-designer' | 'manager' | 'social-media-manager' | 'admin';
   assignedClients: string[]; // Array of client IDs
   isActive: boolean;
   createdAt: Date;

@@ -320,6 +320,10 @@ export default function StaffManagementPage() {
                         className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       >
                         <option value="content-creator">Content Creator</option>
+                        <option value="video-editor">Video Editor</option>
+                        <option value="graphic-designer">Graphic Designer</option>
+                        <option value="manager">Manager</option>
+                        <option value="social-media-manager">Social Media Manager</option>
                         <option value="admin">Admin</option>
                       </select>
                     </div>

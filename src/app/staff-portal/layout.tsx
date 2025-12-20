@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { useAutoLogout } from '@/hooks/useAutoLogout';
+import StaffSidebar from '@/components/StaffSidebar';
 
 export default function StaffPortalLayout({
   children,
@@ -19,9 +20,17 @@ export default function StaffPortalLayout({
     enabled: !isLoginPage,
   });
 
+  // Show sidebar layout only when not on login page
+  if (isLoginPage) {
+    return <div className="min-h-screen bg-gray-50">{children}</div>;
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {children}
+    <div className="flex min-h-screen bg-gray-50">
+      <StaffSidebar />
+      <div className="flex-1">
+        {children}
+      </div>
     </div>
   );
 }
