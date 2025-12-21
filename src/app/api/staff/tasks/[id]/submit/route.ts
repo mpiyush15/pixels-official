@@ -8,9 +8,10 @@ const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-k
 // POST submit work for task (staff)
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = request.cookies.get('staff-token')?.value;
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -27,7 +28,7 @@ export async function POST(
 
     // Verify task belongs to this staff member
     const task = await tasksCollection.findOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(id),
       assignedTo: staffId,
     });
 
@@ -52,7 +53,7 @@ export async function POST(
     }
 
     await tasksCollection.updateOne(
-      { _id: new ObjectId(params.id) },
+      { _id: new ObjectId(id) },
       { $set: updates }
     );
 

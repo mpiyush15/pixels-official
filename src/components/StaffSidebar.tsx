@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, FileText, Upload, LogOut } from 'lucide-react';
+import { LayoutDashboard, FileText, BarChart3, Wallet } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function StaffSidebar() {
@@ -19,13 +19,19 @@ export default function StaffSidebar() {
       name: 'My Tasks', 
       icon: FileText, 
       href: '/staff-portal/tasks',
-      description: 'View all assigned tasks'
+      description: 'View and manage tasks'
     },
     { 
-      name: 'Upload Content', 
-      icon: Upload, 
-      href: '/staff-portal/upload',
-      description: 'Upload files'
+      name: 'Work Summary', 
+      icon: BarChart3, 
+      href: '/staff-portal/work-summary',
+      description: 'Weekly & monthly reports'
+    },
+    { 
+      name: 'Payments', 
+      icon: Wallet, 
+      href: '/staff-portal/payments',
+      description: 'Payment history & bank'
     },
   ];
 

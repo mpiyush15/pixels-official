@@ -6,6 +6,13 @@ export interface Staff {
   role: 'content-creator' | 'video-editor' | 'graphic-designer' | 'manager' | 'social-media-manager' | 'admin';
   assignedClients: string[]; // Array of client IDs
   isActive: boolean;
+  bankDetails?: {
+    accountHolderName: string;
+    bankName: string;
+    accountNumber: string;
+    ifscCode: string;
+    upiId?: string;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,4 +36,19 @@ export interface StaffSession {
   email: string;
   name: string;
   role: string;
+}
+
+export interface Payment {
+  _id?: string;
+  staffId: string;
+  staffName: string;
+  month: string;
+  amount: number;
+  tasksCompleted: number;
+  status: 'pending' | 'processing' | 'paid';
+  transactionId?: string;
+  paidAt?: Date;
+  notes?: string;
+  createdAt: Date;
+  updatedAt?: Date;
 }

@@ -47,6 +47,7 @@ const menuItems = [
   // Accounts & Finance
   { icon: FileText, label: 'Invoices', path: '/admin/invoices', category: 'Accounts' },
   { icon: CreditCard, label: 'Payments', path: '/admin/payments', category: 'Accounts' },
+  { icon: Wallet, label: 'Staff Payments', path: '/admin/staff-payments', category: 'Accounts' },
   { icon: Building, label: 'Vendors', path: '/admin/vendors', category: 'Accounts' },
   { icon: Receipt, label: 'Expenses', path: '/admin/expenses', category: 'Accounts' },
   { icon: DollarSign, label: 'Salaries', path: '/admin/salaries', category: 'Accounts' },

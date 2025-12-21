@@ -610,8 +610,8 @@ export default function DashboardPage() {
             </div>
           </div>
           
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-64 min-h-[256px]">
+            <ResponsiveContainer width="100%" height="100%" minHeight={256}>
               <PieChart>
                 <defs>
                   <filter id="shadow" height="200%">
@@ -682,8 +682,8 @@ export default function DashboardPage() {
           className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100"
         >
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Financial Comparison</h2>
-          <div className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
+          <div className="h-80 min-h-[320px]">
+            <ResponsiveContainer width="100%" height="100%" minHeight={320}>
               <BarChart
                 data={[
                   {

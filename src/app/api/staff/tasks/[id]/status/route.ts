@@ -8,9 +8,10 @@ const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-k
 // PATCH update task status (staff)
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const token = request.cookies.get('staff-token')?.value;
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -34,7 +35,7 @@ export async function PATCH(
 
     // Verify task belongs to this staff member
     const task = await tasksCollection.findOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(id),
       assignedTo: staffId,
     });
 
@@ -58,7 +59,7 @@ export async function PATCH(
     }
 
     await tasksCollection.updateOne(
-      { _id: new ObjectId(params.id) },
+      { _id: new ObjectId(id) },
       { $set: updates }
     );
 

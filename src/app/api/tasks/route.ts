@@ -21,10 +21,20 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters for filtering
     const { searchParams } = new URL(request.url);
+    const taskId = searchParams.get('taskId');
     const staffId = searchParams.get('staffId');
     const clientId = searchParams.get('clientId');
     const projectId = searchParams.get('projectId');
     const status = searchParams.get('status');
+
+    // If taskId is provided, return single task
+    if (taskId) {
+      const task = await tasksCollection.findOne({ _id: new ObjectId(taskId) });
+      if (!task) {
+        return NextResponse.json({ error: 'Task not found' }, { status: 404 });
+      }
+      return NextResponse.json([{ ...task, _id: task._id.toString() }]);
+    }
 
     // Build filter query
     const filter: any = {};

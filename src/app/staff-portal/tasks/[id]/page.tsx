@@ -8,6 +8,8 @@ import {
   CheckCircle, Clock, Send, Download 
 } from 'lucide-react';
 import StaffTopBar from '@/components/StaffTopBar';
+import FileThumbnail from '@/components/FileThumbnail';
+import FilePreviewModal from '@/components/FilePreviewModal';
 
 interface Task {
   _id: string;
@@ -50,6 +52,12 @@ export default function TaskDetailPage() {
   const [notes, setNotes] = useState('');
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [previewFile, setPreviewFile] = useState<{
+    name: string;
+    url: string;
+    key: string;
+    size: number;
+  } | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -351,12 +359,25 @@ export default function TaskDetailPage() {
             transition={{ delay: 0.3 }}
             className="bg-white rounded-lg shadow-sm p-6 mb-6"
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Update Status</h2>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              {canStartTask && 'Ready to Start?'}
+              {canCompleteTask && 'Working on Task'}
+              {canSubmitTask && !canStartTask && !canCompleteTask && 'Ready to Submit'}
+            </h2>
+            
+            {canStartTask && (
+              <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-blue-800 mb-3">
+                  Click "Start Working" to begin this task. This will change the status to "In Progress" and enable the upload section.
+                </p>
+              </div>
+            )}
+            
             <div className="flex flex-wrap gap-3">
               {canStartTask && (
                 <button
                   onClick={() => updateStatus('in-progress')}
-                  className="px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors flex items-center space-x-2"
+                  className="px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:shadow-lg transition-all flex items-center space-x-2 font-semibold"
                 >
                   <Clock className="h-5 w-5" />
                   <span>Start Working</span>
@@ -365,7 +386,7 @@ export default function TaskDetailPage() {
               {canCompleteTask && (
                 <button
                   onClick={() => updateStatus('completed')}
-                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
+                  className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg hover:shadow-lg transition-all flex items-center space-x-2 font-semibold"
                 >
                   <CheckCircle className="h-5 w-5" />
                   <span>Mark as Completed</span>
@@ -375,15 +396,22 @@ export default function TaskDetailPage() {
           </motion.div>
         )}
 
-        {/* Submission Form */}
+        {/* Submission Form - Only visible when task is in-progress or needs revision */}
         {canSubmitTask && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-white rounded-lg shadow-sm p-6 mb-6"
+            className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-lg shadow-sm p-6 mb-6"
           >
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Submit Work</h2>
+            <div className="flex items-center space-x-3 mb-4">
+              <Upload className="h-6 w-6 text-purple-600" />
+              <h2 className="text-xl font-bold text-gray-900">Upload Your Work</h2>
+            </div>
+            
+            <p className="text-gray-700 mb-4">
+              Once you've completed your work, upload your files and add notes below. Your submission will be sent to the admin for review.
+            </p>
             
             <div className="space-y-4">
               <div>
@@ -452,26 +480,13 @@ export default function TaskDetailPage() {
             className="bg-white rounded-lg shadow-sm p-6 mb-6"
           >
             <h2 className="text-xl font-bold text-gray-900 mb-4">Submitted Files</h2>
-            <div className="space-y-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {task.files.map((file, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center space-x-3">
-                    <FileText className="h-5 w-5 text-gray-400" />
-                    <div>
-                      <p className="font-medium text-gray-900">{file.name}</p>
-                      <p className="text-sm text-gray-500">{formatFileSize(file.size)}</p>
-                    </div>
-                  </div>
-                  <a
-                    href={file.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center space-x-2"
-                  >
-                    <Download className="h-4 w-4" />
-                    <span>Download</span>
-                  </a>
-                </div>
+                <FileThumbnail
+                  key={index}
+                  file={file}
+                  onClick={() => setPreviewFile(file)}
+                />
               ))}
             </div>
           </motion.div>
@@ -490,6 +505,14 @@ export default function TaskDetailPage() {
           </motion.div>
         )}
       </div>
+
+      {/* File Preview Modal */}
+      {previewFile && (
+        <FilePreviewModal
+          file={previewFile}
+          onClose={() => setPreviewFile(null)}
+        />
+      )}
     </div>
   );
 }
