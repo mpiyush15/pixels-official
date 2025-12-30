@@ -4,30 +4,8 @@ import nodemailer from 'nodemailer';
 // Initialize Resend (optional - as backup)
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
-// Initialize AWS SES SMTP Transporter
-const smtpTransporter = process.env.SMTP_HOST ? (() => {
-  console.log('📧 Initializing SMTP Transporter:');
-  console.log('  Host:', process.env.SMTP_HOST);
-  console.log('  Port:', process.env.SMTP_PORT);
-  console.log('  User:', process.env.SMTP_USER);
-  console.log('  Password:', process.env.SMTP_PASSWORD ? `[Set - ${process.env.SMTP_PASSWORD.length} chars]` : '[Not Set]');
-  
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: parseInt(process.env.SMTP_PORT || '587'),
-    secure: process.env.SMTP_PORT === '465', // true for 465 (SSL), false for 587 (TLS)
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
-    },
-    tls: {
-      rejectUnauthorized: false
-    },
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 10000,
-    socketTimeout: 10000,
-  });
-})() : null;
+// Initialize Zeptomail API
+const zeptomailApiToken = process.env.ZEPTOMAIL_API_TOKEN;
 
 // Email configuration
 const FROM_EMAIL = process.env.EMAIL_FROM || 'noreply@pixelsdigital.tech';
@@ -44,57 +22,85 @@ export interface EmailOptions {
 }
 
 /**
- * Send email using AWS SES SMTP (primary) or Resend (backup)
+ * Send email using Zeptomail API (primary) or Resend (backup)
  */
 export async function sendEmail(options: EmailOptions): Promise<{ success: boolean; error?: string; messageId?: string }> {
   try {
     // Check if any email service is configured
-    if (!smtpTransporter && !resend) {
+    if (!zeptomailApiToken && !resend) {
       console.warn('No email service configured. Email would have been sent to:', options.to);
       return { success: false, error: 'Email service not configured' };
     }
 
-    // Priority 1: Use AWS SES SMTP if configured
-    if (smtpTransporter) {
+    // Priority 1: Use Zeptomail API if token is configured
+    if (zeptomailApiToken) {
       try {
-        console.log('Attempting to send email via SMTP to:', options.to);
-        console.log('SMTP Config:', {
-          host: process.env.SMTP_HOST,
-          port: process.env.SMTP_PORT,
-          from: FROM_EMAIL
-        });
+        console.log('📧 Attempting to send email via Zeptomail API to:', options.to);
+        console.log('  From:', FROM_EMAIL);
         
-        const info = await smtpTransporter.sendMail({
-          from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
-          to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+        const toAddresses = Array.isArray(options.to) 
+          ? options.to.map(email => ({ email_address: { email_address: email } }))
+          : [{ email_address: { email_address: options.to } }];
+
+        const requestBody = {
+          from: {
+            address: FROM_EMAIL,
+            name: FROM_NAME
+          },
+          to: toAddresses,
           subject: options.subject,
-          html: options.html,
-          text: options.text,
+          htmlbody: options.html,
+          textbody: options.text || stripHtml(options.html),
+        };
+
+        const response = await fetch('https://api.zeptomail.com/v1.1/email', {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+            'Authorization': zeptomailApiToken,
+          },
+          body: JSON.stringify(requestBody),
         });
 
-        console.log('✅ Email sent successfully via SMTP:', info.messageId);
-        return { success: true, messageId: info.messageId };
-      } catch (smtpError: any) {
-        console.error('❌ SMTP Error Details:', {
-          message: smtpError.message,
-          code: smtpError.code,
-          command: smtpError.command,
-          response: smtpError.response
-        });
+        const responseData = await response.json();
+
+        if (!response.ok) {
+          console.error('❌ Zeptomail API Error:', {
+            status: response.status,
+            statusText: response.statusText,
+            data: responseData
+          });
+          
+          // If Resend is available, fall back to it
+          if (resend) {
+            console.log('⚠️  Zeptomail failed, falling back to Resend...');
+          } else {
+            return { 
+              success: false, 
+              error: `Zeptomail Error: ${responseData.message || 'Failed to send email'}` 
+            };
+          }
+        } else {
+          console.log('✅ Email sent successfully via Zeptomail API:', responseData.request_id || responseData.id);
+          return { success: true, messageId: responseData.request_id || responseData.id };
+        }
+      } catch (zeptomailError: any) {
+        console.error('❌ Zeptomail API Exception:', zeptomailError.message);
         
         // If Resend is available, fall back to it
         if (resend) {
-          console.log('Falling back to Resend...');
+          console.log('⚠️  Zeptomail failed, falling back to Resend...');
         } else {
           return { 
             success: false, 
-            error: `SMTP Error: ${smtpError.message || 'Failed to send email'}` 
+            error: `Zeptomail Error: ${zeptomailError.message || 'Failed to send email'}` 
           };
         }
       }
     }
 
-    // Priority 2: Use Resend if SMTP failed or not configured
+    // Priority 2: Use Resend if Zeptomail failed or not configured
     if (resend) {
       const { data, error } = await resend.emails.send({
         from: `${FROM_NAME} <${FROM_EMAIL}>`,
@@ -108,15 +114,27 @@ export async function sendEmail(options: EmailOptions): Promise<{ success: boole
         return { success: false, error: error.message };
       }
 
-      console.log('Email sent via Resend:', data?.id);
+      console.log('✅ Email sent via Resend:', data?.id);
       return { success: true, messageId: data?.id };
     }
 
     return { success: false, error: 'No email provider configured' };
   } catch (error: any) {
-    console.error('Email sending failed:', error);
+    console.error('❌ Email sending failed:', error);
     return { success: false, error: error.message || 'Failed to send email' };
   }
+}
+
+/**
+ * Strip HTML tags from text
+ */
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&');
 }
 
 /**
