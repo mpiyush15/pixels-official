@@ -1,11 +1,17 @@
 import { Resend } from 'resend';
-import nodemailer from 'nodemailer';
+// @ts-ignore - Type declaration issue with zeptomail package
+import { SendMailClient } from 'zeptomail';
+
+// Initialize Zeptomail client
+const zeptomailClient = process.env.ZEPTOMAIL_API_TOKEN 
+  ? new SendMailClient({
+      url: 'https://api.zeptomail.com/v1.1/email',
+      token: process.env.ZEPTOMAIL_API_TOKEN
+    })
+  : null;
 
 // Initialize Resend (optional - as backup)
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-
-// Initialize Zeptomail API
-const zeptomailApiToken = process.env.ZEPTOMAIL_API_TOKEN;
 
 // Email configuration
 const FROM_EMAIL = process.env.EMAIL_FROM || 'noreply@pixelsdigital.tech';
@@ -22,27 +28,37 @@ export interface EmailOptions {
 }
 
 /**
- * Send email using Zeptomail API (primary) or Resend (backup)
+ * Send email using Zeptomail SDK (primary) or Resend (backup)
  */
 export async function sendEmail(options: EmailOptions): Promise<{ success: boolean; error?: string; messageId?: string }> {
   try {
     // Check if any email service is configured
-    if (!zeptomailApiToken && !resend) {
+    if (!zeptomailClient && !resend) {
       console.warn('No email service configured. Email would have been sent to:', options.to);
       return { success: false, error: 'Email service not configured' };
     }
 
-    // Priority 1: Use Zeptomail API if token is configured
-    if (zeptomailApiToken) {
+    // Priority 1: Use Zeptomail SDK if client is initialized
+    if (zeptomailClient) {
       try {
-        console.log('📧 Attempting to send email via Zeptomail API to:', options.to);
+        console.log('📧 Attempting to send email via Zeptomail to:', options.to);
         console.log('  From:', FROM_EMAIL);
         
         const toAddresses = Array.isArray(options.to) 
-          ? options.to.map(email => ({ email_address: { email_address: email } }))
-          : [{ email_address: { email_address: options.to } }];
+          ? options.to.map(email => ({
+              email_address: {
+                address: email,
+                name: email.split('@')[0]
+              }
+            }))
+          : [{
+              email_address: {
+                address: options.to,
+                name: options.to.split('@')[0]
+              }
+            }];
 
-        const requestBody = {
+        const mailResponse = await zeptomailClient.sendMail({
           from: {
             address: FROM_EMAIL,
             name: FROM_NAME
@@ -51,42 +67,19 @@ export async function sendEmail(options: EmailOptions): Promise<{ success: boole
           subject: options.subject,
           htmlbody: options.html,
           textbody: options.text || stripHtml(options.html),
-        };
-
-        const response = await fetch('https://api.zeptomail.com/v1.1/email', {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'Authorization': zeptomailApiToken,
-          },
-          body: JSON.stringify(requestBody),
         });
 
-        const responseData = await response.json();
-
-        if (!response.ok) {
-          console.error('❌ Zeptomail API Error:', {
-            status: response.status,
-            statusText: response.statusText,
-            data: responseData
-          });
-          
-          // If Resend is available, fall back to it
-          if (resend) {
-            console.log('⚠️  Zeptomail failed, falling back to Resend...');
-          } else {
-            return { 
-              success: false, 
-              error: `Zeptomail Error: ${responseData.message || 'Failed to send email'}` 
-            };
-          }
-        } else {
-          console.log('✅ Email sent successfully via Zeptomail API:', responseData.request_id || responseData.id);
-          return { success: true, messageId: responseData.request_id || responseData.id };
-        }
+        console.log('✅ Email sent successfully via Zeptomail:', mailResponse?.request_id || mailResponse?.id || 'Unknown');
+        return { success: true, messageId: mailResponse?.request_id || mailResponse?.id || 'sent' };
       } catch (zeptomailError: any) {
-        console.error('❌ Zeptomail API Exception:', zeptomailError.message);
+        const errorMessage = zeptomailError?.message || 'Failed to send email';
+        const errorDetails = zeptomailError?.response || zeptomailError;
+        
+        console.error('❌ Zeptomail Error:', {
+          message: errorMessage,
+          details: errorDetails,
+          status: zeptomailError?.status || 'Unknown'
+        });
         
         // If Resend is available, fall back to it
         if (resend) {
@@ -94,7 +87,7 @@ export async function sendEmail(options: EmailOptions): Promise<{ success: boole
         } else {
           return { 
             success: false, 
-            error: `Zeptomail Error: ${zeptomailError.message || 'Failed to send email'}` 
+            error: `Zeptomail Error: ${errorMessage}` 
           };
         }
       }

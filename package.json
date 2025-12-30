@@ -30,7 +30,8 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "recharts": "^3.5.1",
-    "resend": "^6.5.2"
+    "resend": "^6.5.2",
+    "zeptomail": "^7.0.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

@@ -1,60 +1,86 @@
 import { NextRequest, NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
 
 export async function GET(request: NextRequest) {
   try {
-    console.log('Testing SMTP connection...');
-    console.log('SMTP_HOST:', process.env.SMTP_HOST);
-    console.log('SMTP_PORT:', process.env.SMTP_PORT);
-    console.log('SMTP_USER:', process.env.SMTP_USER);
+    console.log('🧪 Testing Zeptomail API connection...');
+    console.log('ZEPTOMAIL_API_TOKEN:', process.env.ZEPTOMAIL_API_TOKEN ? `[Set - ${process.env.ZEPTOMAIL_API_TOKEN.length} chars]` : '[Not Set]');
     console.log('EMAIL_FROM:', process.env.EMAIL_FROM);
 
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_PORT === '465',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
+    const zeptomailApiToken = process.env.ZEPTOMAIL_API_TOKEN;
+
+    if (!zeptomailApiToken) {
+      return NextResponse.json({
+        success: false,
+        error: 'ZEPTOMAIL_API_TOKEN not configured',
+        message: 'Please set ZEPTOMAIL_API_TOKEN in environment variables'
+      }, { status: 500 });
+    }
+
+    // Test Zeptomail API connection with a simple API call
+    const response = await fetch('https://api.zeptomail.com/v1.1/email', {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': zeptomailApiToken,
       },
-      tls: {
-        rejectUnauthorized: false
-      },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 10000,
+      body: JSON.stringify({
+        from: {
+          address: process.env.EMAIL_FROM || 'noreply@pixelsdigital.tech',
+          name: 'Pixels Digital'
+        },
+        to: [{
+          email_address: {
+            email_address: 'test@example.com'
+          }
+        }],
+        subject: 'Test Email',
+        htmlbody: '<p>This is a test email</p>',
+        textbody: 'This is a test email',
+      }),
     });
 
-    // Verify connection
-    await transporter.verify();
-    
-    console.log('✅ SMTP connection successful!');
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      console.error('❌ Zeptomail API Test Failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: responseData
+      });
+
+      return NextResponse.json({
+        success: false,
+        error: responseData.message || 'Zeptomail API connection failed',
+        details: responseData,
+        config: {
+          apiToken: process.env.ZEPTOMAIL_API_TOKEN ? `[Set - ${process.env.ZEPTOMAIL_API_TOKEN.length} chars]` : '[Not Set]',
+          from: process.env.EMAIL_FROM,
+        }
+      }, { status: 500 });
+    }
+
+    console.log('✅ Zeptomail API connection successful!');
 
     return NextResponse.json({
       success: true,
-      message: 'SMTP connection verified successfully',
+      message: 'Zeptomail API connection verified successfully',
       config: {
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        user: process.env.SMTP_USER,
+        apiToken: `[Set - ${zeptomailApiToken.length} chars]`,
         from: process.env.EMAIL_FROM,
-      }
+        endpoint: 'https://api.zeptomail.com/v1.1/email'
+      },
+      response: responseData
     });
   } catch (error: any) {
-    console.error('❌ SMTP connection failed:', error);
+    console.error('❌ Zeptomail API connection test failed:', error);
     
     return NextResponse.json({
       success: false,
-      error: error.message,
-      details: {
-        code: error.code,
-        command: error.command,
-        response: error.response,
-      },
+      error: error.message || 'Connection test failed',
       config: {
-        host: process.env.SMTP_HOST,
-        port: process.env.SMTP_PORT,
-        user: process.env.SMTP_USER,
+        apiToken: process.env.ZEPTOMAIL_API_TOKEN ? `[Set - ${process.env.ZEPTOMAIL_API_TOKEN.length} chars]` : '[Not Set]',
+        from: process.env.EMAIL_FROM,
       }
     }, { status: 500 });
   }
