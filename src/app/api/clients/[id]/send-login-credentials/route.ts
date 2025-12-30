@@ -53,7 +53,7 @@ export async function POST(
       }
     );
 
-    const portalUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/client-portal/login`;
+    const portalUrl = 'https://www.pixelsdigital.tech/client-portal/login';
 
     console.log('[SEND LOGIN CREDENTIALS] Sending login credentials to:', client.email);
     console.log('[SEND LOGIN CREDENTIALS] Generated password:', autoPassword);

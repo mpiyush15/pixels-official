@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
-import { jwtVerify } from '@/lib/auth';
+import { verifyToken } from '@/lib/auth';
 
 // POST - Admin cancels project with reason
 export async function POST(
@@ -20,8 +20,8 @@ export async function POST(
     }
 
     // Verify admin token
-    const decoded = await jwtVerify(token);
-    if (decoded.role !== 'admin') {
+    const decoded = verifyToken(token);
+    if (!decoded || decoded.role !== 'admin') {
       return NextResponse.json(
         { error: 'Unauthorized: Only admins can cancel projects' },
         { status: 403 }
