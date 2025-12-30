@@ -58,16 +58,20 @@ export default function ClientsPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showSendLoginModal, setShowSendLoginModal] = useState(false);
 
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [viewingClient, setViewingClient] = useState<Client | null>(null);
   const [passwordClient, setPasswordClient] = useState<Client | null>(null);
+  const [sendLoginClient, setSendLoginClient] = useState<Client | null>(null);
   const [clientInvoices, setClientInvoices] = useState<Invoice[]>([]);
   const [sendingWelcomeEmail, setSendingWelcomeEmail] = useState<string | null>(null);
+  const [sendingLoginEmail, setSendingLoginEmail] = useState<string | null>(null);
   
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [sendLoginError, setSendLoginError] = useState("");
 
   const emptyForm = {
     name: "",
@@ -273,6 +277,48 @@ export default function ClientsPage() {
     setShowPasswordModal(true);
   };
 
+  const openSendLoginModal = (client: Client) => {
+    setSendLoginClient(client);
+    setSendLoginError("");
+    setShowSendLoginModal(true);
+  };
+
+  const handleSendLoginCredentials = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSendLoginError("");
+
+    if (!sendLoginClient) return;
+
+    try {
+      setSendingLoginEmail(sendLoginClient._id);
+      const res = await fetch(
+        `/api/clients/${sendLoginClient._id}/send-login-credentials`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(
+          `✅ Login credentials sent successfully!\n\nEmail sent to: ${sendLoginClient.email}\n\nThe email contains:\n• Portal login link\n• Email address\n• 8-digit numeric password\n• Security tips\n\nClient can now login and change password if needed.`
+        );
+        setShowSendLoginModal(false);
+        setSendLoginClient(null);
+        setSendLoginError("");
+      } else {
+        setSendLoginError(data.error || "Failed to send login credentials");
+      }
+    } catch (err) {
+      console.error("Error sending login credentials:", err);
+      setSendLoginError("Failed to send login credentials");
+    } finally {
+      setSendingLoginEmail(null);
+    }
+  };
+
   const statusColor = (status: Invoice["status"]) => {
     switch (status) {
       case "draft":
@@ -426,6 +472,14 @@ export default function ClientsPage() {
                   title={client.portalAccessEnabled ? 'Reset Portal Password' : 'Enable Portal Access'}
                 >
                   <Key className="w-4" />
+                </button>
+                <button
+                  onClick={() => openSendLoginModal(client)}
+                  disabled={!client.email || sendingLoginEmail === client._id}
+                  className="p-2 bg-emerald-100 text-emerald-600 rounded-xl hover:bg-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Send Login Credentials via Email"
+                >
+                  <Mail className="w-4" />
                 </button>
                 <button
                   onClick={() => sendWelcomeEmail(client)}
@@ -900,6 +954,89 @@ export default function ClientsPage() {
                 >
                   <Key className="w-4 h-4" />
                   {passwordClient.portalAccessEnabled ? "Reset Password" : "Enable Access"}
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
+
+      {/* SEND LOGIN CREDENTIALS MODAL */}
+      {showSendLoginModal && sendLoginClient && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl p-8 max-w-md w-full"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <div>
+                <h2 className="text-2xl font-light text-black mb-1">
+                  Send Login Credentials
+                </h2>
+                <p className="text-sm text-gray-600">
+                  {sendLoginClient.name} • {sendLoginClient.email}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowSendLoginModal(false);
+                  setSendLoginClient(null);
+                  setSendLoginError("");
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSendLoginCredentials} className="space-y-4">
+              <div className="bg-blue-50 p-4 rounded-xl">
+                <p className="text-sm text-blue-800 font-light mb-3">
+                  <strong>📧 Auto-generated credentials will be sent to:</strong>
+                </p>
+                <p className="text-sm text-blue-700 font-light font-mono bg-white p-3 rounded border border-blue-200">
+                  {sendLoginClient.email}
+                </p>
+              </div>
+
+              <div className="bg-emerald-50 p-4 rounded-xl">
+                <p className="text-sm text-emerald-800 font-light mb-2">
+                  <strong>✉️ Email will contain:</strong>
+                </p>
+                <ul className="text-sm text-emerald-700 font-light space-y-1 list-disc list-inside">
+                  <li>Portal login link</li>
+                  <li>Email address</li>
+                  <li>8-digit numeric password (auto-generated)</li>
+                  <li>Security tips</li>
+                </ul>
+              </div>
+
+              {sendLoginError && (
+                <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="text-sm text-red-600 font-light">{sendLoginError}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSendLoginModal(false);
+                    setSendLoginClient(null);
+                    setSendLoginError("");
+                  }}
+                  className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-light transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={sendingLoginEmail === sendLoginClient._id}
+                  className="flex-1 px-6 py-3 bg-black text-white hover:bg-gray-900 rounded-xl font-light transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Mail className="w-4 h-4" />
+                  {sendingLoginEmail === sendLoginClient._id ? "Sending..." : "Send Email"}
                 </button>
               </div>
             </form>

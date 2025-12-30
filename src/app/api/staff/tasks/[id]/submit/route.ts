@@ -23,8 +23,17 @@ export async function POST(
     const body = await request.json();
     const { notes, files } = body;
 
+    console.log('📤 SUBMIT API - Received request:', {
+      taskId: id,
+      staffId,
+      notesLength: notes?.length || 0,
+      filesCount: files?.length || 0,
+      files: files?.map((f: any) => ({ name: f.name, url: f.url, size: f.size })),
+    });
+
     const db = await getDatabase();
     const tasksCollection = db.collection('tasks');
+    const staffCollection = db.collection('staff');
 
     // Verify task belongs to this staff member
     const task = await tasksCollection.findOne({
@@ -39,6 +48,32 @@ export async function POST(
       );
     }
 
+    // Get staff name
+    const staff = await staffCollection.findOne({ _id: new ObjectId(staffId) });
+    const staffName = staff?.name || 'Unknown Staff';
+
+    // Calculate revision number
+    const existingHistory = task.submissionHistory || [];
+    const revisionNumber = existingHistory.length + 1;
+
+    // Create submission entry for history
+    const submissionEntry = {
+      revisionNumber,
+      submittedAt: new Date(),
+      submittedBy: staffId,
+      submittedByName: staffName,
+      notes: notes || '',
+      files: files || [],
+      status: 'pending-review', // pending-review, approved, revision-requested
+    };
+
+    console.log('💾 Creating submission entry:', {
+      revisionNumber,
+      staffName,
+      filesCount: submissionEntry.files.length,
+      files: submissionEntry.files.map((f: any) => f.name),
+    });
+
     const updates: any = {
       status: 'submitted',
       submissionNotes: notes || '',
@@ -52,12 +87,26 @@ export async function POST(
       updates.completedDate = new Date();
     }
 
-    await tasksCollection.updateOne(
+    // Push to submission history
+    const result = await tasksCollection.updateOne(
       { _id: new ObjectId(id) },
-      { $set: updates }
+      { 
+        $set: updates,
+        $push: { submissionHistory: submissionEntry } as any
+      }
     );
 
-    return NextResponse.json({ success: true });
+    console.log('✅ SUBMIT API - Task updated:', {
+      matched: result.matchedCount,
+      modified: result.modifiedCount,
+      submissionHistoryLength: existingHistory.length + 1,
+    });
+
+    return NextResponse.json({ 
+      success: true,
+      revisionNumber,
+      filesCount: files?.length || 0,
+    });
   } catch (error: any) {
     console.error('Error submitting task:', error);
     return NextResponse.json(

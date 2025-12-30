@@ -30,7 +30,7 @@ interface Project {
   projectName: string;
   projectType: string;
   description: string;
-  status: 'planning' | 'in-progress' | 'review' | 'completed' | 'on-hold';
+  status: 'planning' | 'in-progress' | 'review' | 'completed' | 'on-hold' | 'cancelled';
   progress: number;
   startDate: string;
   endDate: string;
@@ -38,6 +38,9 @@ interface Project {
   contractAccepted?: boolean;
   contractAcceptedAt?: string;
   contractAcceptedBy?: string;
+  contractContent?: string;
+  canModifyUntil?: string;
+  contractLocked?: boolean;
   milestones: Array<{
     name: string;
     description?: string;
@@ -138,12 +141,8 @@ export default function ClientProjectsPage() {
       console.log('Contract acceptance response:', data);
 
       if (response.ok && data.success) {
-        // Update local state
-        setProjects(projects.map(p =>
-          p._id === contractProject._id
-            ? { ...p, contractAccepted: true, contractAcceptedAt: new Date().toISOString() }
-            : p
-        ));
+        // Refresh projects from server to get updated contract data
+        fetchProjects();
         setShowContractModal(false);
         setContractProject(null);
         alert('Contract accepted successfully! You can now access all project features.');
@@ -518,6 +517,16 @@ export default function ClientProjectsPage() {
                   ) : (
                     <>
                       <button
+                        onClick={() => {
+                          setContractProject(project);
+                          setShowContractModal(true);
+                        }}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-light"
+                      >
+                        <FileText className="w-4 h-4" />
+                        View Contract
+                      </button>
+                      <button
                         onClick={() => setActiveSubmissionProject(project)}
                         className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 text-sm font-light"
                       >
@@ -624,10 +633,15 @@ export default function ClientProjectsPage() {
             setContractProject(null);
           }}
           onAccept={handleContractAccept}
+          projectId={contractProject._id}
           projectName={contractProject.projectName}
           projectType={contractProject.projectType}
           clientName={clientInfo.name}
-          companyName={clientInfo.name}
+          clientId={clientInfo.id}
+          contractContent={contractProject.contractContent || ''}
+          contractAccepted={contractProject.contractAccepted}
+          contractAcceptedAt={contractProject.contractAcceptedAt}
+          canModifyUntil={contractProject.canModifyUntil}
         />
       )}
     </div>

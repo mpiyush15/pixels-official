@@ -2,26 +2,36 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, FileText, CheckCircle, AlertCircle } from 'lucide-react';
+import { X, FileText, CheckCircle, AlertCircle, Lock } from 'lucide-react';
 
 interface ContractModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onAccept: () => void;
+  onAccept?: () => void;
+  projectId: string;
   projectName: string;
   projectType: string;
   clientName: string;
-  companyName: string;
+  clientId: string;
+  contractContent: string;
+  contractAccepted?: boolean;
+  contractAcceptedAt?: string;
+  canModifyUntil?: string;
 }
 
 export default function ContractModal({
   isOpen,
   onClose,
   onAccept,
+  projectId,
   projectName,
   projectType,
   clientName,
-  companyName,
+  clientId,
+  contractContent,
+  contractAccepted = false,
+  contractAcceptedAt,
+  canModifyUntil,
 }: ContractModalProps) {
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -33,8 +43,31 @@ export default function ContractModal({
     }
 
     setLoading(true);
-    await onAccept();
-    setLoading(false);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/contract`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clientId,
+          clientName,
+          accepted: true,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to accept contract');
+      }
+
+      alert('Contract accepted! Project is now active.');
+      if (onAccept) onAccept();
+      onClose();
+    } catch (error) {
+      console.error('Error accepting contract:', error);
+      alert('Failed to accept contract: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const today = new Date().toLocaleDateString('en-IN', {
@@ -42,6 +75,9 @@ export default function ContractModal({
     month: 'long',
     year: 'numeric',
   });
+
+  const isLocked = contractAccepted && contractAcceptedAt;
+  const lockedDate = contractAcceptedAt ? new Date(contractAcceptedAt).toLocaleDateString('en-IN') : null;
 
   return (
     <AnimatePresence>
@@ -51,16 +87,24 @@ export default function ContractModal({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden"
+            className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
+            <div className={`${isLocked ? 'bg-gray-600' : 'bg-gradient-to-r from-blue-600 to-purple-600'} p-6 text-white`}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <FileText className="w-8 h-8" />
+                  {isLocked ? (
+                    <Lock className="w-8 h-8" />
+                  ) : (
+                    <FileText className="w-8 h-8" />
+                  )}
                   <div>
-                    <h2 className="text-2xl font-bold">Project Service Agreement</h2>
-                    <p className="text-blue-100 text-sm">Please review and accept the terms to proceed</p>
+                    <h2 className="text-2xl font-bold">{isLocked ? 'Project Contract (Locked)' : 'Project Contract & Terms'}</h2>
+                    <p className={isLocked ? 'text-gray-200 text-sm' : 'text-blue-100 text-sm'}>
+                      {isLocked 
+                        ? `Accepted on ${lockedDate} - Locked until ${canModifyUntil}` 
+                        : 'Please review and accept the terms to proceed'}
+                    </p>
                   </div>
                 </div>
                 <button
@@ -73,7 +117,7 @@ export default function ContractModal({
             </div>
 
             {/* Contract Content */}
-            <div className="p-8 overflow-y-auto max-h-[calc(90vh-250px)]">
+            <div className="flex-1 p-8 overflow-y-auto">
               <div className="prose max-w-none">
                 <div className="mb-6 p-4 bg-blue-50 border-l-4 border-blue-600 rounded-r-lg">
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Project Details</h3>
@@ -97,180 +141,84 @@ export default function ContractModal({
                   </div>
                 </div>
 
-                <h3 className="text-xl font-bold text-gray-900 mb-4">Terms and Conditions</h3>
+                {contractContent ? (
+                  <div className="bg-gray-50 p-6 rounded-lg whitespace-pre-wrap text-sm text-gray-800 font-light leading-relaxed border border-gray-200">
+                    {contractContent}
+                  </div>
+                ) : (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+                    <AlertCircle className="w-8 h-8 text-yellow-600 mx-auto mb-2" />
+                    <p className="text-gray-700 font-light">No contract content has been provided yet.</p>
+                    <p className="text-sm text-gray-600 font-light mt-1">Please contact the admin for contract details.</p>
+                  </div>
+                )}
 
-                <div className="space-y-6 text-gray-700">
-                  <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">1. SCOPE OF WORK</h4>
-                    <p className="text-sm leading-relaxed">
-                      Pixels Digital Solutions ("Service Provider") agrees to provide {projectType} services as outlined in the project "{projectName}" to {companyName} ("Client"). The specific deliverables, milestones, and timelines are detailed in the project dashboard and will be executed as agreed upon between both parties.
-                    </p>
-                  </section>
-
-                  <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">2. PAYMENT TERMS</h4>
-                    <ul className="list-disc list-inside space-y-2 text-sm">
-                      <li>Payment schedule will follow the milestone-based structure as defined in the project.</li>
-                      <li>Invoices will be generated upon milestone completion and must be paid within 15 days.</li>
-                      <li>Late payments may incur additional charges or project suspension.</li>
-                      <li>All payments are non-refundable once work has commenced, except as outlined in the refund policy.</li>
-                    </ul>
-                  </section>
-
-                  <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">3. CLIENT RESPONSIBILITIES</h4>
-                    <ul className="list-disc list-inside space-y-2 text-sm">
-                      <li>Provide timely feedback and approvals within 48-72 business hours.</li>
-                      <li>Supply all necessary content, materials, and access credentials required for project completion.</li>
-                      <li>Respond to queries and requests from the Service Provider in a timely manner.</li>
-                      <li>Review and approve deliverables at each milestone stage.</li>
-                    </ul>
-                  </section>
-
-                  <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">4. SERVICE PROVIDER RESPONSIBILITIES</h4>
-                    <ul className="list-disc list-inside space-y-2 text-sm">
-                      <li>Deliver work according to agreed timelines and quality standards.</li>
-                      <li>Maintain regular communication through the project portal and chat system.</li>
-                      <li>Provide revisions as per the agreed revision policy (typically 2-3 rounds per milestone).</li>
-                      <li>Ensure confidentiality and security of all client data and materials.</li>
-                    </ul>
-                  </section>
-
-                  <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">5. REVISIONS & MODIFICATIONS</h4>
-                    <p className="text-sm leading-relaxed">
-                      Each milestone includes a specified number of revision rounds (typically 2-3). Additional revisions beyond the agreed scope may incur extra charges. Major scope changes will require a new project agreement and additional fees.
-                    </p>
-                  </section>
-
-                  <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">6. INTELLECTUAL PROPERTY</h4>
-                    <ul className="list-disc list-inside space-y-2 text-sm">
-                      <li>Upon full payment, all deliverables and intellectual property rights transfer to the Client.</li>
-                      <li>Service Provider retains the right to showcase the work in portfolios unless a separate NDA is signed.</li>
-                      <li>Any pre-existing materials or third-party assets remain the property of their respective owners.</li>
-                    </ul>
-                  </section>
-
-                  <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">7. CONFIDENTIALITY</h4>
-                    <p className="text-sm leading-relaxed">
-                      Both parties agree to maintain confidentiality of all proprietary information, trade secrets, and sensitive data shared during the project. This obligation continues even after project completion.
-                    </p>
-                  </section>
-
-                  <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">8. PROJECT DELAYS</h4>
-                    <ul className="list-disc list-inside space-y-2 text-sm">
-                      <li>Delays caused by client (late feedback, content, approvals) may extend the project timeline.</li>
-                      <li>Service Provider will notify client of any anticipated delays on their end.</li>
-                      <li>Extended delays may result in project re-scoping or additional charges.</li>
-                    </ul>
-                  </section>
-
-                  <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">9. TERMINATION</h4>
-                    <ul className="list-disc list-inside space-y-2 text-sm">
-                      <li>Either party may terminate with 15 days written notice.</li>
-                      <li>Client must pay for all completed work and work-in-progress up to termination date.</li>
-                      <li>Termination does not affect payment obligations for work already performed.</li>
-                    </ul>
-                  </section>
-
-                  <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">10. WARRANTY & SUPPORT</h4>
-                    <p className="text-sm leading-relaxed">
-                      Service Provider warrants that all deliverables will be free from defects and will function as specified. Post-launch support period (if applicable) will be as defined in the project scope. Additional support beyond the agreed period may incur maintenance fees.
-                    </p>
-                  </section>
-
-                  <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">11. LIMITATION OF LIABILITY</h4>
-                    <p className="text-sm leading-relaxed">
-                      Service Provider's liability is limited to the total amount paid for this project. Service Provider is not liable for indirect, consequential, or incidental damages arising from the use or inability to use the delivered services.
-                    </p>
-                  </section>
-
-                  <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">12. DISPUTE RESOLUTION</h4>
-                    <p className="text-sm leading-relaxed">
-                      Any disputes will first be attempted to resolve through good-faith negotiation. If unresolved, disputes will be subject to binding arbitration in accordance with the laws of India, with jurisdiction in Indore, Madhya Pradesh.
-                    </p>
-                  </section>
-
-                  <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">13. COMMUNICATION</h4>
-                    <p className="text-sm leading-relaxed">
-                      All project communication should be conducted through the official client portal chat system or registered email addresses. This ensures proper documentation and prevents miscommunication.
-                    </p>
-                  </section>
-
-                  <section>
-                    <h4 className="font-semibold text-gray-900 mb-2">14. FORCE MAJEURE</h4>
-                    <p className="text-sm leading-relaxed">
-                      Neither party shall be liable for delays or failures in performance resulting from acts beyond their reasonable control, including but not limited to acts of God, natural disasters, pandemics, war, terrorism, or government actions.
-                    </p>
-                  </section>
-                </div>
-
-                <div className="mt-8 p-6 bg-gray-50 border border-gray-200 rounded-lg">
-                  <h4 className="font-semibold text-gray-900 mb-3">ACCEPTANCE</h4>
-                  <p className="text-sm text-gray-700 mb-4">
-                    By checking the box below and clicking "Accept & Start Project," you acknowledge that you have read, understood, and agree to be bound by all the terms and conditions outlined in this agreement.
-                  </p>
-                  <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4">
+                {isLocked && (
+                  <div className="mt-8 p-6 bg-gray-100 border border-gray-300 rounded-lg">
                     <div className="flex items-start space-x-3">
-                      <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                      <div className="text-sm text-yellow-800">
-                        <strong>Important:</strong> This is a legally binding agreement. Once accepted, you will have access to submit work, communicate via chat, make payments, and track project progress. Please ensure you understand all terms before proceeding.
+                      <Lock className="w-5 h-5 text-gray-600 flex-shrink-0 mt-0.5" />
+                      <div className="text-sm text-gray-700">
+                        <strong>Contract Locked:</strong> This contract was accepted on {lockedDate} and is locked until {canModifyUntil}. You can view this contract, but no modifications can be made during the locked period.
                       </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
 
             {/* Footer */}
-            <div className="bg-gray-50 px-8 py-6 border-t border-gray-200">
-              <label className="flex items-center space-x-3 mb-4 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={agreed}
-                  onChange={(e) => setAgreed(e.target.checked)}
-                  className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-700">
-                  I have read and agree to the terms and conditions of this project service agreement
-                </span>
-              </label>
+            {!isLocked && contractContent && (
+              <div className="bg-gray-50 px-8 py-6 border-t border-gray-200">
+                <label className="flex items-center space-x-3 mb-4 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={agreed}
+                    onChange={(e) => setAgreed(e.target.checked)}
+                    className="w-5 h-5 text-blue-600 rounded focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span className="text-sm text-gray-700">
+                    I have read and agree to all the terms and conditions of this project contract
+                  </span>
+                </label>
 
-              <div className="flex space-x-4">
+                <div className="flex space-x-4">
+                  <button
+                    onClick={onClose}
+                    className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-100 transition"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleAccept}
+                    disabled={!agreed || loading}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>Accepting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle className="w-5 h-5" />
+                        <span>Accept & Start Project</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {isLocked && (
+              <div className="bg-gray-50 px-8 py-6 border-t border-gray-200">
                 <button
                   onClick={onClose}
-                  className="flex-1 px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-100 transition"
+                  className="w-full px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-100 transition"
                 >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAccept}
-                  disabled={!agreed || loading}
-                  className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-                >
-                  {loading ? (
-                    <>
-                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                      <span>Processing...</span>
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-5 h-5" />
-                      <span>Accept & Start Project</span>
-                    </>
-                  )}
+                  Close
                 </button>
               </div>
-            </div>
+            )}
           </motion.div>
         </div>
       )}

@@ -512,3 +512,193 @@ export async function sendProjectUpdateEmail(
     html,
   });
 }
+
+// Contract Acceptance Email
+export async function sendContractAcceptanceEmail(
+  to: string,
+  clientName: string,
+  projectName: string,
+  projectType: string
+) {
+  const acceptanceDate = new Date().toLocaleDateString('en-IN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  
+  const portalUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/client-portal/projects`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; }
+        .success-badge { background: #d1fae5; color: #065f46; padding: 15px 20px; border-radius: 8px; text-align: center; margin: 20px 0; border: 2px solid #10b981; }
+        .project-info { background: #f0fdf4; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #10b981; }
+        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+        .info-row:last-child { border-bottom: none; }
+        .status-change { background: #fef3c7; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #fbbf24; }
+        .button { display: inline-block; padding: 12px 30px; background: #10b981; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .next-steps { background: #eff6ff; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #3b82f6; }
+        .next-steps ol { margin: 10px 0; padding-left: 20px; }
+        .next-steps li { margin: 8px 0; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>✅ Contract Accepted!</h1>
+          <p>Your project is ready to begin</p>
+        </div>
+        <div class="content">
+          <h2>Hi ${clientName},</h2>
+          <p>Thank you for accepting the contract. We're excited to work with you on this project!</p>
+          
+          <div class="success-badge">
+            <strong>Contract Accepted on ${acceptanceDate}</strong>
+          </div>
+
+          <div class="project-info">
+            <h3 style="margin-top: 0; color: #059669;">Project Details</h3>
+            <div class="info-row">
+              <span><strong>Project Name:</strong></span>
+              <span>${projectName}</span>
+            </div>
+            <div class="info-row">
+              <span><strong>Project Type:</strong></span>
+              <span>${projectType}</span>
+            </div>
+            <div class="info-row">
+              <span><strong>Acceptance Date:</strong></span>
+              <span>${acceptanceDate}</span>
+            </div>
+          </div>
+
+          <div class="status-change">
+            <strong>📊 Status Update:</strong>
+            <p style="margin: 10px 0 0 0;">Your project status has been updated to <strong>"In Progress"</strong>. We'll begin work according to the agreed timeline.</p>
+          </div>
+
+          <div class="next-steps">
+            <h3 style="margin-top: 0; color: #1e40af;">What's Next?</h3>
+            <ol>
+              <li>Monitor project progress in your dashboard</li>
+              <li>Review work submissions and provide feedback</li>
+              <li>Chat with our team anytime for updates</li>
+              <li>Track milestones and deliverables</li>
+            </ol>
+          </div>
+
+          <p style="text-align: center; margin: 30px 0;">
+            <a href="${portalUrl}" class="button">View Your Project</a>
+          </p>
+
+          <p><strong>Questions or need help?</strong></p>
+          <p>Reach out to our support team at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a>. We're here to help!</p>
+          <p>Best regards,<br>The ${COMPANY_NAME} Team</p>
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} ${COMPANY_NAME}. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to,
+    subject: `Contract Accepted: ${projectName} - Project Started ✅`,
+    html,
+  });
+}
+
+// Send Login Credentials Email
+export async function sendLoginCredentialsEmail(
+  to: string,
+  clientName: string,
+  email: string,
+  password: string,
+  portalUrl: string
+) {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; }
+        .credentials-box { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px solid #667eea; font-family: 'Courier New', monospace; }
+        .credential-row { margin: 12px 0; padding: 10px; background: white; border-radius: 4px; }
+        .credential-label { color: #667eea; font-weight: bold; display: block; font-size: 12px; text-transform: uppercase; margin-bottom: 4px; }
+        .credential-value { font-size: 14px; color: #333; word-break: break-all; }
+        .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; text-align: center; }
+        .security-box { background: #fef3c7; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #f59e0b; }
+        .security-box strong { color: #b45309; }
+        .security-box li { margin: 6px 0; color: #92400e; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🔐 Your Login Credentials</h1>
+        </div>
+        <div class="content">
+          <h2>Hi ${clientName},</h2>
+          <p>Welcome! Here are your login credentials to access the client portal. You can now view your projects, invoices, payments, and communicate with our team.</p>
+
+          <div class="credentials-box">
+            <div class="credential-row">
+              <span class="credential-label">📧 Email Address</span>
+              <span class="credential-value">${email}</span>
+            </div>
+            <div class="credential-row">
+              <span class="credential-label">🔑 Password</span>
+              <span class="credential-value">${password}</span>
+            </div>
+          </div>
+
+          <p style="text-align: center; margin-top: 30px;">
+            <a href="${portalUrl}" class="button">Login to Portal</a>
+          </p>
+
+          <div class="security-box">
+            <strong>🛡️ Security Tips:</strong>
+            <ul style="margin: 10px 0; padding-left: 20px;">
+              <li>Keep your password confidential and don't share it with anyone</li>
+              <li>Change your password after your first login for added security</li>
+              <li>Use a strong password if you change it</li>
+              <li>Clear your browser cache if using a shared computer</li>
+              <li>Never give your password to support staff (we'll never ask for it)</li>
+            </ul>
+          </div>
+
+          <p><strong>Can't login or forgot your password?</strong></p>
+          <p>If you have trouble accessing your account or need to reset your password, please contact us at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a></p>
+
+          <p>We're here to help and answer any questions you may have about your projects or account.</p>
+          <p>Best regards,<br>The ${COMPANY_NAME} Team</p>
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} ${COMPANY_NAME}. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to,
+    subject: `Your ${COMPANY_NAME} Portal Login Credentials`,
+    html,
+  });
+}

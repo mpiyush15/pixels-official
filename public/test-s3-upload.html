@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S3 Upload Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    h1 { color: #333; margin-top: 0; }
+    h2 { color: #666; border-bottom: 2px solid #6366f1; padding-bottom: 10px; }
+    button {
+      background: #6366f1;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-right: 10px;
+      margin-top: 10px;
+    }
+    button:hover { background: #4f46e5; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    input[type="file"] {
+      display: block;
+      margin: 20px 0;
+      padding: 10px;
+      border: 2px dashed #ccc;
+      border-radius: 6px;
+      width: 100%;
+    }
+    .result {
+      background: #f9fafb;
+      padding: 15px;
+      border-radius: 6px;
+      border-left: 4px solid #6366f1;
+      margin-top: 15px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+    .error {
+      border-left-color: #ef4444;
+      background: #fef2f2;
+      color: #991b1b;
+    }
+    .success {
+      border-left-color: #10b981;
+      background: #f0fdf4;
+      color: #065f46;
+    }
+    .status { font-weight: bold; margin-bottom: 10px; }
+    .log { font-size: 12px; color: #666; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🔧 S3 Upload Diagnostic Tool</h1>
+    <p>Test AWS S3 file uploads and configuration</p>
+  </div>
+
+  <div class="card">
+    <h2>1. Check Configuration</h2>
+    <button onclick="checkConfig()">Check AWS Config</button>
+    <div id="configResult"></div>
+  </div>
+
+  <div class="card">
+    <h2>2. Test File Upload</h2>
+    <input type="file" id="fileInput" />
+    <button onclick="uploadFile()">Upload to S3</button>
+    <button onclick="clearResults()">Clear Results</button>
+    <div id="uploadResult"></div>
+  </div>
+
+  <div class="card">
+    <h2>📋 Console Logs</h2>
+    <div id="logs" class="result" style="min-height: 100px; max-height: 300px; overflow-y: auto;">
+      Waiting for actions...
+    </div>
+  </div>
+
+  <script>
+    const logs = [];
+    
+    function log(message, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      logs.push(`[${timestamp}] ${message}`);
+      document.getElementById('logs').innerHTML = logs.join('\n');
+      console.log(message);
+    }
+
+    function clearResults() {
+      document.getElementById('configResult').innerHTML = '';
+      document.getElementById('uploadResult').innerHTML = '';
+      logs.length = 0;
+      document.getElementById('logs').innerHTML = 'Waiting for actions...';
+    }
+
+    async function checkConfig() {
+      log('Checking AWS S3 configuration...');
+      const resultDiv = document.getElementById('configResult');
+      resultDiv.innerHTML = '<div class="result">Loading...</div>';
+
+      try {
+        const response = await fetch('/api/s3/check-config');
+        const data = await response.json();
+        
+        log(`Config check complete: ${data.ready ? 'READY ✅' : 'NOT READY ❌'}`);
+        
+        const className = data.ready ? 'success' : 'error';
+        resultDiv.innerHTML = `
+          <div class="result ${className}">
+            <div class="status">${data.ready ? '✅ AWS Configured' : '❌ AWS Not Configured'}</div>
+            ${JSON.stringify(data, null, 2)}
+          </div>
+        `;
+        
+        if (!data.ready) {
+          log('⚠️ AWS credentials missing! Check .env.local file', 'error');
+        }
+      } catch (error) {
+        log(`❌ Error: ${error.message}`, 'error');
+        resultDiv.innerHTML = `<div class="result error">Error: ${error.message}</div>`;
+      }
+    }
+
+    async function uploadFile() {
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        alert('Please select a file first');
+        return;
+      }
+
+      log(`📤 Starting upload: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`);
+      const resultDiv = document.getElementById('uploadResult');
+      resultDiv.innerHTML = '<div class="result">Uploading...</div>';
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        log('Sending request to /api/s3/upload...');
+        const response = await fetch('/api/s3/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+        
+        if (response.ok) {
+          log(`✅ Upload successful!`);
+          log(`URL: ${data.url}`);
+          resultDiv.innerHTML = `
+            <div class="result success">
+              <div class="status">✅ Upload Successful!</div>
+              <strong>File:</strong> ${data.name}<br>
+              <strong>Size:</strong> ${(data.size / 1024).toFixed(2)} KB<br>
+              <strong>Key:</strong> ${data.key}<br>
+              <strong>URL:</strong> <a href="${data.url}" target="_blank">${data.url}</a>
+              <div class="log">
+                <strong>Test Access:</strong><br>
+                Click the URL above to verify the file is publicly accessible.
+              </div>
+            </div>
+          `;
+        } else {
+          log(`❌ Upload failed: ${data.error}`, 'error');
+          log(`Details: ${data.details || 'No details'}`, 'error');
+          resultDiv.innerHTML = `
+            <div class="result error">
+              <div class="status">❌ Upload Failed</div>
+              <strong>Error:</strong> ${data.error}<br>
+              <strong>Details:</strong> ${data.details || 'No details'}<br>
+              <strong>Code:</strong> ${data.code || 'Unknown'}
+              <div class="log">
+                <strong>Troubleshooting:</strong><br>
+                1. Check if AWS credentials are set (run config check above)<br>
+                2. Verify AWS credentials have S3 permissions<br>
+                3. Check bucket name and region<br>
+                4. Check server logs in terminal
+              </div>
+            </div>
+          `;
+        }
+      } catch (error) {
+        log(`❌ Request error: ${error.message}`, 'error');
+        resultDiv.innerHTML = `
+          <div class="result error">
+            <div class="status">❌ Request Error</div>
+            ${error.message}
+            <div class="log">
+              This usually means the server is not responding or there's a network issue.
+            </div>
+          </div>
+        `;
+      }
+    }
+
+    // Auto-check config on page load
+    window.addEventListener('load', () => {
+      log('Page loaded. Click "Check AWS Config" to verify setup.');
+    });
+  </script>
+</body>
+</html>

@@ -40,7 +40,7 @@ interface Project {
   projectName: string;
   projectType: string;
   description: string;
-  status: 'planning' | 'in-progress' | 'review' | 'completed' | 'on-hold';
+  status: 'planning' | 'in-progress' | 'review' | 'completed' | 'on-hold' | 'cancelled';
   progress: number;
   startDate: string;
   endDate: string;
@@ -86,16 +86,23 @@ export default function ProjectsPage() {
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [editingProject, setEditingProject] = useState<Project | null>(null);
   const [uploadingFiles, setUploadingFiles] = useState<{ [key: number]: boolean }>({});
   const [expandedMilestones, setExpandedMilestones] = useState<{ [key: string]: boolean }>({});
+  const [cancellationData, setCancellationData] = useState({ reason: '', notes: '' });
+  const [cancelling, setCancelling] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentFormData, setPaymentFormData] = useState({ amount: '', paymentMethod: 'offline', notes: '' });
+  const [loggingPayment, setLoggingPayment] = useState(false);
 
   const [formData, setFormData] = useState({
     clientId: '',
     projectName: '',
     projectType: '',
     description: '',
+    contractContent: '',
     status: 'planning' as Project['status'],
     progress: 0,
     startDate: new Date().toISOString().split('T')[0],
@@ -191,6 +198,48 @@ export default function ProjectsPage() {
     }
   };
 
+  const handleCancelProject = async () => {
+    if (!selectedProject) return;
+
+    if (!cancellationData.reason.trim()) {
+      alert('Please provide a reason for cancellation');
+      return;
+    }
+
+    try {
+      setCancelling(true);
+      const token = localStorage.getItem('adminToken') || '';
+
+      const response = await fetch(`/api/admin/projects/${selectedProject._id}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          reason: cancellationData.reason,
+          notes: cancellationData.notes,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to cancel project');
+      }
+
+      alert('Project cancelled successfully');
+      setShowCancelModal(false);
+      setShowViewModal(false);
+      setCancellationData({ reason: '', notes: '' });
+      fetchData();
+    } catch (error) {
+      console.error('Error cancelling project:', error);
+      alert('Failed to cancel project: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   const handleEdit = (project: Project) => {
     setEditingProject(project);
     
@@ -205,6 +254,7 @@ export default function ProjectsPage() {
       projectName: project.projectName,
       projectType: project.projectType,
       description: project.description,
+      contractContent: (project as any).contractContent || '',
       status: project.status,
       progress: calculatedProgress,
       startDate: project.startDate.split('T')[0],
@@ -222,6 +272,7 @@ export default function ProjectsPage() {
       projectName: '',
       projectType: '',
       description: '',
+      contractContent: '',
       status: 'planning',
       progress: 0,
       startDate: new Date().toISOString().split('T')[0],
@@ -636,6 +687,28 @@ export default function ProjectsPage() {
                 />
               </div>
 
+              {/* Contract Section */}
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                <div className="flex items-center gap-2 mb-4">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                  <label className="block text-sm text-gray-700 font-semibold">Project Contract</label>
+                  <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">Optional</span>
+                </div>
+                <p className="text-sm text-gray-600 mb-3 font-light">
+                  Write the full contract that the client will need to accept. This will be locked for 1 year after client acceptance.
+                </p>
+                <textarea
+                  value={formData.contractContent}
+                  onChange={(e) => setFormData({ ...formData, contractContent: e.target.value })}
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 font-light resize-none"
+                  rows={6}
+                  placeholder="Enter the full contract terms and conditions. Include payment terms, deliverables, timeline, and any special conditions..."
+                />
+                <p className="text-xs text-gray-500 mt-2 font-light">
+                  Tip: Include details about project scope, milestones, payment terms, revision policy, and cancellation terms.
+                </p>
+              </div>
+
               {/* Status and Progress */}
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
@@ -922,12 +995,23 @@ export default function ProjectsPage() {
                 <h2 className="text-2xl font-light text-black mb-2">{selectedProject.projectName}</h2>
                 <p className="text-gray-600 font-light">{selectedProject.clientName}</p>
               </div>
-              <button
-                onClick={() => setShowViewModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <div className="flex gap-2">
+                {selectedProject.status !== 'cancelled' && (
+                  <button
+                    onClick={() => setShowCancelModal(true)}
+                    className="p-2 hover:bg-red-100 rounded-lg text-red-600 transition-colors"
+                    title="Cancel project"
+                  >
+                    <AlertCircle className="w-5 h-5" />
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowViewModal(false)}
+                  className="p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
             </div>
 
             <div className="space-y-6">
@@ -950,6 +1034,40 @@ export default function ProjectsPage() {
                 <h3 className="text-sm font-medium text-gray-600 mb-2">Description</h3>
                 <p className="text-gray-700 font-light">{selectedProject.description}</p>
               </div>
+
+              {/* Contract Content */}
+              {(selectedProject as any).contractContent && (
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="text-sm font-medium text-gray-600">Contract</h3>
+                    {(selectedProject as any).contractAccepted ? (
+                      <span className="flex items-center gap-2 px-3 py-1.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">
+                        <CheckCircle className="w-4 h-4" />
+                        Accepted
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2 px-3 py-1.5 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">
+                        <Clock className="w-4 h-4" />
+                        Pending
+                      </span>
+                    )}
+                  </div>
+                  
+                  {(selectedProject as any).contractAccepted && (
+                    <div className="mb-3 text-xs text-gray-600 bg-gray-50 p-2 rounded">
+                      <p><strong>Accepted by:</strong> {(selectedProject as any).contractAcceptedBy}</p>
+                      <p><strong>Accepted on:</strong> {new Date((selectedProject as any).contractAcceptedAt).toLocaleDateString('en-IN')}</p>
+                    </div>
+                  )}
+                  
+                  <textarea
+                    value={(selectedProject as any).contractContent}
+                    readOnly
+                    className="w-full h-48 p-4 border-2 border-blue-200 rounded-lg bg-blue-50 text-gray-700 font-light text-sm resize-none focus:outline-none"
+                    placeholder="No contract content"
+                  />
+                </div>
+              )}
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
@@ -1098,7 +1216,246 @@ export default function ProjectsPage() {
                 <h3 className="text-lg font-medium text-gray-900 mb-4">Client Work Submissions</h3>
                 <WorkSubmissionsList projectId={selectedProject._id} />
               </div>
+
+              {/* Log General Payment Button (if no milestones) */}
+              {(!selectedProject.milestones || selectedProject.milestones.length === 0) && (
+                <div className="mt-6 pt-6 border-t">
+                  <button
+                    onClick={() => setShowPaymentModal(true)}
+                    className="px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-light text-sm flex items-center gap-2"
+                  >
+                    <IndianRupee className="w-4 h-4" />
+                    Log Payment
+                  </button>
+                </div>
+              )}
             </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Log Payment Modal */}
+      {showPaymentModal && selectedProject && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl p-8 max-w-md w-full"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-green-100 rounded-lg">
+                <IndianRupee className="w-6 h-6 text-green-600" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-light text-black">Log Payment</h2>
+                <p className="text-gray-600 font-light text-sm">
+                  {selectedProject.projectName}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Amount (₹)</label>
+                <input
+                  type="number"
+                  value={paymentFormData.amount}
+                  onChange={(e) => setPaymentFormData({ ...paymentFormData, amount: e.target.value })}
+                  placeholder="Enter amount"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                <select
+                  value={paymentFormData.paymentMethod}
+                  onChange={(e) => setPaymentFormData({ ...paymentFormData, paymentMethod: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="offline">Offline</option>
+                  <option value="bank-transfer">Bank Transfer</option>
+                  <option value="cheque">Cheque</option>
+                  <option value="cash">Cash</option>
+                  <option value="upi">UPI</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Notes</label>
+                <textarea
+                  value={paymentFormData.notes}
+                  onChange={(e) => setPaymentFormData({ ...paymentFormData, notes: e.target.value })}
+                  placeholder="Payment notes (optional)"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 resize-none h-24"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowPaymentModal(false);
+                  setPaymentFormData({ amount: '', paymentMethod: 'offline', notes: '' });
+                }}
+                className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-light"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!paymentFormData.amount) {
+                    alert('Please enter an amount');
+                    return;
+                  }
+
+                  setLoggingPayment(true);
+                  try {
+                    const response = await fetch(`/api/projects/${selectedProject._id}/log-payment`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        amount: parseFloat(paymentFormData.amount),
+                        paymentMethod: paymentFormData.paymentMethod,
+                        paymentDetails: paymentFormData.notes || 'Payment logged by admin',
+                      }),
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                      alert('Payment logged successfully!');
+                      setShowPaymentModal(false);
+                      setPaymentFormData({ amount: '', paymentMethod: 'offline', notes: '' });
+                      // Refresh project data
+                      const refreshResponse = await fetch(`/api/projects/${selectedProject._id}`);
+                      const refreshedProject = await refreshResponse.json();
+                      setSelectedProject(refreshedProject);
+                      fetchData();
+                    } else {
+                      alert('Failed to log payment: ' + (data.error || 'Unknown error'));
+                    }
+                  } catch (error) {
+                    console.error('Error logging payment:', error);
+                    alert('Failed to log payment. Please try again.');
+                  } finally {
+                    setLoggingPayment(false);
+                  }
+                }}
+                disabled={loggingPayment}
+                className="flex-1 px-4 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-light disabled:opacity-50"
+              >
+                {loggingPayment ? 'Logging...' : 'Log Payment'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Cancel Project Modal */}
+      {showCancelModal && selectedProject && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl p-8 max-w-2xl w-full"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-3 bg-red-100 rounded-lg">
+                <AlertCircle className="w-6 h-6 text-red-600" />
+              </div>
+              <div>
+                <h2 className="text-2xl font-light text-black">Cancel Project</h2>
+                <p className="text-gray-600 font-light text-sm">
+                  {selectedProject.projectName}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-red-800 font-light">
+                ⚠️ This action will mark the project as cancelled. All milestones and work will be affected.
+                The client will be notified of the cancellation reason.
+              </p>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleCancelProject();
+              }}
+              className="space-y-4"
+            >
+              {/* Cancellation Reason */}
+              <div>
+                <label className="block text-sm text-gray-700 font-medium mb-2">
+                  Reason for Cancellation *
+                </label>
+                <select
+                  value={cancellationData.reason}
+                  onChange={(e) =>
+                    setCancellationData({ ...cancellationData, reason: e.target.value })
+                  }
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-red-500 font-light"
+                  required
+                >
+                  <option value="">Select a reason...</option>
+                  <option value="client_request">Client Requested Cancellation</option>
+                  <option value="scope_change">Scope Changed Significantly</option>
+                  <option value="budget_constraint">Budget Constraints</option>
+                  <option value="technical_issue">Technical Issues</option>
+                  <option value="resource_unavailable">Resources Unavailable</option>
+                  <option value="other">Other Reason</option>
+                </select>
+              </div>
+
+              {/* Additional Notes */}
+              <div>
+                <label className="block text-sm text-gray-700 font-medium mb-2">
+                  Additional Notes (Optional)
+                </label>
+                <textarea
+                  value={cancellationData.notes}
+                  onChange={(e) =>
+                    setCancellationData({ ...cancellationData, notes: e.target.value })
+                  }
+                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:outline-none focus:border-red-500 font-light resize-none"
+                  rows={4}
+                  placeholder="Provide additional context about the cancellation..."
+                />
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowCancelModal(false);
+                    setCancellationData({ reason: '', notes: '' });
+                  }}
+                  className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-lg font-light"
+                >
+                  Close
+                </button>
+                <button
+                  type="submit"
+                  disabled={cancelling}
+                  className="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg font-light flex items-center justify-center gap-2"
+                >
+                  {cancelling ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Cancelling...
+                    </>
+                  ) : (
+                    <>
+                      <X className="w-4 h-4" />
+                      Confirm Cancellation
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </motion.div>
         </div>
       )}

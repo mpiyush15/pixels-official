@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Submission Workflow Test</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+      line-height: 1.6;
+    }
+    .container { max-width: 1200px; margin: 0 auto; }
+    h1 { color: #333; margin-bottom: 30px; }
+    .section {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h2 { color: #4f46e5; margin-bottom: 15px; font-size: 1.2em; }
+    .step {
+      padding: 15px;
+      margin: 10px 0;
+      background: #f8f9fa;
+      border-left: 4px solid #4f46e5;
+      border-radius: 4px;
+    }
+    .step-title { font-weight: 600; color: #333; margin-bottom: 8px; }
+    .step-status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 0.85em;
+      font-weight: 500;
+      margin-left: 10px;
+    }
+    .status-pending { background: #fef3c7; color: #92400e; }
+    .status-success { background: #d1fae5; color: #065f46; }
+    .status-error { background: #fee2e2; color: #991b1b; }
+    button {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: 500;
+      margin: 10px 10px 10px 0;
+    }
+    button:hover { background: #4338ca; }
+    button:disabled {
+      background: #9ca3af;
+      cursor: not-allowed;
+    }
+    input[type="file"] {
+      padding: 10px;
+      border: 2px solid #e5e7eb;
+      border-radius: 6px;
+      width: 100%;
+      margin: 10px 0;
+    }
+    textarea {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e5e7eb;
+      border-radius: 6px;
+      margin: 10px 0;
+      min-height: 100px;
+      font-family: inherit;
+    }
+    .log {
+      background: #1e293b;
+      color: #e2e8f0;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: "Courier New", monospace;
+      font-size: 0.9em;
+      max-height: 400px;
+      overflow-y: auto;
+      margin-top: 10px;
+    }
+    .log-entry {
+      padding: 4px 0;
+      border-bottom: 1px solid #334155;
+    }
+    .log-entry:last-child { border-bottom: none; }
+    .log-success { color: #86efac; }
+    .log-error { color: #fca5a5; }
+    .log-info { color: #93c5fd; }
+    pre {
+      background: #334155;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+      margin: 10px 0;
+    }
+    .input-group {
+      margin: 15px 0;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #374151;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🧪 Task Submission Workflow Test</h1>
+    
+    <!-- Setup -->
+    <div class="section">
+      <h2>1. Test Configuration</h2>
+      <div class="input-group">
+        <label>Task ID (MongoDB ObjectId)</label>
+        <input type="text" id="taskId" placeholder="Enter task ID to test" />
+      </div>
+      <div class="input-group">
+        <label>Select Test File</label>
+        <input type="file" id="testFile" />
+      </div>
+      <div class="input-group">
+        <label>Submission Notes</label>
+        <textarea id="testNotes" placeholder="Enter submission notes...">Test submission from diagnostic page</textarea>
+      </div>
+    </div>
+
+    <!-- Workflow Steps -->
+    <div class="section">
+      <h2>2. Workflow Test Steps</h2>
+      
+      <div class="step" id="step1">
+        <div class="step-title">
+          Step 1: Upload File to S3
+          <span class="step-status status-pending" id="status1">Pending</span>
+        </div>
+        <button onclick="testS3Upload()" id="btn1">Test S3 Upload</button>
+        <div id="result1"></div>
+      </div>
+
+      <div class="step" id="step2">
+        <div class="step-title">
+          Step 2: Submit Task with File Data
+          <span class="step-status status-pending" id="status2">Pending</span>
+        </div>
+        <button onclick="testTaskSubmit()" id="btn2" disabled>Test Task Submit</button>
+        <div id="result2"></div>
+      </div>
+
+      <div class="step" id="step3">
+        <div class="step-title">
+          Step 3: Fetch Task (Admin View)
+          <span class="step-status status-pending" id="status3">Pending</span>
+        </div>
+        <button onclick="testAdminFetch()" id="btn3" disabled>Test Admin Fetch</button>
+        <div id="result3"></div>
+      </div>
+
+      <div class="step" id="step4">
+        <div class="step-title">
+          Step 4: Fetch Task (Staff View)
+          <span class="step-status status-pending" id="status4">Pending</span>
+        </div>
+        <button onclick="testStaffFetch()" id="btn4" disabled>Test Staff Fetch</button>
+        <div id="result4"></div>
+      </div>
+
+      <button onclick="testFullWorkflow()" style="background: #059669; margin-top: 20px;">
+        ▶️ Run Complete Workflow Test
+      </button>
+      <button onclick="clearLogs()" style="background: #6b7280; margin-top: 20px;">
+        🗑️ Clear Logs
+      </button>
+    </div>
+
+    <!-- Console Log -->
+    <div class="section">
+      <h2>3. Test Console</h2>
+      <div class="log" id="console"></div>
+    </div>
+
+    <!-- Diagnostics -->
+    <div class="section">
+      <h2>4. Quick Diagnostics</h2>
+      <button onclick="checkS3Config()">Check S3 Config</button>
+      <button onclick="checkAuth()">Check Authentication</button>
+      <button onclick="listRecentTasks()">List Recent Tasks</button>
+      <div id="diagnostics"></div>
+    </div>
+  </div>
+
+  <script>
+    let uploadedFileData = null;
+    let submissionResponse = null;
+
+    function log(message, type = 'info') {
+      const console = document.getElementById('console');
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      console.appendChild(entry);
+      console.scrollTop = console.scrollHeight;
+    }
+
+    function clearLogs() {
+      document.getElementById('console').innerHTML = '';
+      log('Logs cleared', 'info');
+    }
+
+    function setStepStatus(stepNum, status) {
+      const statusEl = document.getElementById(`status${stepNum}`);
+      statusEl.className = `step-status status-${status}`;
+      statusEl.textContent = status === 'success' ? 'Success' : status === 'error' ? 'Error' : 'Pending';
+    }
+
+    function enableButton(stepNum) {
+      document.getElementById(`btn${stepNum}`).disabled = false;
+    }
+
+    async function testS3Upload() {
+      log('🔄 Testing S3 Upload...', 'info');
+      const fileInput = document.getElementById('testFile');
+      const file = fileInput.files[0];
+
+      if (!file) {
+        log('❌ No file selected', 'error');
+        alert('Please select a file first');
+        return;
+      }
+
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        log(`📤 Uploading: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`, 'info');
+
+        const response = await fetch('/api/s3/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          uploadedFileData = data;
+          log('✅ S3 Upload successful!', 'success');
+          log(`📍 URL: ${data.url}`, 'success');
+          log(`🔑 Key: ${data.key}`, 'success');
+          
+          document.getElementById('result1').innerHTML = `
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+
+          setStepStatus(1, 'success');
+          enableButton(2);
+        } else {
+          log(`❌ S3 Upload failed: ${data.error}`, 'error');
+          log(`Details: ${JSON.stringify(data)}`, 'error');
+          setStepStatus(1, 'error');
+          document.getElementById('result1').innerHTML = `
+            <pre style="color: #ef4444;">${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      } catch (error) {
+        log(`❌ Error: ${error.message}`, 'error');
+        setStepStatus(1, 'error');
+      }
+    }
+
+    async function testTaskSubmit() {
+      log('🔄 Testing Task Submit...', 'info');
+      const taskId = document.getElementById('taskId').value;
+      const notes = document.getElementById('testNotes').value;
+
+      if (!taskId) {
+        alert('Please enter a Task ID');
+        return;
+      }
+
+      if (!uploadedFileData) {
+        alert('Please upload a file first (Step 1)');
+        return;
+      }
+
+      try {
+        const payload = {
+          notes,
+          files: [{
+            name: uploadedFileData.name,
+            url: uploadedFileData.url,
+            key: uploadedFileData.key,
+            size: uploadedFileData.size,
+          }],
+        };
+
+        log(`📤 Submitting task ${taskId}`, 'info');
+        log(`Files: ${payload.files.length}`, 'info');
+
+        const response = await fetch(`/api/staff/tasks/${taskId}/submit`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          submissionResponse = data;
+          log('✅ Task submitted successfully!', 'success');
+          log(`Revision #${data.revisionNumber}`, 'success');
+          
+          document.getElementById('result2').innerHTML = `
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+
+          setStepStatus(2, 'success');
+          enableButton(3);
+          enableButton(4);
+        } else {
+          log(`❌ Submit failed: ${data.error}`, 'error');
+          setStepStatus(2, 'error');
+          document.getElementById('result2').innerHTML = `
+            <pre style="color: #ef4444;">${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      } catch (error) {
+        log(`❌ Error: ${error.message}`, 'error');
+        setStepStatus(2, 'error');
+      }
+    }
+
+    async function testAdminFetch() {
+      log('🔄 Testing Admin Task Fetch...', 'info');
+      const taskId = document.getElementById('taskId').value;
+
+      try {
+        const response = await fetch(`/api/admin/tasks/${taskId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          log('✅ Admin fetch successful!', 'success');
+          log(`Task: ${data.task.title}`, 'info');
+          log(`Submission History: ${data.task.submissionHistory?.length || 0} revisions`, 'info');
+          
+          if (data.task.submissionHistory?.length > 0) {
+            data.task.submissionHistory.forEach(sub => {
+              log(`  Revision #${sub.revisionNumber}: ${sub.files?.length || 0} files`, 'info');
+            });
+          }
+
+          document.getElementById('result3').innerHTML = `
+            <pre>${JSON.stringify(data.task, null, 2)}</pre>
+          `;
+
+          setStepStatus(3, 'success');
+        } else {
+          log(`❌ Fetch failed: ${data.error}`, 'error');
+          setStepStatus(3, 'error');
+        }
+      } catch (error) {
+        log(`❌ Error: ${error.message}`, 'error');
+        setStepStatus(3, 'error');
+      }
+    }
+
+    async function testStaffFetch() {
+      log('🔄 Testing Staff Task Fetch...', 'info');
+      const taskId = document.getElementById('taskId').value;
+
+      try {
+        const response = await fetch(`/api/staff/tasks/${taskId}`);
+        const data = await response.json();
+
+        if (response.ok) {
+          log('✅ Staff fetch successful!', 'success');
+          log(`Task: ${data.task.title}`, 'info');
+          log(`Submission History: ${data.task.submissionHistory?.length || 0} revisions`, 'info');
+
+          document.getElementById('result4').innerHTML = `
+            <pre>${JSON.stringify(data.task, null, 2)}</pre>
+          `;
+
+          setStepStatus(4, 'success');
+        } else {
+          log(`❌ Fetch failed: ${data.error}`, 'error');
+          setStepStatus(4, 'error');
+        }
+      } catch (error) {
+        log(`❌ Error: ${error.message}`, 'error');
+        setStepStatus(4, 'error');
+      }
+    }
+
+    async function testFullWorkflow() {
+      log('🚀 Starting full workflow test...', 'info');
+      log('═══════════════════════════════', 'info');
+
+      await testS3Upload();
+      await new Promise(r => setTimeout(r, 1000));
+
+      if (uploadedFileData) {
+        await testTaskSubmit();
+        await new Promise(r => setTimeout(r, 1000));
+
+        if (submissionResponse) {
+          await testAdminFetch();
+          await new Promise(r => setTimeout(r, 500));
+          await testStaffFetch();
+        }
+      }
+
+      log('═══════════════════════════════', 'info');
+      log('✅ Full workflow test complete!', 'success');
+    }
+
+    async function checkS3Config() {
+      log('Checking S3 configuration...', 'info');
+      try {
+        const response = await fetch('/api/s3/check-config');
+        const data = await response.json();
+        document.getElementById('diagnostics').innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        log(`S3 Config: ${data.configured ? 'OK' : 'Missing'}`, data.configured ? 'success' : 'error');
+      } catch (error) {
+        log(`Error: ${error.message}`, 'error');
+      }
+    }
+
+    async function checkAuth() {
+      log('Checking authentication...', 'info');
+      const staffAuth = await fetch('/api/staff-auth/session');
+      const adminAuth = await fetch('/api/admin-auth/session');
+
+      const staffData = await staffAuth.json();
+      const adminData = await adminAuth.json();
+
+      document.getElementById('diagnostics').innerHTML = `
+        <h3>Staff Auth:</h3>
+        <pre>${JSON.stringify(staffData, null, 2)}</pre>
+        <h3>Admin Auth:</h3>
+        <pre>${JSON.stringify(adminData, null, 2)}</pre>
+      `;
+
+      log(`Staff: ${staffData.authenticated ? 'Logged in' : 'Not authenticated'}`, 'info');
+      log(`Admin: ${adminData.authenticated ? 'Logged in' : 'Not authenticated'}`, 'info');
+    }
+
+    async function listRecentTasks() {
+      log('Fetching recent tasks...', 'info');
+      try {
+        const response = await fetch('/api/staff/tasks');
+        const tasks = await response.json();
+        
+        if (tasks.length > 0) {
+          document.getElementById('diagnostics').innerHTML = `
+            <h3>Recent Tasks (Click to copy ID):</h3>
+            ${tasks.slice(0, 10).map(task => `
+              <div style="padding: 10px; margin: 5px 0; background: #f3f4f6; border-radius: 4px; cursor: pointer;"
+                   onclick="document.getElementById('taskId').value='${task._id}'; alert('Task ID copied!')">
+                <strong>${task.title}</strong> - ${task.status}
+                <br><small style="color: #6b7280;">ID: ${task._id}</small>
+              </div>
+            `).join('')}
+          `;
+          log(`Found ${tasks.length} tasks`, 'success');
+        } else {
+          log('No tasks found', 'info');
+        }
+      } catch (error) {
+        log(`Error: ${error.message}`, 'error');
+      }
+    }
+
+    // Initialize
+    log('Task Submission Workflow Test Page Loaded', 'success');
+    log('Please select a file and enter a task ID to begin testing', 'info');
+  </script>
+</body>
+</html>

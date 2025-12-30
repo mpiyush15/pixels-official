@@ -13,14 +13,12 @@ import {
   MessageCircle,
   Upload,
   User,
-  CheckSquare,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const menuItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/client-portal/dashboard' },
   { icon: FolderKanban, label: 'Projects', path: '/client-portal/projects' },
-  { icon: CheckSquare, label: 'Tasks', path: '/client-portal/tasks' },
   { icon: Upload, label: 'Submit Work', path: '/client-portal/submit-work' },
   { icon: MessageCircle, label: 'Chats', path: '/client-portal/chats' },
   { icon: FileText, label: 'Invoices', path: '/client-portal/invoices' },
