@@ -5,21 +5,29 @@ import nodemailer from 'nodemailer';
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // Initialize AWS SES SMTP Transporter
-const smtpTransporter = process.env.SMTP_HOST ? nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_PORT === '465', // true for 465 (SSL), false for 587 (TLS)
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
-  },
-  tls: {
-    rejectUnauthorized: false
-  },
-  connectionTimeout: 10000, // 10 seconds
-  greetingTimeout: 10000,
-  socketTimeout: 10000,
-}) : null;
+const smtpTransporter = process.env.SMTP_HOST ? (() => {
+  console.log('📧 Initializing SMTP Transporter:');
+  console.log('  Host:', process.env.SMTP_HOST);
+  console.log('  Port:', process.env.SMTP_PORT);
+  console.log('  User:', process.env.SMTP_USER);
+  console.log('  Password:', process.env.SMTP_PASSWORD ? `[Set - ${process.env.SMTP_PASSWORD.length} chars]` : '[Not Set]');
+  
+  return nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: process.env.SMTP_PORT === '465', // true for 465 (SSL), false for 587 (TLS)
+    auth: {
+      user: process.env.SMTP_USER,
+      pass: process.env.SMTP_PASSWORD,
+    },
+    tls: {
+      rejectUnauthorized: false
+    },
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000,
+    socketTimeout: 10000,
+  });
+})() : null;
 
 // Email configuration
 const FROM_EMAIL = process.env.EMAIL_FROM || 'noreply@pixelsdigital.tech';
