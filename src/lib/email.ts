@@ -2,11 +2,13 @@ import { Resend } from 'resend';
 // @ts-ignore - Type declaration issue with zeptomail package
 import { SendMailClient } from 'zeptomail';
 
-// Initialize Zeptomail client
+// Initialize Zeptomail client with correct endpoint and mail agent alias
 const zeptomailClient = process.env.ZEPTOMAIL_API_TOKEN 
   ? new SendMailClient({
-      url: 'https://api.zeptomail.com/v1.1/email',
-      token: process.env.ZEPTOMAIL_API_TOKEN
+      url: 'https://api.zeptomail.in/v1.1/email',
+      token: process.env.ZEPTOMAIL_API_TOKEN,
+      // Mail Agent Alias for routing
+      mailAgentAlias: process.env.ZEPTOMAIL_MAIL_AGENT_ALIAS || '7ba3f22116c7e67b'
     })
   : null;
 
