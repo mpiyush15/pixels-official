@@ -71,7 +71,11 @@ export async function sendEmail(options: EmailOptions): Promise<{ success: boole
           textbody: options.text || stripHtml(options.html),
         });
 
-        console.log('✅ Email sent successfully via Zeptomail:', mailResponse?.request_id || mailResponse?.id || 'Unknown');
+        console.log('📧 Email sent successfully via Zeptomail');
+        console.log('  From:', `${FROM_NAME} <${FROM_EMAIL}>`);
+        console.log('  To:', Array.isArray(options.to) ? options.to.join(', ') : options.to);
+        console.log('  Subject:', options.subject);
+        console.log('  Request ID:', mailResponse?.request_id || mailResponse?.id || 'Unknown');
         return { success: true, messageId: mailResponse?.request_id || mailResponse?.id || 'sent' };
       } catch (zeptomailError: any) {
         const errorMessage = zeptomailError?.message || 'Failed to send email';
