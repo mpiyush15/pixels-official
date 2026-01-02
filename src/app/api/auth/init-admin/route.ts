@@ -24,7 +24,7 @@ export async function POST() {
       email: 'piyush@pixelsdigital.tech',
       password: hashedPassword,
       name: 'Piyush Magar',
-      role: 'admin',
+      role: 'superadmin',
       createdAt: new Date(),
     });
 

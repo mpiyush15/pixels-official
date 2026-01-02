@@ -25,6 +25,7 @@ import {
 // ----------------------------
 interface Client {
   _id: string;
+  salutation?: "Mr." | "Mrs." | "Miss" | "Dr." | "Ms.";
   name: string;
   email: string;
   phone: string;
@@ -74,6 +75,7 @@ export default function ClientsPage() {
   const [sendLoginError, setSendLoginError] = useState("");
 
   const emptyForm = {
+    salutation: "Mr." as "Mr." | "Mrs." | "Miss" | "Dr." | "Ms.",
     name: "",
     email: "",
     phone: "",
@@ -150,6 +152,7 @@ export default function ClientsPage() {
   const handleEdit = (c: Client) => {
     setEditingClient(c);
     setFormData({
+      salutation: c.salutation || "Mr.",
       name: c.name,
       email: c.email,
       phone: c.phone,
@@ -549,6 +552,25 @@ export default function ClientsPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-600 font-light mb-2">
+                    Salutation *
+                  </label>
+                  <select
+                    value={formData.salutation}
+                    onChange={(e) =>
+                      setFormData({ ...formData, salutation: e.target.value as "Mr." | "Mrs." | "Miss" | "Dr." | "Ms." })
+                    }
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-light"
+                    required
+                  >
+                    <option value="Mr.">Mr.</option>
+                    <option value="Mrs.">Mrs.</option>
+                    <option value="Miss">Miss</option>
+                    <option value="Ms.">Ms.</option>
+                    <option value="Dr.">Dr.</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm text-gray-600 font-light mb-2">
                     Name *
                   </label>
                   <input
@@ -561,9 +583,12 @@ export default function ClientsPage() {
                     required
                   />
                 </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm text-gray-600 font-light mb-2">
-                    Email *
+                    Email
                   </label>
                   <input
                     type="email"
@@ -572,7 +597,6 @@ export default function ClientsPage() {
                       setFormData({ ...formData, email: e.target.value })
                     }
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-light"
-                    required
                   />
                 </div>
               </div>

@@ -11,8 +11,8 @@ export async function verifyPassword(password: string, hashedPassword: string): 
   return await bcrypt.compare(password, hashedPassword);
 }
 
-export function generateToken(userId: string, email: string): string {
-  return jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: '7d' });
+export function generateToken(userId: string, email: string, role: string = 'admin'): string {
+  return jwt.sign({ userId, email, role }, JWT_SECRET, { expiresIn: '7d' });
 }
 
 export function verifyToken(token: string): any {

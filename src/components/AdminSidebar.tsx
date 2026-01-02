@@ -22,7 +22,8 @@ import {
   Building,
   DollarSign,
   Wallet,
-  Calendar
+  Calendar,
+  FileCheck
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -33,6 +34,7 @@ const menuItems = [
   // CRM - Customer Relationship Management
   { icon: Mail, label: 'Leads', path: '/admin/leads', category: 'CRM' },
   { icon: Users, label: 'Clients', path: '/admin/clients', category: 'CRM' },
+  { icon: FileCheck, label: 'Quotations', path: '/admin/quotations', category: 'CRM', superAdminOnly: true },
   { icon: FolderKanban, label: 'Projects', path: '/admin/projects', category: 'CRM' },
   { icon: Calendar, label: 'Schedule', path: '/admin/schedule', category: 'CRM' },
   { icon: MessageCircle, label: 'Project Chats', path: '/admin/chats', category: 'CRM' },
@@ -61,6 +63,33 @@ export default function AdminSidebar() {
   const router = useRouter();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+
+  // Check if user is superadmin
+  useEffect(() => {
+    const checkAdminRole = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (!response.ok) {
+          console.error('Failed to fetch user role');
+          return;
+        }
+        const data = await response.json();
+        console.log('🔍 Admin role check:', data);
+        if (data.role === 'superadmin') {
+          console.log('✅ User is superadmin - showing Quotations menu');
+          setIsSuperAdmin(true);
+        } else {
+          console.log('❌ User is NOT superadmin, role:', data.role);
+        }
+      } catch (error) {
+        console.error('Error checking admin role:', error);
+        // If error, default to non-superadmin (safer)
+        setIsSuperAdmin(false);
+      }
+    };
+    checkAdminRole();
+  }, []);
 
   // Fetch unread message count
   const fetchUnreadCount = async () => {
@@ -173,7 +202,12 @@ export default function AdminSidebar() {
             <h3 className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
               CRM
             </h3>
-            {menuItems.filter(item => item.category === 'CRM').map((item) => {
+            {menuItems.filter(item => {
+              if (item.category !== 'CRM') return false;
+              // Filter out superadmin-only items if user is not superadmin
+              if (item.superAdminOnly && !isSuperAdmin) return false;
+              return true;
+            }).map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.path;
               const isChatsPage = item.path === '/admin/chats';

@@ -727,3 +727,126 @@ export async function sendLoginCredentialsEmail(
     html,
   });
 }
+
+// Send Quotation Email
+export async function sendQuotationEmail(
+  to: string,
+  clientName: string,
+  quotationNumber: string,
+  title: string,
+  items: Array<{ description: string; quantity: number; rate: number; amount: number }>,
+  total: number,
+  validUntil: Date
+) {
+  const itemsHtml = items
+    .map(
+      (item) => `
+    <div class="item-row">
+      <span>${item.description}</span>
+      <span>${item.quantity}</span>
+      <span>₹${item.rate.toLocaleString('en-IN')}</span>
+      <span>₹${item.amount.toLocaleString('en-IN')}</span>
+    </div>
+  `
+    )
+    .join('');
+
+  const portalUrl = 'https://www.pixelsdigital.tech/client-portal/login';
+  const validDate = new Date(validUntil).toLocaleDateString('en-IN', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; }
+        .quotation-number { background: #e0e7ff; color: #3730a3; padding: 10px 20px; border-radius: 5px; text-align: center; font-weight: bold; margin: 20px 0; }
+        .items-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .items-header { background: #f3f4f6; font-weight: bold; padding: 12px; border-bottom: 2px solid #667eea; }
+        .item-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; padding: 12px; border-bottom: 1px solid #e5e7eb; }
+        .total-section { background: #f0fdf4; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #10b981; }
+        .total-row { display: flex; justify-content: space-between; padding: 8px 0; }
+        .final-total { font-size: 24px; font-weight: bold; color: #059669; border-top: 2px solid #10b981; padding-top: 12px; margin-top: 12px; }
+        .validity-box { background: #fef3c7; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #f59e0b; }
+        .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; text-align: center; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📋 New Quotation</h1>
+          <p>A quotation has been prepared for you</p>
+        </div>
+        <div class="content">
+          <h2>Hi ${clientName},</h2>
+          <p>Thank you for your interest! We've prepared a quotation for your project.</p>
+          
+          <div class="quotation-number">
+            Quotation No: ${quotationNumber}
+          </div>
+
+          <h3>${title}</h3>
+
+          <div class="items-table">
+            <div class="items-header item-row">
+              <span>Description</span>
+              <span>Qty</span>
+              <span>Rate</span>
+              <span>Amount</span>
+            </div>
+            ${itemsHtml}
+          </div>
+
+          <div class="total-section">
+            <div class="total-row final-total">
+              <span>Total Amount:</span>
+              <span>₹${total.toLocaleString('en-IN')}</span>
+            </div>
+          </div>
+
+          <div class="validity-box">
+            <strong>⏰ Valid Until:</strong>
+            <p style="margin: 5px 0 0 0;">${validDate}</p>
+            <p style="margin: 5px 0 0 0; font-size: 14px;">This quotation is valid until the date mentioned above. Please respond before expiry.</p>
+          </div>
+
+          <p style="text-align: center; margin: 30px 0;">
+            <a href="${portalUrl}" class="button">View in Portal & Accept</a>
+          </p>
+
+          <p><strong>What's Next?</strong></p>
+          <ul>
+            <li>Review the quotation details carefully</li>
+            <li>Login to your portal to accept or ask questions</li>
+            <li>Once accepted, we'll start working on your project</li>
+            <li>Feel free to reach out for any clarifications</li>
+          </ul>
+
+          <p><strong>Have questions?</strong></p>
+          <p>Contact us at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a>. We're here to help!</p>
+
+          <p>Best regards,<br>The ${COMPANY_NAME} Team</p>
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} ${COMPANY_NAME}. All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to,
+    subject: `New Quotation ${quotationNumber} - ${title}`,
+    html,
+  });
+}

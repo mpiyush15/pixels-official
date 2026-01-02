@@ -200,8 +200,8 @@ export default function DashboardPage() {
       {/* Header with Date Filter */}
       <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-light text-black mb-2">Business Dashboard</h1>
-          <p className="text-gray-600 font-light">Revenue, payments, and key business metrics</p>
+          <h1 className="text-4xl font-semibold text-black mb-2">Business Dashboard</h1>
+          <p className="text-gray-600 font-medium">Revenue, payments, and key business metrics</p>
         </div>
         
         {/* Date Filter */}
@@ -211,7 +211,7 @@ export default function DashboardPage() {
             <button
               key={filter.value}
               onClick={() => setDateFilter(filter.value)}
-              className={`px-4 py-2 rounded-lg text-sm font-light transition-colors ${
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 dateFilter === filter.value
                   ? 'bg-black text-white'
                   : 'text-gray-600 hover:bg-gray-100'
@@ -267,11 +267,11 @@ export default function DashboardPage() {
                 )}
               </div>
               <h3 className="text-gray-600 text-sm font-medium mb-1">{stat.title}</h3>
-              <p className="text-3xl font-light text-black mb-1">
+              <p className="text-3xl font-semibold text-black mb-1">
                 {loading ? '...' : stat.value}
               </p>
               {stat.subtitle && (
-                <p className="text-xs text-gray-500 font-light">{stat.subtitle}</p>
+                <p className="text-xs text-gray-500 font-medium">{stat.subtitle}</p>
               )}
             </motion.div>
           );
@@ -836,20 +836,20 @@ export default function DashboardPage() {
         className="bg-white rounded-2xl p-6 border border-gray-200 mb-6"
       >
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-light text-black flex items-center gap-2">
+          <h2 className="text-xl font-semibold text-black flex items-center gap-2">
             <FolderKanban className="w-5 h-5" />
             Active Projects ({projects.length})
           </h2>
           <Link 
             href="/admin/projects"
-            className="text-sm text-blue-600 hover:text-blue-700 font-light flex items-center gap-1"
+            className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
           >
             View All <ExternalLink className="w-4 h-4" />
           </Link>
         </div>
         
         {projects.length === 0 ? (
-          <p className="text-gray-500 text-center py-8 font-light">No active projects</p>
+          <p className="text-gray-500 text-center py-8 font-medium">No active projects</p>
         ) : (
           <div className="space-y-4">
             {projects.map((project) => {
@@ -866,10 +866,10 @@ export default function DashboardPage() {
                       <h3 className="font-medium text-black hover:text-blue-600 transition-colors">
                         {project.projectName}
                       </h3>
-                      <p className="text-sm text-gray-500 font-light">{project.clientName}</p>
+                      <p className="text-sm text-gray-500 font-medium">{project.clientName}</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-lg font-light text-black">₹{project.budget.toLocaleString('en-IN')}</p>
+                      <p className="text-lg font-semibold text-black">₹{project.budget.toLocaleString('en-IN')}</p>
                       <p className="text-xs text-gray-500">{project.progress}% Complete</p>
                     </div>
                   </div>
@@ -894,7 +894,7 @@ export default function DashboardPage() {
                       <div className="space-y-2">
                         {inProgressMilestones.slice(0, 3).map((milestone, idx) => (
                           <div key={idx} className="flex items-center justify-between text-sm">
-                            <span className="text-gray-700 font-light">• {milestone.name}</span>
+                            <span className="text-gray-700 font-medium">• {milestone.name}</span>
                             <div className="flex items-center gap-2">
                               {milestone.amount && milestone.amount > 0 && (
                                 <span className="text-xs text-gray-600">₹{milestone.amount.toLocaleString('en-IN')}</span>
@@ -924,7 +924,7 @@ export default function DashboardPage() {
       >
         <button
           onClick={() => setShowTraffic(!showTraffic)}
-          className="w-full flex items-center justify-between text-xl font-light text-black mb-4"
+          className="w-full flex items-center justify-between text-xl font-semibold text-black mb-4"
         >
           <div className="flex items-center gap-2">
             <Globe className="w-5 h-5" />
@@ -952,9 +952,9 @@ export default function DashboardPage() {
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
               <Users className="w-5 h-5 text-blue-600" />
             </div>
-            <h3 className="text-lg font-light text-black">Total Clients</h3>
+            <h3 className="text-lg font-semibold text-black">Total Clients</h3>
           </div>
-          <p className="text-3xl font-light text-black">{loading ? '...' : stats.totalClients}</p>
+          <p className="text-3xl font-semibold text-black">{loading ? '...' : stats.totalClients}</p>
         </motion.div>
 
         <motion.div
@@ -967,12 +967,12 @@ export default function DashboardPage() {
             <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
               <FileText className="w-5 h-5 text-gray-600" />
             </div>
-            <h3 className="text-lg font-light text-black">Draft Invoices</h3>
+            <h3 className="text-lg font-semibold text-black">Draft Invoices</h3>
           </div>
-          <p className="text-3xl font-light text-black">
+          <p className="text-3xl font-semibold text-black">
             {loading ? '...' : `₹${stats.draftValue.toLocaleString('en-IN')}`}
           </p>
-          <p className="text-xs text-gray-500 font-light mt-1">{stats.draftInvoices} drafts</p>
+          <p className="text-xs text-gray-500 font-medium mt-1">{stats.draftInvoices} drafts</p>
         </motion.div>
 
         <motion.div
@@ -985,9 +985,9 @@ export default function DashboardPage() {
             <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
               <Mail className="w-5 h-5 text-indigo-600" />
             </div>
-            <h3 className="text-lg font-light text-black">Total Leads</h3>
+            <h3 className="text-lg font-semibold text-black">Total Leads</h3>
           </div>
-          <p className="text-3xl font-light text-black">{loading ? '...' : stats.totalLeads}</p>
+          <p className="text-3xl font-semibold text-black">{loading ? '...' : stats.totalLeads}</p>
         </motion.div>
       </div>
     </div>

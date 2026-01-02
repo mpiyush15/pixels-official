@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const token = generateToken(admin._id.toString(), admin.email);
+    const token = generateToken(admin._id.toString(), admin.email, admin.role || 'admin');
 
     const response = NextResponse.json({
       success: true,
