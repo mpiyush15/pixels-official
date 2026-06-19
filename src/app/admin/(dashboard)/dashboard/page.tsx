@@ -34,21 +34,21 @@ interface Stats {
   totalDues: number;
   overdueAmount: number;
   draftValue: number;
-  
+
   // Invoice counts
   totalInvoices: number;
   paidInvoices: number;
   unpaidInvoices: number;
   overdueInvoices: number;
   draftInvoices: number;
-  
+
   // Business metrics
   totalClients: number;
   activeProjects: number;
   totalProjects: number;
   totalProjectsRevenue: number;
   totalLeads: number;
-  
+
   // Financial metrics
   totalExpenses: number;
   totalSalaries: number;
@@ -58,7 +58,7 @@ interface Stats {
   totalBalance: number;
   monthlyProfit: number;
   pendingAmount: number;
-  
+
   // Changes
   revenueChange: number;
 }
@@ -122,11 +122,11 @@ export default function DashboardPage() {
       // Fetch basic stats
       const response = await fetch('/api/dashboard/stats');
       const data = await response.json();
-      
+
       // Fetch financial stats
       const financialResponse = await fetch('/api/dashboard/financial-stats');
       const financialData = await financialResponse.json();
-      
+
       if (financialData.success) {
         setStats({
           ...data,
@@ -203,7 +203,7 @@ export default function DashboardPage() {
           <h1 className="text-4xl font-semibold text-black mb-2">Business Dashboard</h1>
           <p className="text-gray-600 font-medium">Revenue, payments, and key business metrics</p>
         </div>
-        
+
         {/* Date Filter */}
         <div className="flex items-center gap-2 bg-white rounded-xl p-1 border border-gray-200">
           <Filter className="w-4 h-4 text-gray-400 ml-2" />
@@ -211,11 +211,10 @@ export default function DashboardPage() {
             <button
               key={filter.value}
               onClick={() => setDateFilter(filter.value)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                dateFilter === filter.value
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${dateFilter === filter.value
                   ? 'bg-black text-white'
                   : 'text-gray-600 hover:bg-gray-100'
-              }`}
+                }`}
             >
               {filter.label}
             </button>
@@ -235,29 +234,26 @@ export default function DashboardPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
-              className={`bg-white rounded-2xl p-6 border ${
-                stat.color === 'green' ? 'border-green-100' :
-                stat.color === 'red' ? 'border-red-100' :
-                stat.color === 'orange' ? 'border-orange-100' :
-                stat.color === 'purple' ? 'border-purple-100' :
-                'border-blue-100'
-              } hover:shadow-lg transition-all`}
+              className={`bg-white rounded-2xl p-6 border ${stat.color === 'green' ? 'border-green-100' :
+                  stat.color === 'red' ? 'border-red-100' :
+                    stat.color === 'orange' ? 'border-orange-100' :
+                      stat.color === 'purple' ? 'border-purple-100' :
+                        'border-blue-100'
+                } hover:shadow-lg transition-all`}
             >
               <div className="flex items-start justify-between mb-4">
-                <div className={`w-12 h-12 rounded-xl ${
-                  stat.color === 'green' ? 'bg-green-50' :
-                  stat.color === 'red' ? 'bg-red-50' :
-                  stat.color === 'orange' ? 'bg-orange-50' :
-                  stat.color === 'purple' ? 'bg-purple-50' :
-                  'bg-blue-50'
-                } flex items-center justify-center`}>
-                  <Icon className={`w-6 h-6 ${
-                    stat.color === 'green' ? 'text-green-500' :
-                    stat.color === 'red' ? 'text-red-500' :
-                    stat.color === 'orange' ? 'text-orange-500' :
-                    stat.color === 'purple' ? 'text-purple-500' :
-                    'text-blue-500'
-                  }`} strokeWidth={1.5} />
+                <div className={`w-12 h-12 rounded-xl ${stat.color === 'green' ? 'bg-green-50' :
+                    stat.color === 'red' ? 'bg-red-50' :
+                      stat.color === 'orange' ? 'bg-orange-50' :
+                        stat.color === 'purple' ? 'bg-purple-50' :
+                          'bg-blue-50'
+                  } flex items-center justify-center`}>
+                  <Icon className={`w-6 h-6 ${stat.color === 'green' ? 'text-green-500' :
+                      stat.color === 'red' ? 'text-red-500' :
+                        stat.color === 'orange' ? 'text-orange-500' :
+                          stat.color === 'purple' ? 'text-purple-500' :
+                            'text-blue-500'
+                    }`} strokeWidth={1.5} />
                 </div>
                 {stat.change !== 0 && (
                   <div className={`flex items-center gap-1 text-sm font-medium ${isPositive ? 'text-green-600' : 'text-red-600'}`}>
@@ -297,7 +293,7 @@ export default function DashboardPage() {
             </p>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
@@ -309,7 +305,7 @@ export default function DashboardPage() {
             </p>
             <p className="text-xs text-blue-100">Total income received</p>
           </div>
-          
+
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
               <ArrowDown className="w-5 h-5 text-red-300" />
@@ -320,7 +316,7 @@ export default function DashboardPage() {
             </p>
             <p className="text-xs text-blue-100">Expenses + Salaries</p>
           </div>
-          
+
           <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
               <TrendingUp className="w-5 h-5 text-yellow-300" />
@@ -345,7 +341,7 @@ export default function DashboardPage() {
           <TrendingUp className="w-6 h-6 text-indigo-600" />
           Money Flow
         </h2>
-        
+
         <div className="relative">
           {/* Flow visualization */}
           <div className="flex items-center justify-between gap-4 flex-wrap md:flex-nowrap">
@@ -390,7 +386,7 @@ export default function DashboardPage() {
                     {loading ? '...' : `₹${stats.totalExpenses.toLocaleString('en-IN')}`}
                   </p>
                 </div>
-                
+
                 <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-2xl p-4 border border-purple-200">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -456,13 +452,13 @@ export default function DashboardPage() {
         className="bg-white rounded-3xl p-8 mb-6 shadow-sm border border-gray-100"
       >
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Financial Breakdown</h2>
-        
+
         <div className="flex items-end justify-around gap-6 h-80">
           {/* Revenue Bar */}
           <div className="flex-1 flex flex-col items-center h-full">
             <div className="flex-1 w-full flex flex-col justify-end">
               <div className="relative w-full bg-gradient-to-t from-blue-500 via-blue-400 to-blue-300 rounded-t-2xl shadow-lg hover:shadow-xl transition-shadow"
-                   style={{ height: '100%' }}>
+                style={{ height: '100%' }}>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
                     <p className="text-2xl font-bold text-white drop-shadow-lg">100%</p>
@@ -484,7 +480,7 @@ export default function DashboardPage() {
           <div className="flex-1 flex flex-col items-center h-full">
             <div className="flex-1 w-full flex flex-col justify-end">
               <div className="relative w-full bg-gradient-to-t from-rose-500 via-rose-400 to-rose-300 rounded-t-2xl shadow-lg hover:shadow-xl transition-shadow"
-                   style={{ height: `${stats.totalRevenue > 0 ? (stats.totalExpenses / stats.totalRevenue) * 100 : 0}%` }}>
+                style={{ height: `${stats.totalRevenue > 0 ? (stats.totalExpenses / stats.totalRevenue) * 100 : 0}%` }}>
                 <div className="absolute inset-0 flex items-center justify-center">
                   {stats.totalExpenses > 0 && (
                     <div className="text-center">
@@ -510,7 +506,7 @@ export default function DashboardPage() {
           <div className="flex-1 flex flex-col items-center h-full">
             <div className="flex-1 w-full flex flex-col justify-end">
               <div className="relative w-full bg-gradient-to-t from-purple-500 via-purple-400 to-purple-300 rounded-t-2xl shadow-lg hover:shadow-xl transition-shadow"
-                   style={{ height: `${stats.totalRevenue > 0 ? (stats.totalSalaries / stats.totalRevenue) * 100 : 0}%` }}>
+                style={{ height: `${stats.totalRevenue > 0 ? (stats.totalSalaries / stats.totalRevenue) * 100 : 0}%` }}>
                 <div className="absolute inset-0 flex items-center justify-center">
                   {stats.totalSalaries > 0 && (
                     <div className="text-center">
@@ -536,7 +532,7 @@ export default function DashboardPage() {
           <div className="flex-1 flex flex-col items-center h-full">
             <div className="flex-1 w-full flex flex-col justify-end">
               <div className="relative w-full bg-gradient-to-t from-emerald-500 via-emerald-400 to-emerald-300 rounded-t-2xl shadow-lg hover:shadow-xl transition-shadow"
-                   style={{ height: `${stats.totalRevenue > 0 ? (stats.netProfit / stats.totalRevenue) * 100 : 0}%` }}>
+                style={{ height: `${stats.totalRevenue > 0 ? (stats.netProfit / stats.totalRevenue) * 100 : 0}%` }}>
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="text-center">
                     <p className="text-2xl font-bold text-white drop-shadow-lg">
@@ -573,7 +569,7 @@ export default function DashboardPage() {
               <span className="text-xs font-semibold text-blue-700">Interactive</span>
             </div>
           </div>
-          
+
           {/* Legend Cards */}
           <div className="grid grid-cols-3 gap-3 mb-6">
             <div className="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-3 border border-emerald-200">
@@ -586,7 +582,7 @@ export default function DashboardPage() {
               </p>
               <p className="text-xs text-gray-600">₹{(stats.netProfit / 1000).toFixed(0)}K</p>
             </div>
-            
+
             <div className="bg-gradient-to-br from-rose-50 to-red-50 rounded-xl p-3 border border-rose-200">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-3 h-3 rounded-full bg-rose-500"></div>
@@ -597,7 +593,7 @@ export default function DashboardPage() {
               </p>
               <p className="text-xs text-gray-600">₹{(stats.totalExpenses / 1000).toFixed(0)}K</p>
             </div>
-            
+
             <div className="bg-gradient-to-br from-purple-50 to-violet-50 rounded-xl p-3 border border-purple-200">
               <div className="flex items-center gap-2 mb-1">
                 <div className="w-3 h-3 rounded-full bg-purple-500"></div>
@@ -609,13 +605,13 @@ export default function DashboardPage() {
               <p className="text-xs text-gray-600">₹{(stats.totalSalaries / 1000).toFixed(0)}K</p>
             </div>
           </div>
-          
+
           <div className="h-64 min-h-[256px]">
             <ResponsiveContainer width="100%" height="100%" minHeight={256}>
               <PieChart>
                 <defs>
                   <filter id="shadow" height="200%">
-                    <feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.3"/>
+                    <feDropShadow dx="0" dy="2" stdDeviation="4" floodOpacity="0.3" />
                   </filter>
                 </defs>
                 <Pie
@@ -643,20 +639,20 @@ export default function DashboardPage() {
                     { name: 'Expenses', value: stats.totalExpenses, color: '#f43f5e' },
                     { name: 'Salaries', value: stats.totalSalaries, color: '#a855f7' },
                   ].filter(item => item.value > 0).map((entry, index) => (
-                    <Cell 
-                      key={`cell-${index}`} 
+                    <Cell
+                      key={`cell-${index}`}
                       fill={entry.color}
-                      style={{ 
+                      style={{
                         cursor: 'pointer',
                         transition: 'opacity 0.3s'
                       }}
                     />
                   ))}
                 </Pie>
-                <Tooltip 
-                  formatter={(value: number) => [`₹${value.toLocaleString('en-IN')}`, '']}
-                  contentStyle={{ 
-                    borderRadius: '12px', 
+                <Tooltip
+                  formatter={(value: any) => [`₹${Number(value).toLocaleString('en-IN')}`, '']}
+                  contentStyle={{
+                    borderRadius: '12px',
                     border: '1px solid #e5e7eb',
                     boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
                     padding: '12px 16px',
@@ -703,21 +699,21 @@ export default function DashboardPage() {
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                <XAxis 
-                  dataKey="name" 
+                <XAxis
+                  dataKey="name"
                   tick={{ fill: '#6b7280', fontSize: 12 }}
                   axisLine={{ stroke: '#e5e7eb' }}
                 />
-                <YAxis 
+                <YAxis
                   tick={{ fill: '#6b7280', fontSize: 12 }}
                   axisLine={{ stroke: '#e5e7eb' }}
                   tickFormatter={(value) => `₹${(value / 1000).toFixed(0)}K`}
                 />
-                <Tooltip 
-                  formatter={(value: number) => `₹${value.toLocaleString('en-IN')}`}
+                <Tooltip
+                  formatter={(value: any) => `₹${Number(value).toLocaleString('en-IN')}`}
                   contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb' }}
                 />
-                <Legend 
+                <Legend
                   wrapperStyle={{ paddingTop: '20px' }}
                   formatter={(value) => <span className="text-sm font-medium text-gray-700">{value}</span>}
                 />
@@ -744,7 +740,7 @@ export default function DashboardPage() {
         className="bg-white rounded-3xl p-8 mb-6 shadow-sm border border-gray-100"
       >
         <h2 className="text-2xl font-bold text-gray-900 mb-6">Your Account Balances</h2>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Cash Balance */}
           <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-50 to-orange-50 p-6 border border-amber-200">
@@ -767,26 +763,22 @@ export default function DashboardPage() {
           </div>
 
           {/* Bank Balance */}
-          <div className={`relative overflow-hidden rounded-2xl p-6 border ${
-            !loading && stats.bankBalance < 20000
+          <div className={`relative overflow-hidden rounded-2xl p-6 border ${!loading && stats.bankBalance < 20000
               ? 'bg-gradient-to-br from-red-50 to-rose-50 border-red-200'
               : 'bg-gradient-to-br from-blue-50 to-cyan-50 border-blue-200'
-          }`}>
-            <div className={`absolute top-0 right-0 w-32 h-32 rounded-full -mr-16 -mt-16 opacity-30 ${
-              !loading && stats.bankBalance < 20000 ? 'bg-red-100' : 'bg-blue-100'
-            }`}></div>
+            }`}>
+            <div className={`absolute top-0 right-0 w-32 h-32 rounded-full -mr-16 -mt-16 opacity-30 ${!loading && stats.bankBalance < 20000 ? 'bg-red-100' : 'bg-blue-100'
+              }`}></div>
             <div className="relative">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${
-                    !loading && stats.bankBalance < 20000 ? 'bg-red-500' : 'bg-blue-500'
-                  }`}>
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-sm ${!loading && stats.bankBalance < 20000 ? 'bg-red-500' : 'bg-blue-500'
+                    }`}>
                     <CreditCard className="w-6 h-6 text-white" strokeWidth={2} />
                   </div>
                   <div>
-                    <p className={`text-xs font-semibold uppercase tracking-wide ${
-                      !loading && stats.bankBalance < 20000 ? 'text-red-600' : 'text-blue-600'
-                    }`}>HDFC Bank</p>
+                    <p className={`text-xs font-semibold uppercase tracking-wide ${!loading && stats.bankBalance < 20000 ? 'text-red-600' : 'text-blue-600'
+                      }`}>HDFC Bank</p>
                     <p className="text-lg font-bold text-gray-900">Bank Balance</p>
                   </div>
                 </div>
@@ -797,14 +789,13 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
-              <p className={`text-4xl font-bold mb-2 ${
-                !loading && stats.bankBalance < 20000 ? 'text-red-600' : 'text-blue-600'
-              }`}>
+              <p className={`text-4xl font-bold mb-2 ${!loading && stats.bankBalance < 20000 ? 'text-red-600' : 'text-blue-600'
+                }`}>
                 {loading ? '...' : `₹${stats.bankBalance.toLocaleString('en-IN')}`}
               </p>
               <p className="text-sm text-gray-600">
-                {!loading && stats.bankBalance < 20000 
-                  ? '⚠️ Below minimum threshold (₹20,000)' 
+                {!loading && stats.bankBalance < 20000
+                  ? '⚠️ Below minimum threshold (₹20,000)'
                   : 'Available in business account'
                 }
               </p>
@@ -840,21 +831,21 @@ export default function DashboardPage() {
             <FolderKanban className="w-5 h-5" />
             Active Projects ({projects.length})
           </h2>
-          <Link 
+          <Link
             href="/admin/projects"
             className="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
           >
             View All <ExternalLink className="w-4 h-4" />
           </Link>
         </div>
-        
+
         {projects.length === 0 ? (
           <p className="text-gray-500 text-center py-8 font-medium">No active projects</p>
         ) : (
           <div className="space-y-4">
             {projects.map((project) => {
               const inProgressMilestones = project.milestones?.filter(m => m.status === 'in-progress') || [];
-              
+
               return (
                 <Link
                   key={project._id}
@@ -873,7 +864,7 @@ export default function DashboardPage() {
                       <p className="text-xs text-gray-500">{project.progress}% Complete</p>
                     </div>
                   </div>
-                  
+
                   {/* Progress Bar */}
                   <div className="mb-3">
                     <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -883,7 +874,7 @@ export default function DashboardPage() {
                       ></div>
                     </div>
                   </div>
-                  
+
                   {/* In Progress Milestones */}
                   {inProgressMilestones.length > 0 && (
                     <div className="bg-yellow-50 rounded-lg p-3 border border-yellow-200">
@@ -932,7 +923,7 @@ export default function DashboardPage() {
           </div>
           {showTraffic ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
         </button>
-        
+
         {showTraffic && (
           <div className="pt-4 border-t border-gray-200">
             <AnalyticsWidget days={7} />

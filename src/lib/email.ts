@@ -9,7 +9,7 @@ const zeptomailClient = process.env.ZEPTOMAIL_API_TOKEN
       token: process.env.ZEPTOMAIL_API_TOKEN,
       // Mail Agent Alias for routing
       mailAgentAlias: process.env.ZEPTOMAIL_MAIL_AGENT_ALIAS || '7ba3f22116c7e67b'
-    })
+    } as any)
   : null;
 
 // Initialize Resend (optional - as backup)
@@ -75,8 +75,8 @@ export async function sendEmail(options: EmailOptions): Promise<{ success: boole
         console.log('  From:', `${FROM_NAME} <${FROM_EMAIL}>`);
         console.log('  To:', Array.isArray(options.to) ? options.to.join(', ') : options.to);
         console.log('  Subject:', options.subject);
-        console.log('  Request ID:', mailResponse?.request_id || mailResponse?.id || 'Unknown');
-        return { success: true, messageId: mailResponse?.request_id || mailResponse?.id || 'sent' };
+        console.log('  Request ID:', (mailResponse as any)?.request_id || (mailResponse as any)?.id || 'Unknown');
+        return { success: true, messageId: (mailResponse as any)?.request_id || (mailResponse as any)?.id || 'sent' };
       } catch (zeptomailError: any) {
         const errorMessage = zeptomailError?.message || 'Failed to send email';
         const errorDetails = zeptomailError?.response || zeptomailError;
