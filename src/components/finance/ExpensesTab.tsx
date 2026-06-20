@@ -3,11 +3,14 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Plus, Receipt, Search, Calendar, IndianRupee, Eye, X, Edit, Trash2, Filter } from 'lucide-react';
+import Link from 'next/link';
 
 interface Expense {
   _id: string;
   vendorId?: string;
   vendorName: string;
+  projectId?: string;
+  projectName?: string;
   category: string;
   businessType?: 'saas' | 'pixels' | 'both';
   description: string;
@@ -29,6 +32,11 @@ interface Vendor {
   category: string;
 }
 
+interface Project {
+  _id: string;
+  name: string;
+}
+
 const expenseCategories = [
   'SaaS Subscriptions',
   'Software Licenses',
@@ -48,6 +56,8 @@ const expenseCategories = [
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [vendors, setVendors] = useState<Vendor[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<Expense | null>(null);
@@ -57,19 +67,44 @@ export default function ExpensesPage() {
   const [filterCategory, setFilterCategory] = useState<string>('all');
 
   const [formData, setFormData] = useState({
+    vendorId: '',
     category: '',
+    projectId: '',
+    projectName: '',
     businessType: 'both' as 'saas' | 'pixels' | 'both',
     description: '',
     amount: 0,
     date: new Date().toISOString().split('T')[0],
     paymentMethod: 'bank_transfer',
-    vendor: '',
+    vendorName: '',
     notes: '',
   });
 
   useEffect(() => {
     fetchExpenses();
+    fetchVendors();
+    fetchProjects();
   }, []);
+
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch('/api/projects');
+      const data = await response.json();
+      setProjects(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+    }
+  };
+
+  const fetchVendors = async () => {
+    try {
+      const response = await fetch('/api/vendors');
+      const data = await response.json();
+      setVendors(data);
+    } catch (error) {
+      console.error('Error fetching vendors:', error);
+    }
+  };
 
   const fetchExpenses = async () => {
     try {
@@ -99,13 +134,16 @@ export default function ExpensesPage() {
       setShowAddModal(false);
       setEditingExpense(null);
       setFormData({
+        vendorId: '',
         category: '',
+        projectId: '',
+        projectName: '',
         businessType: 'both',
         description: '',
         amount: 0,
         date: new Date().toISOString().split('T')[0],
         paymentMethod: 'bank_transfer',
-        vendor: '',
+        vendorName: '',
         notes: '',
       });
       fetchExpenses();
@@ -118,13 +156,16 @@ export default function ExpensesPage() {
   const handleEdit = (expense: Expense) => {
     setEditingExpense(expense);
     setFormData({
+      vendorId: expense.vendorId || '',
       category: expense.category,
-      businessType: expense.businessType,
+      projectId: expense.projectId || '',
+      projectName: expense.projectName || '',
+      businessType: expense.businessType || 'both',
       description: expense.description,
       amount: expense.amount,
       date: expense.date.split('T')[0],
       paymentMethod: expense.paymentMethod,
-      vendor: expense.vendor || '',
+      vendorName: expense.vendorName || '',
       notes: expense.notes || '',
     });
     setShowAddModal(true);
@@ -163,7 +204,7 @@ export default function ExpensesPage() {
   const filteredExpenses = expenses.filter(expense => {
     const matchesSearch = expense.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          expense.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         (expense.vendor && expense.vendor.toLowerCase().includes(searchTerm.toLowerCase()));
+                         (expense.vendorName && expense.vendorName.toLowerCase().includes(searchTerm.toLowerCase()));
     const matchesBusiness = filterBusiness === 'all' || expense.businessType === filterBusiness;
     const matchesCategory = filterCategory === 'all' || expense.category === filterCategory;
     return matchesSearch && matchesBusiness && matchesCategory;
@@ -181,28 +222,13 @@ export default function ExpensesPage() {
           <h1 className="text-4xl font-light text-black mb-2">Business Expenses</h1>
           <p className="text-gray-600 font-light">Track and manage all business expenses</p>
         </div>
-        <motion.button
-          onClick={() => {
-            setEditingExpense(null);
-            setFormData({
-              category: '',
-              businessType: 'both',
-              description: '',
-              amount: 0,
-              date: new Date().toISOString().split('T')[0],
-              paymentMethod: 'bank_transfer',
-              vendor: '',
-              notes: '',
-            });
-            setShowAddModal(true);
-          }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="bg-black text-white px-6 py-3 rounded-xl flex items-center gap-2 font-light"
+        <Link
+          href="/admin/expenses/new"
+          className="bg-black text-white px-6 py-3 rounded-xl flex items-center gap-2 font-light hover:scale-105 active:scale-95 transition-transform"
         >
           <Plus className="w-5 h-5" strokeWidth={1.5} />
           <span>Add Expense</span>
-        </motion.button>
+        </Link>
       </div>
 
       {/* Stats */}
@@ -308,13 +334,16 @@ export default function ExpensesPage() {
                     </td>
                     <td className="px-6 py-4">
                       <p className="font-light text-black">{expense.description}</p>
-                      {expense.vendor && (
-                        <p className="text-xs text-gray-500 font-light">Vendor: {expense.vendor}</p>
+                      {expense.projectName && (
+                        <p className="text-xs text-indigo-600 font-light mt-1">Project: {expense.projectName}</p>
+                      )}
+                      {expense.vendorName && (
+                        <p className="text-xs text-gray-500 font-light mt-1">Vendor: {expense.vendorName}</p>
                       )}
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-light ${getBusinessTypeColor(expense.businessType)}`}>
-                        {getBusinessTypeLabel(expense.businessType)}
+                      <span className={`px-3 py-1 rounded-full text-xs font-light ${getBusinessTypeColor(expense.businessType || 'both')}`}>
+                        {getBusinessTypeLabel(expense.businessType || 'both')}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -328,13 +357,6 @@ export default function ExpensesPage() {
                           title="View Details"
                         >
                           <Eye className="w-4 h-4 text-gray-600" />
-                        </button>
-                        <button
-                          onClick={() => handleEdit(expense)}
-                          className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
-                          title="Edit Expense"
-                        >
-                          <Edit className="w-4 h-4 text-blue-600" />
                         </button>
                         <button
                           onClick={() => handleDelete(expense._id)}
@@ -352,180 +374,6 @@ export default function ExpensesPage() {
           </table>
         </div>
       </div>
-
-      {/* Add/Edit Expense Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-8 max-w-2xl w-full my-8"
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-light text-black">
-                {editingExpense ? 'Edit Expense' : 'Add New Expense'}
-              </h2>
-              <button
-                onClick={() => {
-                  setShowAddModal(false);
-                  setEditingExpense(null);
-                }}
-                className="p-2 hover:bg-gray-100 rounded-lg"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">
-                    Category *
-                  </label>
-                  <select
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
-                    required
-                  >
-                    <option value="">Select category...</option>
-                    {expenseCategories.map(cat => (
-                      <option key={cat} value={cat}>{cat}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">
-                    Business Type *
-                  </label>
-                  <select
-                    value={formData.businessType}
-                    onChange={(e) => setFormData({ ...formData, businessType: e.target.value as any })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
-                    required
-                  >
-                    <option value="both">Both Businesses</option>
-                    <option value="saas">SaaS Only</option>
-                    <option value="pixels">Pixels Digital Only</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-600 font-light mb-2">
-                  Description *
-                </label>
-                <input
-                  type="text"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  placeholder="Brief description of the expense..."
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
-                  required
-                />
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">
-                    Amount (₹) *
-                  </label>
-                  <input
-                    type="number"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-                    placeholder="0"
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
-                    min="0"
-                    step="0.01"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">
-                    Date *
-                  </label>
-                  <input
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">
-                    Payment Method *
-                  </label>
-                  <select
-                    value={formData.paymentMethod}
-                    onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
-                    required
-                  >
-                    <option value="bank_transfer">Bank Transfer</option>
-                    <option value="upi">UPI</option>
-                    <option value="cash">Cash</option>
-                    <option value="card">Credit/Debit Card</option>
-                    <option value="cheque">Cheque</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">
-                    Vendor / Supplier
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.vendor}
-                    onChange={(e) => setFormData({ ...formData, vendor: e.target.value })}
-                    placeholder="e.g., AWS, Google, etc."
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm text-gray-600 font-light mb-2">
-                  Additional Notes
-                </label>
-                <textarea
-                  value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  placeholder="Any additional details..."
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light resize-none"
-                  rows={3}
-                />
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowAddModal(false);
-                    setEditingExpense(null);
-                  }}
-                  className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-light"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 px-6 py-3 bg-black text-white hover:bg-gray-900 rounded-xl font-light"
-                >
-                  {editingExpense ? 'Update Expense' : 'Add Expense'}
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
 
       {/* View Expense Modal */}
       {selectedExpense && (
@@ -560,8 +408,8 @@ export default function ExpensesPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 font-light mb-1">Business Type</p>
-                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-light ${getBusinessTypeColor(selectedExpense.businessType)}`}>
-                    {getBusinessTypeLabel(selectedExpense.businessType)}
+                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-light ${getBusinessTypeColor(selectedExpense.businessType || 'both')}`}>
+                    {getBusinessTypeLabel(selectedExpense.businessType || 'both')}
                   </span>
                 </div>
                 <div>
@@ -587,11 +435,11 @@ export default function ExpensesPage() {
                 </div>
               </div>
 
-              {selectedExpense.vendor && (
+              {selectedExpense.vendorName && (
                 <div>
                   <p className="text-sm text-gray-600 font-light mb-2">Vendor / Supplier</p>
                   <div className="bg-gray-50 rounded-xl p-4">
-                    <p className="font-light text-black">{selectedExpense.vendor}</p>
+                    <p className="font-light text-black">{selectedExpense.vendorName}</p>
                   </div>
                 </div>
               )}

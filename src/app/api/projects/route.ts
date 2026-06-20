@@ -27,7 +27,27 @@ export async function GET(request: NextRequest) {
         .toArray();
     }
 
-    return NextResponse.json(projects);
+    // Attach financial data to projects
+    const projectsWithFinancials = await Promise.all(
+      projects.map(async (project) => {
+        // 1. Calculate Revenue (Sum of amountPaid for all invoices linked to this project)
+        const invoices = await db.collection('invoices').find({ projectId: project._id.toString() }).toArray();
+        const totalRevenue = invoices.reduce((sum, inv) => sum + (inv.amountPaid || 0), 0);
+
+        // 2. Calculate Costs (Sum of amount for all expenses linked to this project)
+        const expenses = await db.collection('expenses').find({ projectId: project._id.toString() }).toArray();
+        const totalCost = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+
+        return {
+          ...project,
+          totalRevenue,
+          totalCost,
+          profitMargin: totalRevenue - totalCost
+        };
+      })
+    );
+
+    return NextResponse.json(projectsWithFinancials);
   } catch (error) {
     console.error('Error fetching projects:', error);
     return NextResponse.json(

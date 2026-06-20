@@ -1,6 +1,6 @@
 {
   "name": "pixels-digital-website",
-  "version": "1.0.0",
+  "version": "19.6.26",
   "private": true,
   "scripts": {
     "dev": "next dev",

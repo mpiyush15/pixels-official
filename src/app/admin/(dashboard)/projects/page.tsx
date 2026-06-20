@@ -64,6 +64,9 @@ interface Project {
     name: string;
     completed: boolean;
   }>;
+  totalRevenue?: number;
+  totalCost?: number;
+  profitMargin?: number;
   createdAt: string;
 }
 
@@ -1076,10 +1079,29 @@ export default function ProjectsPage() {
                     <p><span className="text-gray-600">Type:</span> <span className="font-light">{selectedProject.projectType}</span></p>
                     <p><span className="text-gray-600">Start Date:</span> <span className="font-light">{new Date(selectedProject.startDate).toLocaleDateString('en-IN')}</span></p>
                     <p><span className="text-gray-600">End Date:</span> <span className="font-light">{new Date(selectedProject.endDate).toLocaleDateString('en-IN')}</span></p>
-                    {selectedProject.budget > 0 && (
-                      <p><span className="text-gray-600">Budget:</span> <span className="font-light">₹{selectedProject.budget.toLocaleString('en-IN')}</span></p>
-                    )}
                   </div>
+
+                  {selectedProject.totalRevenue !== undefined && (
+                    <div className="mt-6">
+                      <h3 className="text-sm font-medium text-gray-600 mb-2">Financials</h3>
+                      <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Total Revenue:</span>
+                          <span className="font-medium text-green-600">₹{(selectedProject.totalRevenue || 0).toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Total Costs:</span>
+                          <span className="font-medium text-red-600">₹{(selectedProject.totalCost || 0).toLocaleString('en-IN')}</span>
+                        </div>
+                        <div className="flex justify-between pt-2 border-t border-gray-200 mt-2">
+                          <span className="text-gray-800 font-medium">Profit Margin:</span>
+                          <span className={`font-bold ${((selectedProject.profitMargin || 0) >= 0) ? 'text-green-600' : 'text-red-600'}`}>
+                            ₹{(selectedProject.profitMargin || 0).toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {selectedProject.milestones && selectedProject.milestones.length > 0 && (

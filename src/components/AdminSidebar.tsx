@@ -5,363 +5,176 @@ import { motion } from 'framer-motion';
 import { 
   LayoutDashboard, 
   Users, 
-  FileText, 
-  TrendingUp, 
-  Mail,
+  FolderKanban, 
+  Wallet, 
+  UserCog, 
   LogOut,
-  Menu,
-  X,
+  ExternalLink,
+  IndianRupee,
+  FileText,
+  TrendingUp,
   CreditCard,
   Receipt,
-  FolderKanban,
-  ExternalLink,
-  UserCog,
-  Image,
-  MessageCircle,
-  Upload,
-  Building,
   DollarSign,
-  Wallet,
+  Building,
+  LineChart,
+  CheckSquare,
   Calendar,
-  FileCheck
+  Upload,
+  Mail,
+  FileCheck,
+  MessageCircle,
+  Image,
+  ArrowLeft,
+  PieChart
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
 
-const menuItems = [
-  // Dashboard
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/admin/dashboard', category: 'Dashboard' },
-  
-  // CRM - Customer Relationship Management
-  { icon: Mail, label: 'Leads', path: '/admin/leads', category: 'CRM' },
-  { icon: Users, label: 'Clients', path: '/admin/clients', category: 'CRM' },
-  { icon: FileCheck, label: 'Quotations', path: '/admin/quotations', category: 'CRM', superAdminOnly: true },
-  { icon: FolderKanban, label: 'Projects', path: '/admin/projects', category: 'CRM' },
-  { icon: Calendar, label: 'Schedule', path: '/admin/schedule', category: 'CRM' },
-  { icon: MessageCircle, label: 'Project Chats', path: '/admin/chats', category: 'CRM' },
-  { icon: Upload, label: 'Submitted Work', path: '/admin/submitted-work', category: 'CRM' },
-  
-  // Business Management
-  { icon: TrendingUp, label: 'Business Overview', path: '/admin/overview', category: 'Business' },
-  { icon: UserCog, label: 'Staff Management', path: '/admin/staff', category: 'Business' },
-  { icon: FileText, label: 'Task Management', path: '/admin/tasks', category: 'Business' },
-  { icon: Image, label: 'Daily Content', path: '/admin/daily-content', category: 'Business' },
-  
-  // Accounts & Finance
-  { icon: FileText, label: 'Invoices', path: '/admin/invoices', category: 'Accounts' },
-  { icon: CreditCard, label: 'Payments', path: '/admin/payments', category: 'Accounts' },
-  { icon: Wallet, label: 'Staff Payments', path: '/admin/staff-payments', category: 'Accounts' },
-  { icon: Building, label: 'Vendors', path: '/admin/vendors', category: 'Accounts' },
-  { icon: Receipt, label: 'Expenses', path: '/admin/expenses', category: 'Accounts' },
-  { icon: DollarSign, label: 'Salaries', path: '/admin/salaries', category: 'Accounts' },
-  
-  // Personal Accounts
-  { icon: Wallet, label: 'Personal Accounts', path: '/admin/personal-accounts', category: 'Personal' },
+const financeRoutes = [
+  { icon: LayoutDashboard, label: 'Finance Command Center', path: '/admin/finance' },
+  { icon: FileText, label: 'Master Ledger', path: '/admin/ledger' },
+  { icon: PieChart, label: 'Profit & Loss', path: '/admin/profit-loss' },
+  { icon: FileText, label: 'Invoices', path: '/admin/invoices' },
+  { icon: TrendingUp, label: 'Receivables', path: '/admin/receivables' },
+  { icon: Receipt, label: 'Expenses', path: '/admin/expenses' },
+  { icon: DollarSign, label: 'Working Capital', path: '/admin/working-capital' },
+];
+
+const operationsRoutes = [
+  { icon: FolderKanban, label: 'Active Projects', path: '/admin/projects' },
+  { icon: CheckSquare, label: 'Task Management', path: '/admin/tasks' },
+  { icon: Calendar, label: 'Schedule & Calendar', path: '/admin/schedule' },
+  { icon: Upload, label: 'Submitted Work', path: '/admin/submitted-work' },
+];
+
+const crmRoutes = [
+  { icon: Mail, label: 'Leads Pipeline', path: '/admin/leads' },
+  { icon: Users, label: 'Client Directory', path: '/admin/clients' },
+  { icon: FileCheck, label: 'Quotations', path: '/admin/quotations' },
+  { icon: MessageCircle, label: 'Project Chats', path: '/admin/chats' },
+];
+
+const teamRoutes = [
+  { icon: UserCog, label: 'Staff Management', path: '/admin/staff' },
+  { icon: Wallet, label: 'Staff Payments', path: '/admin/staff-payments' },
+  { icon: Image, label: 'Daily Content', path: '/admin/daily-content' },
 ];
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
-  // Check if user is superadmin
-  useEffect(() => {
-    const checkAdminRole = async () => {
-      try {
-        const response = await fetch('/api/auth/me');
-        if (!response.ok) {
-          console.error('Failed to fetch user role');
-          return;
-        }
-        const data = await response.json();
-        console.log('🔍 Admin role check:', data);
-        if (data.role === 'superadmin') {
-          console.log('✅ User is superadmin - showing Quotations menu');
-          setIsSuperAdmin(true);
-        } else {
-          console.log('❌ User is NOT superadmin, role:', data.role);
-        }
-      } catch (error) {
-        console.error('Error checking admin role:', error);
-        // If error, default to non-superadmin (safer)
-        setIsSuperAdmin(false);
-      }
-    };
-    checkAdminRole();
-  }, []);
+  // Helper to determine which department we are currently viewing
+  const isFinance = financeRoutes.some(r => pathname.startsWith(r.path));
+  const isOperations = operationsRoutes.some(r => pathname.startsWith(r.path)) || pathname === '/admin/operations';
+  const isCrm = crmRoutes.some(r => pathname.startsWith(r.path)) || pathname === '/admin/crm';
+  const isTeam = teamRoutes.some(r => pathname.startsWith(r.path)) || pathname === '/admin/team';
 
-  // Fetch unread message count
-  const fetchUnreadCount = async () => {
+  let currentRoutes: Array<{icon: any, label: string, path: string}> = [];
+  let departmentTitle = 'Pixels OS';
+  let departmentSubtitle = 'App Launcher';
+
+  if (isFinance) {
+    currentRoutes = financeRoutes;
+    departmentTitle = 'Finance Hub';
+    departmentSubtitle = 'Accounts Department';
+  } else if (isOperations) {
+    currentRoutes = operationsRoutes;
+    departmentTitle = 'Operations Hub';
+    departmentSubtitle = 'Projects Department';
+  } else if (isCrm) {
+    currentRoutes = crmRoutes;
+    departmentTitle = 'CRM Hub';
+    departmentSubtitle = 'Sales Department';
+  } else if (isTeam) {
+    currentRoutes = teamRoutes;
+    departmentTitle = 'Team Hub';
+    departmentSubtitle = 'HR Department';
+  } else {
+    // We are on the App Launcher or some other global page
+    departmentTitle = 'Pixels OS';
+    departmentSubtitle = 'Central Command';
+  }
+
+  const handleLogout = async () => {
     try {
-      const response = await fetch('/api/chat/unread-count');
-      const data = await response.json();
-      if (data.success) {
-        setUnreadCount(data.unreadCount);
-      }
+      await fetch('/api/auth/logout', { method: 'POST' });
+      router.push('/admin/login');
     } catch (error) {
-      console.error('Error fetching unread count:', error);
+      console.error('Logout failed', error);
+      router.push('/admin/login'); // Fallback
     }
   };
 
-  useEffect(() => {
-    fetchUnreadCount();
-    // DISABLED: Poll every 10 seconds for new messages
-    // const interval = setInterval(fetchUnreadCount, 10000);
-    // return () => clearInterval(interval);
-  }, []);
-
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/admin/login');
-  };
-
   return (
-    <>
-      <style jsx>{`
-        nav::-webkit-scrollbar {
-          width: 6px;
-        }
-        nav::-webkit-scrollbar-track {
-          background: #111827;
-        }
-        nav::-webkit-scrollbar-thumb {
-          background: #374151;
-          border-radius: 10px;
-        }
-        nav::-webkit-scrollbar-thumb:hover {
-          background: #4b5563;
-        }
-      `}</style>
-      
-      {/* Mobile Header - Logo centered */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-black border-b border-white/10 px-4 py-4">
-        <div className="flex items-center justify-center relative">
-          {/* Hamburger Button - Absolute Left */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="absolute left-0 text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
-          >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-          
-          {/* Logo/Title - Centered */}
-          <div className="text-center">
-            <h1 className="text-lg font-light text-white">Pixels Digital</h1>
-            <p className="text-gray-400 text-xs font-light">Admin Portal</p>
-          </div>
-        </div>
+    <div className="w-72 flex-shrink-0 bg-white border-r border-gray-200 z-50 hidden lg:flex flex-col">
+      <div className="p-8 border-b border-gray-100 flex-shrink-0">
+        <h1 className="text-2xl font-semibold text-gray-900 tracking-tight">{departmentTitle}</h1>
+        <p className="text-gray-500 text-sm font-medium mt-1">{departmentSubtitle}</p>
       </div>
 
-      {/* Sidebar */}
-      <motion.div
-        initial={false}
-        animate={{ x: 0 }}
-        className={`fixed lg:static inset-y-0 left-0 z-40 w-72 bg-black border-r border-white/10 flex flex-col ${
-          isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 transition-transform duration-300 mt-[73px] lg:mt-0`}
-      >
-        {/* Logo - Desktop Only */}
-        <div className="hidden lg:block p-8 border-b border-white/10 flex-shrink-0">
-          <h1 className="text-2xl font-light text-white">Pixels Digital</h1>
-          <p className="text-gray-400 text-sm font-light mt-1">Admin Dashboard</p>
-        </div>
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        {currentRoutes.length > 0 && (
+          <motion.button
+            onClick={() => router.push('/admin/dashboard')}
+            whileHover={{ x: 4 }}
+            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-gray-500 hover:text-black hover:bg-gray-100 transition-all font-medium text-[15px] mb-4 border border-gray-200 shadow-sm"
+          >
+            <ArrowLeft className="w-4 h-4" strokeWidth={2} />
+            <span>Switch Department</span>
+          </motion.button>
+        )}
 
-        {/* Menu Items - Scrollable */}
-        <nav className="flex-1 p-4 space-y-1 overflow-y-auto" style={{
-          scrollbarWidth: 'thin',
-          scrollbarColor: '#374151 #111827'
-        }}>
-          {/* Dashboard Section */}
-          {menuItems.filter(item => item.category === 'Dashboard').map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.path;
+        {currentRoutes.length === 0 && (
+           <div className="px-4 py-8 text-center text-gray-400 text-sm font-medium">
+             Select a department from the App Launcher to see tools.
+           </div>
+        )}
 
-            return (
-              <motion.button
-                key={item.path}
-                onClick={() => {
-                  router.push(item.path);
-                  setIsMobileMenuOpen(false);
-                }}
-                whileHover={{ x: 4 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors relative ${
-                  isActive
-                    ? 'bg-white text-black'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
-                }`}
-              >
-                <Icon className="w-5 h-5" strokeWidth={1.5} />
-                <span className="font-light">{item.label}</span>
-              </motion.button>
-            );
-          })}
+        {currentRoutes.map((item) => {
+          const Icon = item.icon;
+          const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
 
-          {/* CRM Section */}
-          <div className="pt-6">
-            <h3 className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              CRM
-            </h3>
-            {menuItems.filter(item => {
-              if (item.category !== 'CRM') return false;
-              // Filter out superadmin-only items if user is not superadmin
-              if (item.superAdminOnly && !isSuperAdmin) return false;
-              return true;
-            }).map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.path;
-              const isChatsPage = item.path === '/admin/chats';
-              const showBadge = isChatsPage && unreadCount > 0;
+          return (
+            <motion.button
+              key={item.path}
+              onClick={() => router.push(item.path)}
+              whileHover={{ x: 4 }}
+              className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all relative ${
+                isActive
+                  ? 'bg-black text-white shadow-md'
+                  : 'text-gray-600 hover:text-black hover:bg-gray-50'
+              }`}
+            >
+              <Icon className="w-5 h-5" strokeWidth={1.5} />
+              <span className="font-medium text-[15px]">{item.label}</span>
+            </motion.button>
+          );
+        })}
 
-              return (
-                <motion.button
-                  key={item.path}
-                  onClick={() => {
-                    router.push(item.path);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  whileHover={{ x: 4 }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors relative ${
-                    isActive
-                      ? 'bg-white text-black'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" strokeWidth={1.5} />
-                  <span className="font-light">{item.label}</span>
-                  {showBadge && (
-                    <span className="ml-auto bg-red-500 text-white text-xs font-semibold rounded-full px-2 py-0.5 min-w-[20px] text-center">
-                      {unreadCount > 99 ? '99+' : unreadCount}
-                    </span>
-                  )}
-                </motion.button>
-              );
-            })}
-          </div>
-
-          {/* Accounts Section */}
-          <div className="pt-6">
-            <h3 className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Accounts & Finance
-            </h3>
-            {menuItems.filter(item => item.category === 'Accounts').map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.path;
-
-              return (
-                <motion.button
-                  key={item.path}
-                  onClick={() => {
-                    router.push(item.path);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  whileHover={{ x: 4 }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors relative ${
-                    isActive
-                      ? 'bg-white text-black'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" strokeWidth={1.5} />
-                  <span className="font-light">{item.label}</span>
-                </motion.button>
-              );
-            })}
-          </div>
-
-          {/* Personal Accounts Section */}
-          <div className="pt-6">
-            <h3 className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Personal
-            </h3>
-            {menuItems.filter(item => item.category === 'Personal').map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.path;
-
-              return (
-                <motion.button
-                  key={item.path}
-                  onClick={() => {
-                    router.push(item.path);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  whileHover={{ x: 4 }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors relative ${
-                    isActive
-                      ? 'bg-white text-black'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" strokeWidth={1.5} />
-                  <span className="font-light">{item.label}</span>
-                </motion.button>
-              );
-            })}
-          </div>
-
-          {/* Business Management Section */}
-          <div className="pt-6">
-            <h3 className="px-4 mb-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-              Business
-            </h3>
-            {menuItems.filter(item => item.category === 'Business').map((item) => {
-              const Icon = item.icon;
-              const isActive = pathname === item.path;
-
-              return (
-                <motion.button
-                  key={item.path}
-                  onClick={() => {
-                    router.push(item.path);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  whileHover={{ x: 4 }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors relative ${
-                    isActive
-                      ? 'bg-white text-black'
-                      : 'text-gray-400 hover:text-white hover:bg-white/5'
-                  }`}
-                >
-                  <Icon className="w-5 h-5" strokeWidth={1.5} />
-                  <span className="font-light">{item.label}</span>
-                </motion.button>
-              );
-            })}
-          </div>
-          
-          {/* Client Portal Link - Opens in new tab */}
+        {currentRoutes.length === 0 && (
           <motion.a
             href="/client-portal/login"
             target="_blank"
             rel="noopener noreferrer"
             whileHover={{ x: 4 }}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-blue-400 hover:text-blue-300 hover:bg-blue-500/10 transition-colors border border-blue-500/20 mt-6"
+            className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-indigo-600 hover:bg-indigo-50 transition-colors mt-6 font-medium text-[15px]"
           >
             <ExternalLink className="w-5 h-5" strokeWidth={1.5} />
-            <span className="font-light">Client Portal</span>
+            <span>Client Portal Access</span>
           </motion.a>
-        </nav>
+        )}
+      </nav>
 
-        {/* Logout */}
-        <div className="p-4 border-t border-white/10 flex-shrink-0">
-          <motion.button
-            onClick={handleLogout}
-            whileHover={{ x: 4 }}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors"
-          >
-            <LogOut className="w-5 h-5" strokeWidth={1.5} />
-            <span className="font-light">Logout</span>
-          </motion.button>
-        </div>
-      </motion.div>
-
-      {/* Mobile Overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-30"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
-    </>
+      <div className="p-4 border-t border-gray-100 flex-shrink-0">
+        <motion.button
+          onClick={handleLogout}
+          whileHover={{ x: 4 }}
+          className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-red-600 hover:bg-red-50 transition-colors font-medium text-[15px]"
+        >
+          <LogOut className="w-5 h-5" strokeWidth={1.5} />
+          <span>Logout System</span>
+        </motion.button>
+      </div>
+    </div>
   );
 }

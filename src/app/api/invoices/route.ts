@@ -56,6 +56,8 @@ export async function POST(request: NextRequest) {
       clientPhone: body.clientPhone || '',
       clientCompany: body.clientCompany || '',
       clientAddress: body.clientAddress || '',
+      projectId: body.projectId || null,
+      projectName: body.projectName || '',
       services: body.services,
       subtotal: body.subtotal,
       discount: body.discount || 0,

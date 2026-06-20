@@ -29,11 +29,16 @@ export async function POST(request: Request) {
     const expense = {
       vendorId: body.vendorId || null,
       vendorName: body.vendorName || '',
+      clientId: body.clientId || null,
+      clientName: body.clientName || '',
+      projectId: body.projectId || null,
+      projectName: body.projectName || '',
       category: body.category, // hosting, domain, internet, social_media, communication, software, utilities, other
       description: body.description,
       amount: parseFloat(body.amount),
       date: body.date,
       paymentMethod: body.paymentMethod || 'bank_transfer', // bank_transfer, upi, cash, card, cheque
+      paidFrom: body.paidFrom || 'bank', // cash or bank
       paymentStatus: body.paymentStatus || 'paid', // paid, pending, overdue
       invoiceNumber: body.invoiceNumber || '',
       notes: body.notes || '',
@@ -58,8 +63,8 @@ export async function POST(request: Request) {
 
     // Auto-create cash flow entry if expense is paid
     if (expense.paymentStatus === 'paid') {
-      // Determine account type: cash payment method = cash, all others = bank
-      const accountType = expense.paymentMethod === 'cash' ? 'cash' : 'bank';
+      // Determine account type: use explicitly provided paidFrom or fall back to paymentMethod logic
+      const accountType = expense.paidFrom || (expense.paymentMethod === 'cash' ? 'cash' : 'bank');
       
       const cashFlowEntry = {
         type: 'expense',
