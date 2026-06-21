@@ -1,13 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { FinanceDB } from '@/lib/finance';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const searchParams = request.nextUrl.searchParams;
+    const projectId = searchParams.get('projectId');
+    const clientId = searchParams.get('clientId');
+    
     const db = await getDatabase();
+    
+    const query: any = {};
+    
+    if (projectId) {
+      // Find invoices for this project
+      const invoices = await db.collection('invoices').find({ projectId }).toArray();
+      const invoiceIds = invoices.map(inv => inv._id.toString());
+      
+      query.$or = [
+        { projectId: projectId },
+        { invoiceId: { $in: invoiceIds } }
+      ];
+    }
+    
+    if (clientId) {
+      if (query.$or) {
+        query.clientId = clientId; // Just append to the query if $or is already there
+      } else {
+        query.clientId = clientId;
+      }
+    }
+
     const payments = await db
       .collection('payments')
-      .find()
+      .find(query)
       .sort({ paymentDate: -1 })
       .toArray();
 
@@ -134,6 +161,39 @@ export async function POST(request: NextRequest) {
     };
 
     await db.collection('cashflow').insertOne(cashFlowEntry);
+
+    // Create Double-Entry Journal Record
+    await FinanceDB.ensureSystemAccounts();
+    const accounts = await FinanceDB.getAccounts();
+    
+    // Payment received -> Debit Bank/Cash, Credit Receivables
+    const paymentAccount = accounts.find(a => accountType === 'cash' ? a.name === 'Cash in Hand' : a.subType === 'Bank') || accounts.find(a => a.name === 'Cash in Hand');
+    const receivableAccount = accounts.find(a => a.subType === 'Receivable') || accounts.find(a => a.type === 'Asset');
+
+    if (paymentAccount && receivableAccount) {
+        await FinanceDB.createJournalEntry([
+            {
+                accountId: paymentAccount._id!,
+                type: 'Debit',
+                amount: paymentAmount,
+                currency: 'INR',
+                date: new Date(body.paymentDate),
+                description: `Invoice Payment Received: #${invoice.invoiceNumber} from ${invoice.clientName}`,
+                referenceId: result.insertedId.toString(),
+                referenceType: 'Payment'
+            },
+            {
+                accountId: receivableAccount._id!,
+                type: 'Credit',
+                amount: paymentAmount,
+                currency: 'INR',
+                date: new Date(body.paymentDate),
+                description: `Invoice Payment: #${invoice.invoiceNumber} from ${invoice.clientName}`,
+                referenceId: result.insertedId.toString(),
+                referenceType: 'Payment'
+            }
+        ]);
+    }
 
     return NextResponse.json({
       success: true,

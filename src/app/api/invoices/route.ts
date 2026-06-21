@@ -3,6 +3,7 @@ import { getDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { createAndUploadInvoice } from '@/lib/invoiceGenerator';
 import { getPresignedDownloadUrl } from '@/lib/s3';
+import { FinanceDB } from '@/lib/finance';
 
 export async function GET() {
   try {
@@ -133,6 +134,39 @@ export async function POST(request: NextRequest) {
         }
       }
     );
+
+    // Create Double-Entry Journal Record for the Invoice (Accrual basis)
+    await FinanceDB.ensureSystemAccounts();
+    const accounts = await FinanceDB.getAccounts();
+    
+    // Invoice issued -> Debit Receivables, Credit Revenue
+    const receivableAccount = accounts.find(a => a.subType === 'Receivable') || accounts.find(a => a.type === 'Asset');
+    const revenueAccount = accounts.find(a => a.subType === 'Sales') || accounts.find(a => a.type === 'Revenue');
+
+    if (receivableAccount && revenueAccount) {
+        await FinanceDB.createJournalEntry([
+            {
+                accountId: receivableAccount._id!,
+                type: 'Debit',
+                amount: body.total,
+                currency: 'INR',
+                date: new Date(body.issueDate),
+                description: `Invoice Created: #${invoiceNumber} for ${body.clientName}`,
+                referenceId: result.insertedId.toString(),
+                referenceType: 'Invoice'
+            },
+            {
+                accountId: revenueAccount._id!,
+                type: 'Credit',
+                amount: body.total,
+                currency: 'INR',
+                date: new Date(body.issueDate),
+                description: `Revenue from Invoice: #${invoiceNumber} for ${body.clientName}`,
+                referenceId: result.insertedId.toString(),
+                referenceType: 'Invoice'
+            }
+        ]);
+    }
 
     return NextResponse.json({
       success: true,

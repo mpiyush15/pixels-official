@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { FinanceDB } from '@/lib/finance';
 
 export async function GET() {
   try {
@@ -37,12 +38,13 @@ export async function POST(request: Request) {
       description: body.description,
       amount: parseFloat(body.amount),
       date: body.date,
-      paymentMethod: body.paymentMethod || 'bank_transfer', // bank_transfer, upi, cash, card, cheque
-      paidFrom: body.paidFrom || 'bank', // cash or bank
-      paymentStatus: body.paymentStatus || 'paid', // paid, pending, overdue
+      paymentMethod: body.paymentMethod || 'bank_transfer',
+      paidFrom: body.paidFrom || '', // This will now be paymentAccountId
+      expenseAccountId: body.expenseAccountId || '',
+      paymentStatus: body.paymentStatus || 'paid',
       invoiceNumber: body.invoiceNumber || '',
       notes: body.notes || '',
-      recurringType: body.recurringType || 'one_time', // one_time, monthly, quarterly, yearly
+      recurringType: body.recurringType || 'one_time',
       nextDueDate: body.nextDueDate || null,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -61,28 +63,32 @@ export async function POST(request: Request) {
       );
     }
 
-    // Auto-create cash flow entry if expense is paid
-    if (expense.paymentStatus === 'paid') {
-      // Determine account type: use explicitly provided paidFrom or fall back to paymentMethod logic
-      const accountType = expense.paidFrom || (expense.paymentMethod === 'cash' ? 'cash' : 'bank');
-      
-      const cashFlowEntry = {
-        type: 'expense',
-        category: 'expense',
-        amount: expense.amount,
-        accountType: accountType,
-        paymentMethod: expense.paymentMethod,
-        reference: expense.invoiceNumber || `Expense #${result.insertedId}`,
-        description: `${expense.category} - ${expense.description}`,
-        transactionDate: new Date(expense.date),
-        vendorId: expense.vendorId,
-        vendorName: expense.vendorName,
-        expenseId: result.insertedId.toString(),
-        expenseCategory: expense.category,
-        createdAt: new Date(),
-      };
+    // Auto-create double-entry journal record if expense is paid
+    if (expense.paymentStatus === 'paid' && expense.expenseAccountId && expense.paidFrom) {
+      await FinanceDB.ensureSystemAccounts();
 
-      await db.collection('cashflow').insertOne(cashFlowEntry);
+      await FinanceDB.createJournalEntry([
+          {
+              accountId: expense.expenseAccountId,
+              type: 'Debit',
+              amount: expense.amount,
+              currency: 'INR',
+              date: new Date(expense.date),
+              description: `Expense: ${expense.category} - ${expense.description}`,
+              referenceId: result.insertedId.toString(),
+              referenceType: 'Expense'
+          },
+          {
+              accountId: expense.paidFrom, // This is paymentAccountId
+              type: 'Credit',
+              amount: expense.amount,
+              currency: 'INR',
+              date: new Date(expense.date),
+              description: `Payment for Expense: ${expense.category} - ${expense.description}`,
+              referenceId: result.insertedId.toString(),
+              referenceType: 'Expense'
+          }
+      ]);
     }
 
     return NextResponse.json(

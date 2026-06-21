@@ -233,36 +233,36 @@ export default function SchedulePage() {
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
-    <div className="p-6">
+    <div className="p-8 bg-background min-h-[calc(100vh-8rem)] rounded-2xl">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Schedule & Calendar</h1>
-        <p className="text-gray-600">Manage your projects, deadlines, and daily tasks</p>
+        <h1 className="text-3xl font-medium text-text-primary mb-2">Schedule & Calendar</h1>
+        <p className="text-text-muted">Manage your projects, deadlines, and daily tasks</p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {/* Calendar */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <div className="lg:col-span-2 xl:col-span-3">
+          <div className="ta-card">
             {/* Calendar Header */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">{monthYear}</h2>
+              <h2 className="text-xl font-semibold text-text-primary">{monthYear}</h2>
               <div className="flex items-center space-x-2">
                 <button
                   onClick={previousMonth}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition"
+                  className="p-2 hover:bg-surface hover:bg-surface/80 rounded-lg transition"
                 >
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => setCurrentDate(new Date())}
-                  className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition text-sm font-medium"
+                  className="px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-blue-100 transition text-sm font-medium"
                 >
                   Today
                 </button>
                 <button
                   onClick={nextMonth}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition"
+                  className="p-2 hover:bg-surface hover:bg-surface/80 rounded-lg transition"
                 >
                   <ChevronRight className="w-5 h-5" />
                 </button>
@@ -272,7 +272,7 @@ export default function SchedulePage() {
             {/* Week Days */}
             <div className="grid grid-cols-7 gap-2 mb-2">
               {weekDays.map(day => (
-                <div key={day} className="text-center text-xs font-semibold text-gray-500 py-2">
+                <div key={day} className="text-center text-xs font-semibold text-text-muted py-2">
                   {day}
                 </div>
               ))}
@@ -289,11 +289,11 @@ export default function SchedulePage() {
                     key={index}
                     whileHover={date ? { scale: 1.05 } : {}}
                     className={`
-                      min-h-[100px] p-2 rounded-lg border transition cursor-pointer
-                      ${!date ? 'bg-gray-50 border-gray-100' : ''}
-                      ${date && isToday(date) ? 'bg-blue-50 border-blue-300 ring-2 ring-blue-200' : ''}
-                      ${date && isSelectedDate(date) ? 'bg-purple-50 border-purple-300' : ''}
-                      ${date && !isToday(date) && !isSelectedDate(date) ? 'bg-white border-gray-200 hover:border-blue-300' : ''}
+                      min-h-[80px] p-2 rounded-lg border transition cursor-pointer
+                      ${!date ? 'bg-surface border-border' : ''}
+                      ${date && isToday(date) ? 'bg-primary/10 border-primary/30 ring-2 ring-primary/20' : ''}
+                      ${date && isSelectedDate(date) ? 'bg-purple-500/10 border-purple-500/30' : ''}
+                      ${date && !isToday(date) && !isSelectedDate(date) ? 'bg-background border-border hover:border-primary/30' : ''}
                     `}
                     onClick={() => date && setSelectedDate(date)}
                   >
@@ -301,7 +301,7 @@ export default function SchedulePage() {
                       <>
                         <div className={`
                           text-sm font-semibold mb-1
-                          ${isToday(date) ? 'text-blue-600' : 'text-gray-700'}
+                          ${isToday(date) ? 'text-primary' : 'text-text-primary'}
                         `}>
                           {date.getDate()}
                         </div>
@@ -311,17 +311,17 @@ export default function SchedulePage() {
                               key={i}
                               className={`
                                 text-xs px-2 py-1 rounded truncate
-                                ${event.type === 'project-deadline' ? 'bg-red-100 text-red-700' : ''}
-                                ${event.type === 'project-start' ? 'bg-green-100 text-green-700' : ''}
-                                ${event.type === 'task' && event.status === 'completed' ? 'bg-gray-100 text-gray-500 line-through' : ''}
-                                ${event.type === 'task' && event.status !== 'completed' ? 'bg-blue-100 text-blue-700' : ''}
+                                ${event.type === 'project-deadline' ? 'bg-red-500/10 text-red-500' : ''}
+                                ${event.type === 'project-start' ? 'bg-emerald-500/10 text-emerald-500' : ''}
+                                ${event.type === 'task' && event.status === 'completed' ? 'bg-surface text-text-muted line-through' : ''}
+                                ${event.type === 'task' && event.status !== 'completed' ? 'bg-blue-500/10 text-blue-500' : ''}
                               `}
                             >
                               {event.title}
                             </div>
                           ))}
                           {events.length > 2 && (
-                            <div className="text-xs text-gray-500 px-2">
+                            <div className="text-xs text-text-muted px-2">
                               +{events.length - 2} more
                             </div>
                           )}
@@ -346,7 +346,7 @@ export default function SchedulePage() {
                 date: selectedDate ? selectedDate.toISOString().split('T')[0] : ''
               });
             }}
-            className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-semibold hover:shadow-lg transition flex items-center justify-center space-x-2"
+            className="w-full py-3 bg-primary text-background rounded-lg font-semibold hover:shadow-lg transition flex items-center justify-center space-x-2"
           >
             <Plus className="w-5 h-5" />
             <span>Add Task</span>
@@ -354,8 +354,8 @@ export default function SchedulePage() {
 
           {/* Selected Date Events */}
           {selectedDate && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-              <h3 className="font-semibold text-gray-900 mb-4">
+            <div className="ta-card">
+              <h3 className="font-semibold text-text-primary mb-4">
                 {selectedDate.toLocaleDateString('default', { 
                   weekday: 'long', 
                   month: 'long', 
@@ -366,19 +366,19 @@ export default function SchedulePage() {
                 {getEventsForDate(selectedDate).map((event, index) => (
                   <div
                     key={index}
-                    className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+                    className="p-3 bg-surface rounded-lg border border-border"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
-                        <div className="font-medium text-gray-900 mb-1">{event.title}</div>
+                        <div className="font-medium text-text-primary mb-1">{event.title}</div>
                         {event.clientName && (
-                          <div className="text-xs text-gray-500 flex items-center space-x-1">
+                          <div className="text-xs text-text-muted flex items-center space-x-1">
                             <User className="w-3 h-3" />
                             <span>{event.clientName}</span>
                           </div>
                         )}
                         {event.time && (
-                          <div className="text-xs text-gray-500 flex items-center space-x-1 mt-1">
+                          <div className="text-xs text-text-muted flex items-center space-x-1 mt-1">
                             <Clock className="w-3 h-3" />
                             <span>{event.time}</span>
                           </div>
@@ -388,7 +388,7 @@ export default function SchedulePage() {
                         <select
                           value={event.status}
                           onChange={(e) => updateTaskStatus(event._id!, e.target.value as Task['status'])}
-                          className="text-xs border border-gray-300 rounded px-2 py-1"
+                          className="ta-input text-xs px-2 py-1 h-auto"
                         >
                           <option value="pending">Pending</option>
                           <option value="in-progress">In Progress</option>
@@ -399,15 +399,15 @@ export default function SchedulePage() {
                   </div>
                 ))}
                 {getEventsForDate(selectedDate).length === 0 && (
-                  <p className="text-sm text-gray-500 text-center py-4">No events scheduled</p>
+                  <p className="text-sm text-text-muted text-center py-4">No events scheduled</p>
                 )}
               </div>
             </div>
           )}
 
           {/* Upcoming Deadlines */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center space-x-2">
+          <div className="ta-card">
+            <h3 className="font-semibold text-text-primary mb-4 flex items-center space-x-2">
               <AlertCircle className="w-5 h-5 text-red-500" />
               <span>Upcoming Deadlines</span>
             </h3>
@@ -426,17 +426,17 @@ export default function SchedulePage() {
                 .sort((a, b) => new Date(a.milestoneDate).getTime() - new Date(b.milestoneDate).getTime())
                 .slice(0, 5)
                 .map((item, index) => (
-                  <div key={index} className="p-2 bg-red-50 rounded-lg border border-red-200">
-                    <div className="font-medium text-sm text-gray-900">{item.projectName}</div>
-                    <div className="text-xs text-gray-600">{item.clientName}</div>
-                    <div className="text-xs text-blue-600 mt-1">{item.milestoneName}</div>
-                    <div className="text-xs text-red-600 mt-1">
+                  <div key={index} className="p-3 bg-red-500/5 rounded-lg border border-red-500/20">
+                    <div className="font-medium text-sm text-text-primary">{item.projectName}</div>
+                    <div className="text-xs text-text-muted">{item.clientName}</div>
+                    <div className="text-xs text-primary mt-1">{item.milestoneName}</div>
+                    <div className="text-xs text-red-500 mt-1">
                       Due: {new Date(item.milestoneDate).toLocaleDateString()}
                     </div>
                   </div>
                 ))}
               {projects.filter(p => p.milestones && p.milestones.length > 0).length === 0 && (
-                <p className="text-sm text-gray-500 text-center py-4">No upcoming deadlines</p>
+                <p className="text-sm text-text-muted text-center py-4">No upcoming deadlines</p>
               )}
             </div>
           </div>
@@ -449,13 +449,13 @@ export default function SchedulePage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl shadow-2xl max-w-md w-full p-6"
+            className="bg-background rounded-xl shadow-2xl max-w-md w-full p-6"
           >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xl font-semibold">Add New Task</h3>
               <button
                 onClick={() => setShowTaskModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-surface rounded-lg text-text-muted"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -463,57 +463,57 @@ export default function SchedulePage() {
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-text-primary mb-1">
                   Task Title *
                 </label>
                 <input
                   type="text"
                   value={newTask.title}
                   onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter task title"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-text-primary mb-1">
                   Description
                 </label>
                 <textarea
                   value={newTask.description}
                   onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   rows={3}
                   placeholder="Enter task description"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-text-primary mb-1">
                   Date *
                 </label>
                 <input
                   type="date"
                   value={newTask.date}
                   onChange={(e) => setNewTask({ ...newTask, date: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-text-primary mb-1">
                   Time (Optional)
                 </label>
                 <input
                   type="time"
                   value={newTask.time}
                   onChange={(e) => setNewTask({ ...newTask, time: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-text-primary mb-1">
                   Link to Project (Optional)
                 </label>
                 <select
@@ -527,7 +527,7 @@ export default function SchedulePage() {
                       clientName: project?.clientName
                     });
                   }}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">No project</option>
                   {projects.map(project => (
@@ -541,13 +541,13 @@ export default function SchedulePage() {
               <div className="flex space-x-3 pt-4">
                 <button
                   onClick={() => setShowTaskModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition"
+                  className="flex-1 px-4 py-2 border border-border text-text-primary rounded-lg hover:bg-surface transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAddTask}
-                  className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition"
+                  className="flex-1 px-4 py-2 bg-primary text-background rounded-lg hover:shadow-lg transition"
                 >
                   Add Task
                 </button>

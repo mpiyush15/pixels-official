@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import {
   Plus,
   FolderKanban,
@@ -99,6 +100,7 @@ export default function ProjectsPage() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentFormData, setPaymentFormData] = useState({ amount: '', paymentMethod: 'offline', notes: '' });
   const [loggingPayment, setLoggingPayment] = useState(false);
+  const [projectPayments, setProjectPayments] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     clientId: '',
@@ -166,6 +168,18 @@ export default function ProjectsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (selectedProject) {
+      fetch(`/api/payments?projectId=${selectedProject._id}`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) setProjectPayments(data);
+          else setProjectPayments([]);
+        })
+        .catch(err => console.error('Error fetching payments:', err));
+    }
+  }, [selectedProject]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -457,13 +471,13 @@ export default function ProjectsPage() {
 
   const getStatusColor = (status: string) => {
     const colors: { [key: string]: string } = {
-      planning: 'bg-blue-100 text-blue-700',
-      'in-progress': 'bg-yellow-100 text-yellow-700',
-      review: 'bg-purple-100 text-purple-700',
-      completed: 'bg-green-100 text-green-700',
-      'on-hold': 'bg-gray-100 text-gray-700',
+      planning: 'bg-blue-500/10 text-blue-500',
+      'in-progress': 'bg-orange-500/10 text-orange-500',
+      review: 'bg-purple-500/10 text-purple-500',
+      completed: 'bg-emerald-500/10 text-emerald-500',
+      'on-hold': 'bg-red-500/10 text-red-500',
     };
-    return colors[status] || 'bg-gray-100 text-gray-700';
+    return colors[status] || 'bg-gray-500/10 text-gray-500';
   };
 
   const getStatusIcon = (status: string) => {
@@ -482,140 +496,138 @@ export default function ProjectsPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-light text-black mb-2">Project Management</h1>
-          <p className="text-gray-600 font-light">Manage client projects and track progress</p>
+          <h1 className="text-3xl font-bold text-text-primary mb-2">Project Management</h1>
+          <p className="text-text-muted font-medium">Manage client projects and track progress</p>
         </div>
-        <motion.button
-          onClick={() => {
-            setEditingProject(null);
-            resetForm();
-            setShowAddModal(true);
-          }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="bg-black text-white px-6 py-3 rounded-xl flex items-center gap-2 font-light"
+        <Link
+          href="/admin/projects/new"
+          className="bg-black text-white px-6 py-3 rounded-xl flex items-center gap-2 font-light hover:scale-105 transition-transform"
         >
-          <Plus className="w-5 h-5" strokeWidth={1.5} />
+          <Plus className="w-5 h-5" strokeWidth={2} />
           <span>New Project</span>
-        </motion.button>
+        </Link>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Total Projects</p>
-          <p className="text-3xl font-light text-black mt-2">{projects.length}</p>
+        <div className="ta-card flex flex-col justify-between">
+          <p className="text-sm font-semibold text-text-muted">Total Projects</p>
+          <p className="text-3xl font-bold text-text-primary mt-2">{projects.length}</p>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Active Projects</p>
-          <p className="text-3xl font-light text-yellow-600 mt-2">{activeProjects}</p>
+        <div className="ta-card flex flex-col justify-between">
+          <p className="text-sm font-semibold text-text-muted">Active Projects</p>
+          <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mt-2">{activeProjects}</p>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Completed</p>
-          <p className="text-3xl font-light text-green-600 mt-2">{completedProjects}</p>
+        <div className="ta-card flex flex-col justify-between">
+          <p className="text-sm font-semibold text-text-muted">Completed</p>
+          <p className="text-3xl font-bold text-emerald-500 mt-2">{completedProjects}</p>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Total Budget</p>
-          <p className="text-3xl font-light text-black mt-2">₹{totalBudget.toLocaleString('en-IN')}</p>
+        <div className="ta-card flex flex-col justify-between">
+          <p className="text-sm font-semibold text-text-muted">Total Budget</p>
+          <p className="text-3xl font-bold text-[#3c50e0] mt-2">₹{totalBudget.toLocaleString('en-IN')}</p>
         </div>
       </div>
 
-      {/* Projects List */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      {/* Projects List as TailAdmin Table */}
+      <div className="ta-card p-0">
+        <div className="border-b border-border px-6 py-4 flex justify-between items-center">
+          <h4 className="text-xl font-bold text-text-primary">All Projects</h4>
+        </div>
+        
         {loading ? (
-          <p className="text-center py-8 text-gray-500 font-light">Loading projects...</p>
+          <p className="text-center py-8 text-text-muted dark:text-gray-400 font-medium">Loading projects...</p>
         ) : projects.length === 0 ? (
           <div className="text-center py-12">
-            <FolderKanban className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 font-light">No projects yet. Create one to get started.</p>
+            <FolderKanban className="w-16 h-16 text-gray-300 dark:text-[var(--card-border)] mx-auto mb-4" />
+            <p className="text-text-muted font-medium">No projects yet. Create one to get started.</p>
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
-            {projects.map((project) => (
-              <div
-                key={project._id}
-                className="p-6 hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-xl font-light text-black">{project.projectName}</h3>
-                      <span className={`px-3 py-1 rounded-full text-xs font-light flex items-center gap-1 ${getStatusColor(project.status)}`}>
-                        {getStatusIcon(project.status)}
+          <div className="max-w-full overflow-x-auto">
+            <table className="w-full table-auto">
+              <thead>
+                <tr className="ta-table-header">
+                  <th className="ta-table-th xl:pl-11">Project Name</th>
+                  <th className="ta-table-th">Client</th>
+                  <th className="ta-table-th">Start Date</th>
+                  <th className="ta-table-th">Progress</th>
+                  <th className="ta-table-th">Status</th>
+                  <th className="ta-table-th">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projects.map((project) => (
+                  <tr key={project._id} className="ta-table-row">
+                    <td className="ta-table-td xl:pl-11">
+                      <p className="font-medium text-text-primary">{project.projectName}</p>
+                      <p className="text-sm text-text-muted">{project.projectType}</p>
+                    </td>
+                    <td className="ta-table-td">
+                      <p className="text-text-primary">{project.clientName}</p>
+                    </td>
+                    <td className="ta-table-td">
+                      <p className="text-text-primary">
+                        {new Date(project.startDate).toLocaleDateString('en-IN')}
+                      </p>
+                    </td>
+                    <td className="ta-table-td">
+                      <div className="flex items-center gap-3">
+                        <div className="w-full h-2.5 rounded-full bg-surface max-w-[100px]">
+                          <div 
+                            className="h-full rounded-full bg-primary" 
+                            style={{ width: `${project.progress}%` }}
+                          ></div>
+                        </div>
+                        <span className="text-sm text-text-muted">{project.progress}%</span>
+                      </div>
+                    </td>
+                    <td className="ta-table-td">
+                      <span className={`inline-flex rounded-full px-3 py-1 text-sm font-medium ${getStatusColor(project.status)}`}>
                         {project.status.replace('-', ' ').toUpperCase()}
                       </span>
-                    </div>
-                    <p className="text-sm text-gray-600 font-light mb-1">{project.clientName}</p>
-                    <p className="text-sm text-gray-700 font-light mb-3">{project.projectType}</p>
-                    <div className="flex items-center gap-6 text-sm text-gray-600 font-light">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        {new Date(project.startDate).toLocaleDateString('en-IN')}
+                    </td>
+                    <td className="ta-table-td">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/admin/projects/${project._id}`}
+                          className="hover:text-primary text-text-muted transition-colors"
+                          title="View Details"
+                        >
+                          <Eye className="w-5 h-5" />
+                        </Link>
+                        <Link
+                          href={`/admin/projects/${project._id}`}
+                          className="hover:text-blue-500 text-text-muted transition-colors"
+                          title="Edit Project"
+                        >
+                          <Edit className="w-5 h-5" />
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(project._id)}
+                          className="hover:text-red-500 text-text-muted transition-colors"
+                          title="Delete Project"
+                        >
+                          <Trash2 className="w-5 h-5" />
+                        </button>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <Target className="w-4 h-4" />
-                        {project.progress}% Complete
-                      </div>
-                      {project.budget > 0 && (
-                        <div className="flex items-center gap-1">
-                          <IndianRupee className="w-4 h-4" />
-                          ₹{project.budget.toLocaleString('en-IN')}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => {
-                        setSelectedProject(project);
-                        setShowViewModal(true);
-                      }}
-                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                      title="View Details"
-                    >
-                      <Eye className="w-4 h-4 text-gray-600" />
-                    </button>
-                    <button
-                      onClick={() => handleEdit(project)}
-                      className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
-                      title="Edit Project"
-                    >
-                      <Edit className="w-4 h-4 text-blue-600" />
-                    </button>
-                    <button
-                      onClick={() => handleDelete(project._id)}
-                      className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Delete Project"
-                    >
-                      <Trash2 className="w-4 h-4 text-red-600" />
-                    </button>
-                  </div>
-                </div>
-                {/* Progress Bar */}
-                <div className="mt-4">
-                  <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-black transition-all duration-500"
-                      style={{ width: `${project.progress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            ))}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>
 
-      {/* Add/Edit Project Modal - Will continue in next part */}
+      {/* Add/Edit Project Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+        <div className="ta-modal-overlay">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            className="ta-modal-content p-0 max-h-[90vh] overflow-y-auto"
           >
-            <div className="flex justify-between items-center p-6 md:p-8 pb-4 sticky top-0 bg-gray-900 rounded-t-2xl border-b border-gray-700 z-10">
-              <h2 className="text-2xl font-light text-white">
+            <div className="flex justify-between items-center px-8 py-6 sticky top-0 bg-card border-b border-border z-10">
+              <h2 className="ta-title">
                 {editingProject ? 'Edit Project' : 'Create New Project'}
               </h2>
               <button
@@ -623,20 +635,20 @@ export default function ProjectsPage() {
                   setShowAddModal(false);
                   setEditingProject(null);
                 }}
-                className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+                className="p-2 hover:bg-surface rounded-lg transition-colors text-text-muted"
               >
-                <X className="w-5 h-5 text-white" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6 p-6 md:p-8 pt-6">
               {/* Client Selection */}
               <div>
-                <label className="block text-sm text-gray-600 font-light mb-2">Client *</label>
+                <label className="block text-sm text-text-muted font-medium mb-2">Client *</label>
                 <select
                   value={formData.clientId}
                   onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                  className="ta-input"
                   required
                 >
                   <option value="">Select a client...</option>
@@ -651,22 +663,22 @@ export default function ProjectsPage() {
               {/* Project Details */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">Project Name *</label>
+                  <label className="block text-sm text-text-muted font-medium mb-2">Project Name *</label>
                   <input
                     type="text"
                     value={formData.projectName}
                     onChange={(e) => setFormData({ ...formData, projectName: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                    className="ta-input"
                     placeholder="e.g., E-commerce Website"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">Project Type *</label>
+                  <label className="block text-sm text-text-muted font-medium mb-2">Project Type *</label>
                   <select
                     value={formData.projectType}
                     onChange={(e) => setFormData({ ...formData, projectType: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                    className="ta-input"
                     required
                   >
                     <option value="">Select type...</option>
@@ -679,11 +691,11 @@ export default function ProjectsPage() {
 
               {/* Description */}
               <div>
-                <label className="block text-sm text-gray-600 font-light mb-2">Description *</label>
+                <label className="block text-sm text-text-muted font-medium mb-2">Description *</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light resize-none"
+                  className="ta-input resize-none"
                   rows={3}
                   placeholder="Brief project description..."
                   required
@@ -691,35 +703,32 @@ export default function ProjectsPage() {
               </div>
 
               {/* Contract Section */}
-              <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+              <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-900/30 rounded-xl p-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <FileText className="w-5 h-5 text-blue-600" />
-                  <label className="block text-sm text-gray-700 font-semibold">Project Contract</label>
-                  <span className="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded">Optional</span>
+                  <FileText className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  <label className="block text-sm text-blue-900 dark:text-blue-100 font-bold">Project Contract</label>
+                  <span className="text-xs text-blue-600 bg-blue-100 dark:bg-blue-900 dark:text-blue-300 px-2 py-1 rounded">Optional</span>
                 </div>
-                <p className="text-sm text-gray-600 mb-3 font-light">
+                <p className="text-sm text-text-muted mb-3 font-medium">
                   Write the full contract that the client will need to accept. This will be locked for 1 year after client acceptance.
                 </p>
                 <textarea
                   value={formData.contractContent}
                   onChange={(e) => setFormData({ ...formData, contractContent: e.target.value })}
-                  className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:border-blue-500 font-light resize-none"
+                  className="ta-input resize-none"
                   rows={6}
-                  placeholder="Enter the full contract terms and conditions. Include payment terms, deliverables, timeline, and any special conditions..."
+                  placeholder="Enter the full contract terms and conditions..."
                 />
-                <p className="text-xs text-gray-500 mt-2 font-light">
-                  Tip: Include details about project scope, milestones, payment terms, revision policy, and cancellation terms.
-                </p>
               </div>
 
               {/* Status and Progress */}
               <div className="grid md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">Status *</label>
+                  <label className="block text-sm text-text-muted font-medium mb-2">Status *</label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value as any })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                    className="ta-input"
                     required
                   >
                     <option value="planning">Planning</option>
@@ -730,20 +739,20 @@ export default function ProjectsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">
-                    Progress (Auto-calculated)
+                  <label className="block text-sm text-text-muted font-medium mb-2">
+                    Progress
                   </label>
-                  <div className="w-full px-4 py-3 bg-gray-100 border border-gray-200 rounded-xl font-light text-gray-700">
-                    {formData.progress}% ({formData.milestones.filter(m => m.status === 'completed').length} of {formData.milestones.length} milestones completed)
+                  <div className="w-full px-4 py-3 bg-surface border border-border rounded-xl text-text-primary opacity-70">
+                    {formData.progress}%
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">Budget (₹)</label>
+                  <label className="block text-sm text-text-muted font-medium mb-2">Budget (₹)</label>
                   <input
                     type="number"
                     value={formData.budget}
                     onChange={(e) => setFormData({ ...formData, budget: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                    className="ta-input"
                     min="0"
                     placeholder="0"
                   />
@@ -753,35 +762,35 @@ export default function ProjectsPage() {
               {/* Dates */}
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">Start Date *</label>
+                  <label className="block text-sm text-text-muted font-medium mb-2">Start Date *</label>
                   <input
                     type="date"
                     value={formData.startDate}
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                    className="ta-input"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">End Date *</label>
+                  <label className="block text-sm text-text-muted font-medium mb-2">End Date *</label>
                   <input
                     type="date"
                     value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                    className="ta-input"
                     required
                   />
                 </div>
               </div>
 
               {/* Milestones */}
-              <div className="bg-gray-900 p-6 rounded-xl">
+              <div className="bg-surface border border-border p-6 rounded-xl">
                 <div className="flex justify-between items-center mb-4">
-                  <label className="block text-sm text-white font-medium">Milestones</label>
+                  <label className="block text-sm text-text-primary font-bold">Milestones</label>
                   <button
                     type="button"
                     onClick={addMilestone}
-                    className="text-sm text-white hover:text-gray-300 font-light transition-colors"
+                    className="text-sm text-[#3c50e0] font-medium"
                   >
                     + Add Milestone
                   </button>
@@ -789,19 +798,19 @@ export default function ProjectsPage() {
                 {formData.milestones.length > 0 && (
                   <div className="space-y-4">
                     {formData.milestones.map((milestone, index) => (
-                      <div key={index} className="bg-gray-800 p-4 rounded-xl space-y-3 border border-gray-700">
+                      <div key={index} className="bg-card p-4 rounded-xl space-y-3 border border-border">
                         <div className="grid md:grid-cols-2 gap-3">
                           <input
                             type="text"
                             placeholder="Milestone name"
                             value={milestone.name}
                             onChange={(e) => updateMilestone(index, 'name', e.target.value)}
-                            className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 font-light text-sm text-white placeholder-gray-400"
+                            className="ta-input"
                           />
                           <select
                             value={milestone.status}
                             onChange={(e) => updateMilestone(index, 'status', e.target.value)}
-                            className="px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 font-light text-sm text-white"
+                            className="ta-input"
                           >
                             <option value="pending">Pending</option>
                             <option value="in-progress">In Progress</option>
@@ -812,18 +821,18 @@ export default function ProjectsPage() {
                         {/* Start Date and Due Date */}
                         <div className="grid md:grid-cols-2 gap-3">
                           <div>
-                            <label className="block text-xs text-gray-300 font-light mb-1">
+                            <label className="block text-xs text-text-muted font-medium mb-1">
                               Start Date
                             </label>
                             <input
                               type="date"
                               value={milestone.startDate || milestone.dueDate}
                               onChange={(e) => updateMilestone(index, 'startDate', e.target.value)}
-                              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:border-gray-400 font-light text-sm text-white"
+                              className="ta-input"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs text-gray-300 font-light mb-1">
+                            <label className="block text-xs text-text-muted font-medium mb-1">
                               Due Date
                             </label>
                             <input
@@ -1094,7 +1103,7 @@ export default function ProjectsPage() {
                           <span className="font-medium text-red-600">₹{(selectedProject.totalCost || 0).toLocaleString('en-IN')}</span>
                         </div>
                         <div className="flex justify-between pt-2 border-t border-gray-200 mt-2">
-                          <span className="text-gray-800 font-medium">Profit Margin:</span>
+                          <span className="text-text-primary font-medium">Profit Margin:</span>
                           <span className={`font-bold ${((selectedProject.profitMargin || 0) >= 0) ? 'text-green-600' : 'text-red-600'}`}>
                             ₹{(selectedProject.profitMargin || 0).toLocaleString('en-IN')}
                           </span>
@@ -1108,7 +1117,7 @@ export default function ProjectsPage() {
                   <div>
                     <button
                       onClick={() => toggleMilestones(selectedProject._id)}
-                      className="flex items-center justify-between w-full text-sm font-medium text-gray-600 mb-2 hover:text-gray-900 transition-colors"
+                      className="flex items-center justify-between w-full text-sm font-medium text-gray-600 mb-2 hover:text-text-primary transition-colors"
                     >
                       <span>Milestones ({selectedProject.milestones.length})</span>
                       {expandedMilestones[selectedProject._id] ? (
@@ -1154,7 +1163,7 @@ export default function ProjectsPage() {
                                 </span>
                               )}
                             </div>
-                            <span className="text-xs text-gray-500">
+                            <span className="text-xs text-text-muted">
                               {new Date(milestone.dueDate).toLocaleDateString('en-IN')}
                             </span>
                           </div>
@@ -1235,8 +1244,47 @@ export default function ProjectsPage() {
 
               {/* Client Work Submissions */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Client Work Submissions</h3>
+                <h3 className="text-lg font-medium text-text-primary mb-4">Client Work Submissions</h3>
                 <WorkSubmissionsList projectId={selectedProject._id} />
+              </div>
+
+              {/* Payment Logs */}
+              <div>
+                <h3 className="text-lg font-medium text-text-primary mb-4">Payment Logs</h3>
+                {projectPayments.length > 0 ? (
+                  <div className="space-y-3">
+                    {projectPayments.map((payment, idx) => (
+                      <div key={idx} className="bg-green-50/50 p-4 rounded-xl border border-green-100 flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 bg-green-100 text-green-600 rounded-full">
+                            <IndianRupee className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-text-primary">₹{payment.amount?.toLocaleString('en-IN')}</p>
+                            <p className="text-xs text-text-muted font-light flex items-center gap-2 mt-0.5">
+                              <span>{payment.paymentMethod?.toUpperCase().replace('_', ' ') || 'OFFLINE'}</span>
+                              <span>•</span>
+                              <span>{new Date(payment.paymentDate).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                            </p>
+                            {payment.paymentDetails && (
+                               <p className="text-xs text-gray-600 font-light mt-1 bg-white/50 inline-block px-2 py-0.5 rounded border border-gray-100">
+                                 {payment.paymentDetails}
+                               </p>
+                            )}
+                          </div>
+                        </div>
+                        <span className="px-3 py-1 bg-green-100 text-green-700 rounded-full text-xs font-light flex items-center gap-1">
+                          <CheckCircle className="w-3 h-3" />
+                          Logged
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-gray-50 border border-gray-100 p-6 rounded-xl text-center">
+                    <p className="text-sm text-text-muted font-light">No payment logs found for this project.</p>
+                  </div>
+                )}
               </div>
 
               {/* Log General Payment Button (if no milestones) */}

@@ -225,17 +225,17 @@ export default function AdminTasksPage() {
       approved: 'bg-emerald-100 text-emerald-700',
       'revision-needed': 'bg-red-100 text-red-700',
     };
-    return colors[status as keyof typeof colors] || 'bg-gray-100 text-gray-700';
+    return colors[status as keyof typeof colors] || 'bg-gray-100 text-text-primary';
   };
 
   const getPriorityColor = (priority: string) => {
     const colors = {
-      low: 'bg-gray-100 text-gray-600',
+      low: 'bg-gray-100 text-text-muted',
       medium: 'bg-blue-100 text-blue-600',
       high: 'bg-orange-100 text-orange-600',
       urgent: 'bg-red-100 text-red-600',
     };
-    return colors[priority as keyof typeof colors] || 'bg-gray-100 text-gray-600';
+    return colors[priority as keyof typeof colors] || 'bg-gray-100 text-text-muted';
   };
 
   const filteredTasks = tasks.filter(task => {
@@ -254,27 +254,19 @@ export default function AdminTasksPage() {
     submitted: tasks.filter(t => t.status === 'submitted').length,
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-xl text-gray-600">Loading tasks...</div>
-      </div>
-    );
-  }
-
   return (
-    <div className="p-6">
+    <div className="p-8 bg-background min-h-[calc(100vh-8rem)] rounded-2xl">
       {/* Header */}
       <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Task Management</h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <h1 className="text-2xl font-medium text-text-primary">Task Management</h1>
+          <p className="mt-1 text-sm text-text-muted">
             Assign and manage tasks for your team
           </p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all flex items-center space-x-2"
+          className="px-4 py-2 bg-primary text-background rounded-lg hover:shadow-lg transition-all flex items-center space-x-2"
         >
           <Plus className="h-5 w-5" />
           <span>Create Task</span>
@@ -286,14 +278,14 @@ export default function AdminTasksPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-lg shadow-sm p-4"
+          className="bg-background rounded-lg shadow-sm p-4"
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600">Total Tasks</p>
-              <p className="text-2xl font-bold text-gray-900">{taskStats.total}</p>
+              <p className="text-sm text-text-muted">Total Tasks</p>
+              <p className="text-2xl font-medium text-text-primary">{taskStats.total}</p>
             </div>
-            <FileText className="h-8 w-8 text-gray-400" />
+            <FileText className="h-8 w-8 text-text-muted" />
           </div>
         </motion.div>
 
@@ -301,12 +293,12 @@ export default function AdminTasksPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="bg-white rounded-lg shadow-sm p-4"
+          className="bg-background rounded-lg shadow-sm p-4"
         >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-blue-600">Assigned</p>
-              <p className="text-2xl font-bold text-blue-700">{taskStats.assigned}</p>
+              <p className="text-2xl font-medium text-blue-700">{taskStats.assigned}</p>
             </div>
             <Clock className="h-8 w-8 text-blue-400" />
           </div>
@@ -316,12 +308,12 @@ export default function AdminTasksPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="bg-white rounded-lg shadow-sm p-4"
+          className="bg-background rounded-lg shadow-sm p-4"
         >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-yellow-600">In Progress</p>
-              <p className="text-2xl font-bold text-yellow-700">{taskStats.inProgress}</p>
+              <p className="text-2xl font-medium text-yellow-700">{taskStats.inProgress}</p>
             </div>
             <AlertCircle className="h-8 w-8 text-yellow-400" />
           </div>
@@ -331,12 +323,12 @@ export default function AdminTasksPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-white rounded-lg shadow-sm p-4"
+          className="bg-background rounded-lg shadow-sm p-4"
         >
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-purple-600">Submitted</p>
-              <p className="text-2xl font-bold text-purple-700">{taskStats.submitted}</p>
+              <p className="text-2xl font-medium text-purple-700">{taskStats.submitted}</p>
             </div>
             <CheckCircle className="h-8 w-8 text-purple-400" />
           </div>
@@ -344,23 +336,23 @@ export default function AdminTasksPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+      <div className="ta-card mb-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-text-muted" />
             <input
               type="text"
               placeholder="Search tasks..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-2 border border-border rounded-lg focus:ring-2 focus:border-primary focus:border-transparent"
             />
           </div>
 
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="px-4 py-2 border border-border rounded-lg focus:ring-2 focus:border-primary focus:border-transparent"
           >
             <option value="all">All Status</option>
             <option value="assigned">Assigned</option>
@@ -374,7 +366,7 @@ export default function AdminTasksPage() {
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="px-4 py-2 border border-border rounded-lg focus:ring-2 focus:border-primary focus:border-transparent"
           >
             <option value="all">All Priorities</option>
             <option value="low">Low</option>
@@ -386,97 +378,109 @@ export default function AdminTasksPage() {
       </div>
 
       {/* Tasks List */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        {filteredTasks.length === 0 ? (
-          <div className="p-12 text-center">
-            <FileText className="h-16 w-16 mx-auto text-gray-300 mb-4" />
-            <p className="text-gray-500 text-lg">No tasks found</p>
-            <p className="text-gray-400 text-sm mt-2">Create a new task to get started</p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+      <div className="ta-table-container">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+              <thead className="ta-table-header">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="ta-table-th uppercase">
                     Task
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="ta-table-th uppercase">
                     Client/Project
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="ta-table-th uppercase">
                     Assigned To
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="ta-table-th uppercase">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="ta-table-th uppercase">
                     Priority
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="ta-table-th uppercase">
                     Due Date
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  <th className="ta-table-th uppercase">
                     Actions
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredTasks.map((task) => (
-                  <tr key={task._id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <div>
-                        <div className="font-semibold text-gray-900">{task.title}</div>
-                        <div className="text-sm text-gray-500 line-clamp-1">{task.description}</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{task.clientName}</div>
-                      {task.projectName && (
-                        <div className="text-sm text-gray-500">{task.projectName}</div>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{task.assignedToName}</div>
-                      <div className="text-sm text-gray-500 capitalize">
-                        {task.assignedToRole.replace('-', ' ')}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(task.status)}`}>
-                        {task.status.replace('-', ' ').toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getPriorityColor(task.priority)}`}>
-                        {task.priority.toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {new Date(task.dueDate).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center space-x-2">
-                        <a
-                          href={`/admin/tasks/${task._id}`}
-                          className="text-blue-600 hover:text-blue-800 font-medium text-sm"
-                        >
-                          View
-                        </a>
-                        <button
-                          onClick={() => handleDelete(task._id)}
-                          className="text-red-600 hover:text-red-800"
-                        >
-                          <Trash2 className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+              <tbody className={`transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+                <AnimatePresence mode="popLayout">
+                  {filteredTasks.length === 0 && !loading ? (
+                    <motion.tr
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <td colSpan={7} className="ta-table-td text-center py-8 text-text-muted">
+                        No tasks found matching your filters.
+                      </td>
+                    </motion.tr>
+                  ) : (
+                    filteredTasks.map((task) => (
+                      <motion.tr 
+                        key={task._id} 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="border-b border-border hover:bg-surface"
+                      >
+                        <td className="ta-table-td">
+                          <div>
+                            <div className="font-medium text-text-primary">{task.title}</div>
+                            <div className="text-sm text-text-muted line-clamp-1">{task.description}</div>
+                          </div>
+                        </td>
+                        <td className="ta-table-td">
+                          <div className="text-sm text-text-primary">{task.clientName}</div>
+                          {task.projectName && (
+                            <div className="text-sm text-text-muted">{task.projectName}</div>
+                          )}
+                        </td>
+                        <td className="ta-table-td">
+                          <div className="text-sm text-text-primary">{task.assignedToName}</div>
+                          <div className="text-sm text-text-muted capitalize">
+                            {task.assignedToRole.replace('-', ' ')}
+                          </div>
+                        </td>
+                        <td className="ta-table-td">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium inline-block ${getStatusColor(task.status)}`}>
+                            {task.status.replace('-', ' ').toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="ta-table-td">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium inline-block ${getPriorityColor(task.priority)}`}>
+                            {task.priority.toUpperCase()}
+                          </span>
+                        </td>
+                        <td className="ta-table-td text-sm font-medium text-text-primary">
+                          {new Date(task.dueDate).toLocaleDateString()}
+                        </td>
+                        <td className="ta-table-td">
+                          <div className="flex items-center space-x-2">
+                            <a
+                              href={`/admin/tasks/${task._id}`}
+                              className="text-text-muted hover:text-text-primary font-medium text-sm transition-colors"
+                            >
+                              View
+                            </a>
+                            <button
+                              onClick={() => handleDelete(task._id)}
+                              className="text-red-500 hover:text-red-600 transition-colors p-2 hover:bg-red-50 rounded-lg"
+                            >
+                              <Trash2 className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))
+                  )}
+                </AnimatePresence>
               </tbody>
             </table>
           </div>
-        )}
       </div>
 
       {/* Create Task Modal */}
@@ -495,14 +499,14 @@ export default function AdminTasksPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="relative bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+              className="relative bg-background border border-border rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto"
             >
-              <div className="p-6">
+              <div className="p-8">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">Create New Task</h2>
+                  <h2 className="text-2xl font-medium text-text-primary">Create New Task</h2>
                   <button
                     onClick={() => setShowModal(false)}
-                    className="text-gray-400 hover:text-gray-600"
+                    className="text-text-muted hover:text-text-muted"
                   >
                     <X className="h-6 w-6" />
                   </button>
@@ -510,7 +514,7 @@ export default function AdminTasksPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text-primary mb-2">
                       Task Title *
                     </label>
                     <input
@@ -518,34 +522,34 @@ export default function AdminTasksPage() {
                       required
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="ta-input w-full"
                       placeholder="e.g., Create social media graphics"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text-primary mb-2">
                       Description
                     </label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       rows={3}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="ta-input w-full"
                       placeholder="Describe the task requirements..."
                     />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text-primary mb-2">
                         Client *
                       </label>
                       <select
                         required
                         value={formData.clientId}
                         onChange={(e) => handleClientChange(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="ta-input w-full"
                       >
                         <option value="">Select Client</option>
                         {clients.map(client => (
@@ -557,14 +561,14 @@ export default function AdminTasksPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text-primary mb-2">
                         Project (Optional)
                       </label>
                       <select
                         value={formData.projectId}
                         onChange={(e) => handleProjectChange(e.target.value)}
                         disabled={!formData.clientId}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent disabled:bg-gray-100"
+                        className="ta-input w-full disabled:opacity-50"
                       >
                         <option value="">Select Project</option>
                         {projects
@@ -579,14 +583,14 @@ export default function AdminTasksPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-text-primary mb-2">
                       Assign To *
                     </label>
                     <select
                       required
                       value={formData.assignedTo}
                       onChange={(e) => handleStaffChange(e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                      className="ta-input w-full"
                     >
                       <option value="">Select Staff Member</option>
                       {staff.map(member => (
@@ -599,14 +603,14 @@ export default function AdminTasksPage() {
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text-primary mb-2">
                         Priority *
                       </label>
                       <select
                         required
                         value={formData.priority}
                         onChange={(e) => setFormData({ ...formData, priority: e.target.value as any })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="ta-input w-full"
                       >
                         <option value="low">Low</option>
                         <option value="medium">Medium</option>
@@ -616,7 +620,7 @@ export default function AdminTasksPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text-primary mb-2">
                         Due Date *
                       </label>
                       <input
@@ -625,7 +629,7 @@ export default function AdminTasksPage() {
                         value={formData.dueDate}
                         onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                         min={new Date().toISOString().split('T')[0]}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="ta-input w-full"
                       />
                     </div>
                   </div>
@@ -634,13 +638,13 @@ export default function AdminTasksPage() {
                     <button
                       type="button"
                       onClick={() => setShowModal(false)}
-                      className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                      className="px-6 py-2 border border-border text-text-primary rounded-lg hover:bg-surface"
                     >
                       Cancel
                     </button>
                     <button
                       type="submit"
-                      className="px-6 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg hover:shadow-lg transition-all"
+                      className="ta-btn-primary"
                     >
                       Create Task
                     </button>

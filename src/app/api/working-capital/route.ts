@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { FinanceDB } from '@/lib/finance';
 
 export async function GET() {
   try {
@@ -58,6 +59,54 @@ export async function POST(request: Request) {
     };
 
     await db.collection('cashflow').insertOne(cashFlowEntry);
+
+    // Create Double-Entry Journal Record
+    await FinanceDB.ensureSystemAccounts();
+    const accounts = await FinanceDB.getAccounts();
+    
+    // Debit Bank/Cash
+    const paymentAccount = accounts.find(a => capital.depositedTo === 'cash' ? a.name === 'Cash in Hand' : a.subType === 'Bank') || accounts.find(a => a.name === 'Cash in Hand');
+    
+    let creditAccount;
+    if (capital.type === 'loan') {
+        creditAccount = accounts.find(a => a.type === 'Liability') || await FinanceDB.createAccount({
+            name: `Loan: ${capital.source}`, type: 'Liability', subType: 'Current Liability', currency: 'INR'
+        });
+    } else if (capital.type === 'equity') {
+        creditAccount = accounts.find(a => a.type === 'Equity') || await FinanceDB.createAccount({
+            name: `Equity: ${capital.source}`, type: 'Equity', subType: 'Capital', currency: 'INR'
+        });
+    } else {
+        // revenue reserve -> normally retained earnings, an equity account
+        creditAccount = accounts.find(a => a.type === 'Equity') || await FinanceDB.createAccount({
+            name: `Reserve: ${capital.source}`, type: 'Equity', subType: 'Capital', currency: 'INR'
+        });
+    }
+
+    if (paymentAccount && creditAccount) {
+        await FinanceDB.createJournalEntry([
+            {
+                accountId: paymentAccount._id || paymentAccount,
+                type: 'Debit',
+                amount: capital.amount,
+                currency: 'INR',
+                date: new Date(capital.date),
+                description: `Capital Received: ${capital.source}`,
+                referenceId: result.insertedId.toString(),
+                referenceType: 'Manual'
+            },
+            {
+                accountId: creditAccount._id || creditAccount,
+                type: 'Credit',
+                amount: capital.amount,
+                currency: 'INR',
+                date: new Date(capital.date),
+                description: `Capital Provided: ${capital.source} (${capital.type})`,
+                referenceId: result.insertedId.toString(),
+                referenceType: 'Manual'
+            }
+        ]);
+    }
 
     return NextResponse.json(
       { _id: result.insertedId, ...capital },

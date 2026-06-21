@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Plus,
   Mail,
@@ -10,14 +11,12 @@ import {
   Edit,
   Trash2,
   X,
-  Calendar,
-  FileText,
   Send,
-  Eye,
   UserCheck,
   UserX,
   Key,
-  Lock
+  Lock,
+  ChevronRight
 } from "lucide-react";
 
 // ----------------------------
@@ -55,14 +54,14 @@ export default function ClientsPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const router = useRouter();
+
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showViewModal, setShowViewModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showSendLoginModal, setShowSendLoginModal] = useState(false);
 
   const [editingClient, setEditingClient] = useState<Client | null>(null);
-  const [viewingClient, setViewingClient] = useState<Client | null>(null);
   const [passwordClient, setPasswordClient] = useState<Client | null>(null);
   const [sendLoginClient, setSendLoginClient] = useState<Client | null>(null);
   const [clientInvoices, setClientInvoices] = useState<Invoice[]>([]);
@@ -166,10 +165,7 @@ export default function ClientsPage() {
   };
 
   const handleView = (c: Client) => {
-    setViewingClient(c);
-    const invs = invoices.filter((i) => i.clientId === c._id);
-    setClientInvoices(invs);
-    setShowViewModal(true);
+    router.push(`/admin/clients/${c._id}`);
   };
 
   const handleDelete = async (id: string) => {
@@ -226,11 +222,7 @@ export default function ClientsPage() {
     }
   };
 
-  const sendInvoiceEmail = (invoice: Invoice) => {
-    alert(
-      `Email integration soon.\nInvoice: ${invoice.invoiceNumber}\nTo: ${viewingClient?.email}`
-    );
-  };
+
 
   const handleSetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -325,7 +317,7 @@ export default function ClientsPage() {
   const statusColor = (status: Invoice["status"]) => {
     switch (status) {
       case "draft":
-        return "bg-gray-100 text-gray-700";
+        return "bg-surface text-text-muted";
       case "sent":
         return "bg-blue-100 text-blue-700";
       case "paid":
@@ -333,7 +325,7 @@ export default function ClientsPage() {
       case "overdue":
         return "bg-red-100 text-red-700";
       default:
-        return "bg-gray-100 text-gray-700";
+        return "bg-surface text-text-muted";
     }
   };
 
@@ -342,12 +334,12 @@ export default function ClientsPage() {
   // ----------------------------
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-background min-h-[calc(100vh-8rem)] rounded-2xl">
       {/* HEADER */}
       <div className="flex justify-between items-center mb-10">
         <div>
-          <h1 className="text-4xl font-light">Clients Management</h1>
-          <p className="text-gray-600 font-light">
+          <h1 className="text-4xl font-medium">Clients Management</h1>
+          <p className="text-text-muted font-medium">
             Manage all client details & billing
           </p>
         </div>
@@ -359,7 +351,7 @@ export default function ClientsPage() {
             setShowAddModal(true);
           }}
           whileHover={{ scale: 1.05 }}
-          className="px-6 py-3 bg-black text-white rounded-xl flex items-center gap-2"
+          className="ta-btn-primary flex items-center gap-2"
         >
           <Plus className="w-5 h-5" />
           Add Client
@@ -368,18 +360,18 @@ export default function ClientsPage() {
 
       {/* STATS CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
-        <div className="bg-white rounded-xl p-6 border">
-          <p className="text-gray-500 text-sm">Total Clients</p>
+        <div className="ta-card">
+          <p className="text-text-muted text-sm">Total Clients</p>
           <p className="text-3xl mt-2">{clients.length}</p>
         </div>
-        <div className="bg-white rounded-xl p-6 border">
-          <p className="text-gray-500 text-sm">Active Clients</p>
+        <div className="ta-card">
+          <p className="text-text-muted text-sm">Active Clients</p>
           <p className="text-3xl mt-2">
             {clients.filter((c) => c.status === "active").length}
           </p>
         </div>
-        <div className="bg-white rounded-xl p-6 border">
-          <p className="text-gray-500 text-sm">Total Revenue</p>
+        <div className="ta-card">
+          <p className="text-text-muted text-sm">Total Revenue</p>
           <p className="text-3xl mt-2">
             ₹
             {clients
@@ -388,140 +380,149 @@ export default function ClientsPage() {
           </p>
         </div>
       </div>
-
-      {/* CLIENT CARDS */}
+      {/* CLIENT TABLE */}
       {loading ? (
-        <p className="text-center text-gray-500">Loading...</p>
+        <p className="text-center text-text-muted py-10">Loading clients...</p>
       ) : clients.length === 0 ? (
-        <p className="text-center text-gray-500">No clients yet.</p>
+        <div className="ta-card text-center p-10">
+          <p className="text-text-muted mb-4">No clients yet.</p>
+          <button
+            onClick={() => {
+              setEditingClient(null);
+              setFormData(emptyForm);
+              setShowAddModal(true);
+            }}
+            className="ta-btn-primary"
+          >
+            Add your first client
+          </button>
+        </div>
       ) : (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {clients.map((client) => (
-            <motion.div
-              key={client._id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white p-6 border rounded-2xl"
-            >
-              {/* CARD HEADER */}
-              <div className="flex justify-between items-start mb-3">
-                <div>
-                  <h3 className="text-xl">{client.name}</h3>
-                  <p className="text-sm text-gray-600 flex items-center gap-1">
-                    <Building className="w-4 h-4" />
-                    {client.company}
-                  </p>
-                </div>
-
-                <span
-                  className={`px-3 py-1 rounded-full text-xs ${
-                    client.status === "active"
-                      ? "bg-green-100 text-green-700"
-                      : "bg-gray-200 text-gray-700"
-                  }`}
-                >
-                  {client.status}
-                </span>
-              </div>
-
-              <div className="space-y-2 text-sm text-gray-600 mb-4">
-                <p className="flex items-center gap-2">
-                  <Mail className="w-4 h-4" />
-                  {client.email}
-                </p>
-                <p className="flex items-center gap-2">
-                  <Phone className="w-4 h-4" />
-                  {client.phone}
-                </p>
-              </div>
-
-              {/* Stats */}
-              <div className="grid grid-cols-2 gap-4 border-t pt-4 mb-4">
-                <div>
-                  <p className="text-xs text-gray-500">Projects</p>
-                  <p className="text-lg">{client.projectsCount}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-500">Revenue</p>
-                  <p className="text-lg">
-                    ₹{client.totalRevenue.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-
-              {/* PORTAL ACCESS STATUS */}
-              {client.portalAccessEnabled && (
-                <div className="mb-4 px-3 py-2 bg-blue-50 rounded-lg flex items-center gap-2">
-                  <Lock className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm text-blue-700">Portal Access Enabled</span>
-                </div>
-              )}
-
-              {/* ACTIONS */}
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={() => handleView(client)}
-                  className="flex-1 min-w-[80px] bg-black text-white py-2 rounded-xl flex items-center justify-center gap-1 text-sm"
-                >
-                  <Eye className="w-4" /> View
-                </button>
-                <button
-                  onClick={() => openPasswordModal(client)}
-                  className={`p-2 rounded-xl ${
-                    client.portalAccessEnabled
-                      ? 'bg-purple-100 text-purple-600 hover:bg-purple-200'
-                      : 'bg-blue-100 text-blue-600 hover:bg-blue-200'
-                  }`}
-                  title={client.portalAccessEnabled ? 'Reset Portal Password' : 'Enable Portal Access'}
-                >
-                  <Key className="w-4" />
-                </button>
-                <button
-                  onClick={() => openSendLoginModal(client)}
-                  disabled={!client.email || sendingLoginEmail === client._id}
-                  className="p-2 bg-emerald-100 text-emerald-600 rounded-xl hover:bg-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Send Login Credentials via Email"
-                >
-                  <Mail className="w-4" />
-                </button>
-                <button
-                  onClick={() => sendWelcomeEmail(client)}
-                  disabled={!client.email || sendingWelcomeEmail === client._id}
-                  className="p-2 bg-indigo-100 text-indigo-600 rounded-xl hover:bg-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  title="Send Welcome Email"
-                >
-                  <Send className="w-4" />
-                </button>
-                <button
-                  onClick={() => toggleClientStatus(client)}
-                  className={`p-2 rounded-xl ${
-                    client.status === 'active' 
-                      ? 'bg-orange-100 text-orange-600 hover:bg-orange-200' 
-                      : 'bg-green-100 text-green-600 hover:bg-green-200'
-                  }`}
-                  title={client.status === 'active' ? 'Mark as Inactive' : 'Mark as Active'}
-                >
-                  {client.status === 'active' ? (
-                    <UserX className="w-4" />
-                  ) : (
-                    <UserCheck className="w-4" />
-                  )}
-                </button>
-                <button
-                  onClick={() => handleEdit(client)}
-                  className="p-2 bg-gray-100 rounded-xl hover:bg-gray-200"
-                >
-                  <Edit className="w-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(client._id)}
-                  className="p-2 bg-red-100 text-red-600 rounded-xl hover:bg-red-200"
-                >
-                  <Trash2 className="w-4" />
-                </button>
-              </div>
-            </motion.div>
-          ))}
+        <div className="ta-table-container">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-surface border-b border-border text-sm text-text-muted font-medium">
+                  <th className="ta-table-th uppercase">Client / Company</th>
+                  <th className="ta-table-th uppercase">Contact</th>
+                  <th className="ta-table-th uppercase text-center">Projects</th>
+                  <th className="ta-table-th uppercase text-right">Revenue</th>
+                  <th className="ta-table-th uppercase text-center">Status</th>
+                  <th className="ta-table-th uppercase text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className={`transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+                <AnimatePresence mode="popLayout">
+                  {clients.map((client) => (
+                    <motion.tr 
+                      key={client._id} 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="hover:bg-surface transition-colors cursor-pointer group border-b border-border"
+                      onClick={() => handleView(client)}
+                    >
+                      <td className="ta-table-td">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-surface flex items-center justify-center text-text-muted font-medium shrink-0">
+                            {client.name.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="font-medium text-text-primary group-hover:text-primary transition-colors">
+                              {client.name}
+                            </p>
+                            <p className="text-sm text-text-muted flex items-center gap-1 mt-0.5">
+                              <Building className="w-3 h-3" />
+                              {client.company}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="ta-table-td text-sm">
+                        <div className="space-y-1">
+                          <p className="flex items-center gap-2 text-text-muted">
+                            <Mail className="w-3.5 h-3.5" />
+                            {client.email}
+                          </p>
+                          {client.phone && (
+                            <p className="flex items-center gap-2 text-text-muted">
+                              <Phone className="w-3.5 h-3.5" />
+                              {client.phone}
+                            </p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="ta-table-td text-center">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-surface border border-border text-sm font-medium text-text-muted">
+                          {client.projectsCount}
+                        </span>
+                      </td>
+                      <td className="ta-table-td text-right font-medium text-text-primary">
+                        ₹{client.totalRevenue.toLocaleString('en-IN')}
+                      </td>
+                      <td className="ta-table-td text-center">
+                        <span
+                          className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wide uppercase ${
+                            client.status === "active"
+                              ? "bg-emerald-500/10 text-emerald-500"
+                              : "bg-surface text-text-muted"
+                          }`}
+                        >
+                          {client.status}
+                        </span>
+                        {client.portalAccessEnabled && (
+                          <div className="mt-1 flex items-center justify-center" title="Portal Access Enabled">
+                            <Lock className="w-3 h-3 text-blue-500" />
+                          </div>
+                        )}
+                      </td>
+                      <td className="ta-table-td text-right">
+                        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            onClick={() => openPasswordModal(client)}
+                            className={`p-1.5 rounded-lg transition-colors ${
+                              client.portalAccessEnabled
+                                ? 'text-purple-500 hover:bg-purple-500/10'
+                                : 'text-text-muted hover:text-blue-500 hover:bg-blue-500/10'
+                            }`}
+                            title={client.portalAccessEnabled ? 'Reset Portal Password' : 'Enable Portal Access'}
+                          >
+                            <Key className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => openSendLoginModal(client)}
+                            disabled={!client.email || sendingLoginEmail === client._id}
+                            className="p-1.5 rounded-lg text-text-muted hover:text-blue-500 hover:bg-blue-500/10 disabled:opacity-50 transition-colors"
+                            title="Send Login Credentials"
+                          >
+                            <Send className="w-4 h-4" />
+                          </button>
+                          <div className="w-px h-4 bg-surface/50 mx-1" />
+                          <button
+                            onClick={() => handleEdit(client)}
+                            className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface transition-colors"
+                            title="Edit Client"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(client._id)}
+                            className="p-1.5 rounded-lg text-text-muted hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                            title="Delete Client"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                          <div className="pl-2 ml-1 border-l border-border">
+                            <ChevronRight className="w-5 h-5 text-text-muted/70 group-hover:text-primary transition-colors" />
+                          </div>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))}
+                </AnimatePresence>
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
@@ -531,10 +532,10 @@ export default function ClientsPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            className="bg-background rounded-2xl p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto"
           >
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-light text-black">
+              <h2 className="text-2xl font-medium text-text-primary">
                 {editingClient ? "Edit Client" : "Add New Client"}
               </h2>
               <button
@@ -542,7 +543,7 @@ export default function ClientsPage() {
                   setShowAddModal(false);
                   setEditingClient(null);
                 }}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-surface rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -551,7 +552,7 @@ export default function ClientsPage() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">
+                  <label className="block text-sm text-text-muted font-medium mb-2">
                     Salutation *
                   </label>
                   <select
@@ -559,7 +560,7 @@ export default function ClientsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, salutation: e.target.value as "Mr." | "Mrs." | "Miss" | "Dr." | "Ms." })
                     }
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-light"
+                    className="w-full px-4 py-3 bg-surface border border-border rounded-xl focus:outline-none focus:border-black transition-colors font-medium"
                     required
                   >
                     <option value="Mr.">Mr.</option>
@@ -570,7 +571,7 @@ export default function ClientsPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">
+                  <label className="block text-sm text-text-muted font-medium mb-2">
                     Name *
                   </label>
                   <input
@@ -579,7 +580,7 @@ export default function ClientsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-light"
+                    className="w-full px-4 py-3 bg-surface border border-border rounded-xl focus:outline-none focus:border-black transition-colors font-medium"
                     required
                   />
                 </div>
@@ -587,7 +588,7 @@ export default function ClientsPage() {
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">
+                  <label className="block text-sm text-text-muted font-medium mb-2">
                     Email
                   </label>
                   <input
@@ -596,14 +597,14 @@ export default function ClientsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-light"
+                    className="w-full px-4 py-3 bg-surface border border-border rounded-xl focus:outline-none focus:border-black transition-colors font-medium"
                   />
                 </div>
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">
+                  <label className="block text-sm text-text-muted font-medium mb-2">
                     Phone *
                   </label>
                   <input
@@ -612,12 +613,12 @@ export default function ClientsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, phone: e.target.value })
                     }
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-light"
+                    className="w-full px-4 py-3 bg-surface border border-border rounded-xl focus:outline-none focus:border-black transition-colors font-medium"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">
+                  <label className="block text-sm text-text-muted font-medium mb-2">
                     Company *
                   </label>
                   <input
@@ -626,7 +627,7 @@ export default function ClientsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, company: e.target.value })
                     }
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-light"
+                    className="w-full px-4 py-3 bg-surface border border-border rounded-xl focus:outline-none focus:border-black transition-colors font-medium"
                     required
                   />
                 </div>
@@ -634,7 +635,7 @@ export default function ClientsPage() {
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">
+                  <label className="block text-sm text-text-muted font-medium mb-2">
                     Industry
                   </label>
                   <input
@@ -643,11 +644,11 @@ export default function ClientsPage() {
                     onChange={(e) =>
                       setFormData({ ...formData, industry: e.target.value })
                     }
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-light"
+                    className="w-full px-4 py-3 bg-surface border border-border rounded-xl focus:outline-none focus:border-black transition-colors font-medium"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">
+                  <label className="block text-sm text-text-muted font-medium mb-2">
                     Client Type
                   </label>
                   <select
@@ -658,7 +659,7 @@ export default function ClientsPage() {
                         clientType: e.target.value as "development" | "other"
                       })
                     }
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-light"
+                    className="w-full px-4 py-3 bg-surface border border-border rounded-xl focus:outline-none focus:border-black transition-colors font-medium"
                   >
                     <option value="development">Development Client</option>
                     <option value="other">Other Services</option>
@@ -668,7 +669,7 @@ export default function ClientsPage() {
 
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-gray-600 font-light mb-2">
+                  <label className="block text-sm text-text-muted font-medium mb-2">
                     Status
                   </label>
                   <select
@@ -679,7 +680,7 @@ export default function ClientsPage() {
                         status: e.target.value as "active" | "inactive"
                       })
                     }
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-light"
+                    className="w-full px-4 py-3 bg-surface border border-border rounded-xl focus:outline-none focus:border-black transition-colors font-medium"
                   >
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
@@ -688,7 +689,7 @@ export default function ClientsPage() {
               </div>
 
               <div>
-                <label className="block text-sm text-gray-600 font-light mb-2">
+                <label className="block text-sm text-text-muted font-medium mb-2">
                   Address
                 </label>
                 <textarea
@@ -697,7 +698,7 @@ export default function ClientsPage() {
                     setFormData({ ...formData, address: e.target.value })
                   }
                   rows={3}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-light resize-none"
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-xl focus:outline-none focus:border-black transition-colors font-medium resize-none"
                 />
               </div>
 
@@ -708,13 +709,13 @@ export default function ClientsPage() {
                     setShowAddModal(false);
                     setEditingClient(null);
                   }}
-                  className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-light transition-colors"
+                  className="flex-1 px-6 py-3 bg-surface hover:bg-surface/50 rounded-xl font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-6 py-3 bg-black text-white hover:bg-gray-900 rounded-xl font-light transition-colors"
+                  className="ta-btn-primary flex-1"
                 >
                   {editingClient ? "Update Client" : "Add Client"}
                 </button>
@@ -724,163 +725,7 @@ export default function ClientsPage() {
         </div>
       )}
 
-      {/* VIEW CLIENT DETAILS MODAL */}
-      {showViewModal && viewingClient && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-8 max-w-4xl w-full my-8"
-          >
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h2 className="text-3xl font-light text-black mb-2">
-                  {viewingClient.name}
-                </h2>
-                <p className="text-gray-600 font-light flex items-center gap-2">
-                  <Building className="w-4 h-4" />
-                  {viewingClient.company}
-                </p>
-              </div>
-              <button
-                onClick={() => setShowViewModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
 
-            {/* Client Details */}
-            <div className="grid md:grid-cols-2 gap-6 mb-8">
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-600 font-light">Email</p>
-                  <p className="text-lg font-light flex items-center gap-2">
-                    <Mail className="w-4 h-4" />
-                    {viewingClient.email}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 font-light">Phone</p>
-                  <p className="text-lg font-light flex items-center gap-2">
-                    <Phone className="w-4 h-4" />
-                    {viewingClient.phone}
-                  </p>
-                </div>
-                {viewingClient.industry && (
-                  <div>
-                    <p className="text-sm text-gray-600 font-light">Industry</p>
-                    <p className="text-lg font-light">{viewingClient.industry}</p>
-                  </div>
-                )}
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-600 font-light">Status</p>
-                  <span
-                    className={`inline-block px-3 py-1 rounded-full text-sm font-light ${
-                      viewingClient.status === "active"
-                        ? "bg-green-100 text-green-700"
-                        : "bg-gray-100 text-gray-700"
-                    }`}
-                  >
-                    {viewingClient.status}
-                  </span>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 font-light">Total Revenue</p>
-                  <p className="text-2xl font-light">
-                    ₹{viewingClient.totalRevenue.toLocaleString()}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm text-gray-600 font-light">Projects</p>
-                  <p className="text-2xl font-light">
-                    {viewingClient.projectsCount}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {viewingClient.address && (
-              <div className="mb-8">
-                <p className="text-sm text-gray-600 font-light mb-2">Address</p>
-                <p className="text-gray-800 font-light">{viewingClient.address}</p>
-              </div>
-            )}
-
-            {/* Invoices Section */}
-            <div>
-              <h3 className="text-xl font-light mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                Invoices ({clientInvoices.length})
-              </h3>
-
-              {clientInvoices.length === 0 ? (
-                <p className="text-center text-gray-500 py-8 font-light">
-                  No invoices for this client yet
-                </p>
-              ) : (
-                <div className="space-y-3">
-                  {clientInvoices.map((invoice) => (
-                    <div
-                      key={invoice._id}
-                      className="bg-gray-50 p-4 rounded-xl flex items-center justify-between"
-                    >
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <p className="font-light text-lg">
-                            {invoice.invoiceNumber}
-                          </p>
-                          <span
-                            className={`px-3 py-1 rounded-full text-xs font-light ${statusColor(
-                              invoice.status
-                            )}`}
-                          >
-                            {invoice.status}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-4 text-sm text-gray-600 font-light">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            Issue: {new Date(invoice.issueDate).toLocaleDateString()}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
-                            Due: {new Date(invoice.dueDate).toLocaleDateString()}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="text-right mr-4">
-                        <p className="text-2xl font-light">
-                          ₹{invoice.total.toLocaleString()}
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={() => sendInvoiceEmail(invoice)}
-                        className="px-4 py-2 bg-black text-white rounded-xl flex items-center gap-2 hover:bg-gray-900 transition-colors"
-                        title="Send invoice via email"
-                      >
-                        <Send className="w-4 h-4" />
-                        <span className="font-light">Send</span>
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <div className="mt-6 pt-6 border-t">
-              <p className="text-sm text-gray-500 font-light">
-                Member since {new Date(viewingClient.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-          </motion.div>
-        </div>
-      )}
 
       {/* SET PASSWORD MODAL */}
       {showPasswordModal && passwordClient && (
@@ -888,14 +733,14 @@ export default function ClientsPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-8 max-w-md w-full"
+            className="bg-background rounded-2xl p-8 max-w-md w-full"
           >
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-2xl font-light text-black mb-1">
+                <h2 className="text-2xl font-medium text-text-primary mb-1">
                   {passwordClient.portalAccessEnabled ? "Reset" : "Enable"} Portal Access
                 </h2>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-text-muted">
                   {passwordClient.name} • {passwordClient.email}
                 </p>
               </div>
@@ -907,7 +752,7 @@ export default function ClientsPage() {
                   setConfirmPassword("");
                   setPasswordError("");
                 }}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-surface rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -915,7 +760,7 @@ export default function ClientsPage() {
 
             <form onSubmit={handleSetPassword} className="space-y-4">
               <div>
-                <label className="block text-sm text-gray-600 font-light mb-2">
+                <label className="block text-sm text-text-muted font-medium mb-2">
                   New Password *
                 </label>
                 <input
@@ -923,13 +768,13 @@ export default function ClientsPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Minimum 6 characters"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-light"
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-xl focus:outline-none focus:border-black transition-colors font-medium"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-gray-600 font-light mb-2">
+                <label className="block text-sm text-text-muted font-medium mb-2">
                   Confirm Password *
                 </label>
                 <input
@@ -937,22 +782,22 @@ export default function ClientsPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Re-enter password"
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black transition-colors font-light"
+                  className="w-full px-4 py-3 bg-surface border border-border rounded-xl focus:outline-none focus:border-black transition-colors font-medium"
                   required
                 />
               </div>
 
               {passwordError && (
                 <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
-                  <p className="text-sm text-red-600 font-light">{passwordError}</p>
+                  <p className="text-sm text-red-600 font-medium">{passwordError}</p>
                 </div>
               )}
 
               <div className="bg-blue-50 p-4 rounded-xl">
-                <p className="text-sm text-blue-800 font-light mb-2">
+                <p className="text-sm text-blue-800 font-medium mb-2">
                   <strong>Login Credentials:</strong>
                 </p>
-                <p className="text-sm text-blue-700 font-light">
+                <p className="text-sm text-blue-700 font-medium">
                   Email: {passwordClient.email}<br />
                   Portal: {window.location.origin}/client-portal/login
                 </p>
@@ -968,13 +813,13 @@ export default function ClientsPage() {
                     setConfirmPassword("");
                     setPasswordError("");
                   }}
-                  className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-light transition-colors"
+                  className="flex-1 px-6 py-3 bg-surface hover:bg-surface/50 rounded-xl font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 px-6 py-3 bg-black text-white hover:bg-gray-900 rounded-xl font-light transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 px-6 py-3 bg-black text-white hover:bg-gray-900 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <Key className="w-4 h-4" />
                   {passwordClient.portalAccessEnabled ? "Reset Password" : "Enable Access"}
@@ -991,14 +836,14 @@ export default function ClientsPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-8 max-w-md w-full"
+            className="bg-background rounded-2xl p-8 max-w-md w-full"
           >
             <div className="flex justify-between items-center mb-6">
               <div>
-                <h2 className="text-2xl font-light text-black mb-1">
+                <h2 className="text-2xl font-medium text-text-primary mb-1">
                   Send Login Credentials
                 </h2>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-text-muted">
                   {sendLoginClient.name} • {sendLoginClient.email}
                 </p>
               </div>
@@ -1008,7 +853,7 @@ export default function ClientsPage() {
                   setSendLoginClient(null);
                   setSendLoginError("");
                 }}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-surface rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -1016,19 +861,19 @@ export default function ClientsPage() {
 
             <form onSubmit={handleSendLoginCredentials} className="space-y-4">
               <div className="bg-blue-50 p-4 rounded-xl">
-                <p className="text-sm text-blue-800 font-light mb-3">
+                <p className="text-sm text-blue-800 font-medium mb-3">
                   <strong>📧 Auto-generated credentials will be sent to:</strong>
                 </p>
-                <p className="text-sm text-blue-700 font-light font-mono bg-white p-3 rounded border border-blue-200">
+                <p className="text-sm text-blue-700 font-medium font-mono bg-background p-3 rounded border border-blue-200">
                   {sendLoginClient.email}
                 </p>
               </div>
 
               <div className="bg-emerald-50 p-4 rounded-xl">
-                <p className="text-sm text-emerald-800 font-light mb-2">
+                <p className="text-sm text-emerald-800 font-medium mb-2">
                   <strong>✉️ Email will contain:</strong>
                 </p>
-                <ul className="text-sm text-emerald-700 font-light space-y-1 list-disc list-inside">
+                <ul className="text-sm text-emerald-700 font-medium space-y-1 list-disc list-inside">
                   <li>Portal login link</li>
                   <li>Email address</li>
                   <li>8-digit numeric password (auto-generated)</li>
@@ -1038,7 +883,7 @@ export default function ClientsPage() {
 
               {sendLoginError && (
                 <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl">
-                  <p className="text-sm text-red-600 font-light">{sendLoginError}</p>
+                  <p className="text-sm text-red-600 font-medium">{sendLoginError}</p>
                 </div>
               )}
 
@@ -1050,14 +895,14 @@ export default function ClientsPage() {
                     setSendLoginClient(null);
                     setSendLoginError("");
                   }}
-                  className="flex-1 px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-light transition-colors"
+                  className="flex-1 px-6 py-3 bg-surface hover:bg-surface/50 rounded-xl font-medium transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={sendingLoginEmail === sendLoginClient._id}
-                  className="flex-1 px-6 py-3 bg-black text-white hover:bg-gray-900 rounded-xl font-light transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-6 py-3 bg-black text-white hover:bg-gray-900 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Mail className="w-4 h-4" />
                   {sendingLoginEmail === sendLoginClient._id ? "Sending..." : "Send Email"}

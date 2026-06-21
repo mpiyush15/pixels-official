@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { FinanceDB } from '@/lib/finance';
 
 export async function GET() {
   try {
@@ -42,6 +43,41 @@ export async function POST(request: Request) {
     };
 
     const result = await db.collection('receivables').insertOne(receivable);
+
+    if (receivable.status === 'received') {
+        // Create Double-Entry Journal Record
+        await FinanceDB.ensureSystemAccounts();
+        const accounts = await FinanceDB.getAccounts();
+        
+        // Debit Bank/Cash, Credit Revenue
+        const revenueAccount = accounts.find(a => a.subType === 'Sales') || accounts.find(a => a.type === 'Revenue');
+        const paymentAccount = accounts.find(a => a.subType === 'Bank') || accounts.find(a => a.name === 'Cash in Hand');
+
+        if (revenueAccount && paymentAccount) {
+            await FinanceDB.createJournalEntry([
+                {
+                    accountId: paymentAccount._id!,
+                    type: 'Debit',
+                    amount: receivable.amount,
+                    currency: 'INR',
+                    date: new Date(receivable.expectedDate),
+                    description: `Payment Received: ${receivable.projectName || receivable.description}`,
+                    referenceId: result.insertedId.toString(),
+                    referenceType: 'Payment'
+                },
+                {
+                    accountId: revenueAccount._id!,
+                    type: 'Credit',
+                    amount: receivable.amount,
+                    currency: 'INR',
+                    date: new Date(receivable.expectedDate),
+                    description: `Revenue: ${receivable.projectName || receivable.description}`,
+                    referenceId: result.insertedId.toString(),
+                    referenceType: 'Payment'
+                }
+            ]);
+        }
+    }
 
     return NextResponse.json(
       { _id: result.insertedId, ...receivable },

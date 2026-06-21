@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, FileText, Download, Eye, X, Calendar, IndianRupee, Printer, Mail, XCircle, Bell } from 'lucide-react';
 
 interface Client {
@@ -867,137 +867,142 @@ export default function InvoicesPage() {
   }, 0);
 
   return (
-    <div className="p-8 bg-gray-50 min-h-screen">
+    <div className="p-8 bg-background min-h-[calc(100vh-8rem)] rounded-2xl">
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-4xl font-light text-black mb-2">Invoices</h1>
-          <p className="text-gray-600 font-light">Manage invoices and track payments</p>
+          <h1 className="text-4xl font-bold text-text-primary mb-2">Invoices</h1>
+          <p className="text-text-muted font-medium">Manage invoices and track payments</p>
         </div>
         <motion.button
           onClick={() => setShowCreateModal(true)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className="bg-black text-white px-6 py-3 rounded-xl flex items-center gap-2 font-light hover:bg-gray-900"
+          className="ta-btn-primary flex items-center gap-2"
         >
-          <Plus className="w-5 h-5" strokeWidth={1.5} />
+          <Plus className="w-5 h-5" strokeWidth={2} />
           <span>Create Invoice</span>
         </motion.button>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Total Revenue</p>
-          <p className="text-3xl font-light text-green-600 mt-2">₹{totalRevenue.toLocaleString()}</p>
+        <div className="ta-card">
+          <p className="text-sm font-semibold text-text-muted">Total Revenue</p>
+          <p className="text-3xl font-bold text-emerald-500 mt-2">₹{totalRevenue.toLocaleString()}</p>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Paid Invoices</p>
-          <p className="text-3xl font-light text-green-600 mt-2">
+        <div className="ta-card">
+          <p className="text-sm font-semibold text-text-muted">Paid Invoices</p>
+          <p className="text-3xl font-bold text-emerald-500 mt-2">
             {invoices?.filter(inv => inv.status === 'paid').length || 0}
           </p>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Pending Amount</p>
-          <p className="text-3xl font-light text-orange-600 mt-2">
+        <div className="ta-card">
+          <p className="text-sm font-semibold text-text-muted">Pending Amount</p>
+          <p className="text-3xl font-bold text-orange-500 mt-2">
             ₹{pendingAmount.toLocaleString()}
           </p>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Pending Invoices</p>
-          <p className="text-3xl font-light text-blue-600 mt-2">
+        <div className="ta-card">
+          <p className="text-sm font-semibold text-text-muted">Pending Invoices</p>
+          <p className="text-3xl font-bold text-blue-500 mt-2">
             {invoices?.filter(inv => inv.status === 'sent' || inv.status === 'partially_paid' || inv.status === 'overdue').length || 0}
           </p>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Cancelled</p>
-          <p className="text-3xl font-light text-red-600 mt-2">
+        <div className="ta-card">
+          <p className="text-sm font-semibold text-text-muted">Cancelled</p>
+          <p className="text-3xl font-bold text-red-500 mt-2">
             {invoices?.filter(inv => inv.status === 'cancelled').length || 0}
           </p>
         </div>
       </div>
 
       {/* Invoices Table */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div className="ta-table-container">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Invoice #</th>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Client</th>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Amount</th>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Issue Date</th>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Due Date</th>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Actions</th>
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="ta-table-header">
+                <th className="ta-table-th">Invoice #</th>
+                <th className="ta-table-th">Client</th>
+                <th className="ta-table-th">Amount</th>
+                <th className="ta-table-th">Status</th>
+                <th className="ta-table-th">Issue Date</th>
+                <th className="ta-table-th">Due Date</th>
+                <th className="ta-table-th">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500 font-light">
-                    Loading invoices...
-                  </td>
-                </tr>
-              ) : invoices.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500 font-light">
-                    No invoices yet. Create your first invoice to get started.
-                  </td>
-                </tr>
-              ) : (
-                invoices.map((invoice) => (
-                  <tr key={invoice._id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <p className="font-light text-black">{invoice.invoiceNumber}</p>
+            <tbody className={`transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+              <AnimatePresence mode="popLayout">
+                {invoices.length === 0 && !loading ? (
+                  <motion.tr
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <td colSpan={7} className="ta-table-td text-center py-8 text-text-muted">
+                      No invoices yet. Create your first invoice to get started.
                     </td>
-                    <td className="px-6 py-4">
-                      <p className="font-light text-black">{invoice.clientName}</p>
-                      {invoice.projectName && (
-                        <p className="text-xs text-indigo-600 font-light mt-1">Project: {invoice.projectName}</p>
-                      )}
-                      <p className="text-sm text-gray-500 font-light">{invoice.clientEmail}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-light text-black">₹{invoice.total.toLocaleString()}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-sm font-light ${getStatusColor(invoice.status)}`}>
-                        {invoice.status}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-light text-gray-600">
-                        {new Date(invoice.issueDate).toLocaleDateString()}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-light text-gray-600">
-                        {new Date(invoice.dueDate).toLocaleDateString()}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setSelectedInvoice(invoice)}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                          title="View Invoice"
-                        >
-                          <Eye className="w-4 h-4 text-gray-600" />
-                        </button>
-                        {invoice.status === 'draft' && (
-                          <button
-                            onClick={() => {
-                              if (confirm(`Send invoice ${invoice.invoiceNumber} to client?`)) {
-                                updateInvoiceStatus(invoice._id, 'sent');
-                              }
-                            }}
-                            className="px-3 py-1 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition-colors"
-                            title="Send to Client"
-                          >
-                            Send to Client
-                          </button>
+                  </motion.tr>
+                ) : (
+                  invoices.map((invoice) => (
+                    <motion.tr 
+                      key={invoice._id} 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="ta-table-row"
+                    >
+                      <td className="ta-table-td">
+                        <p className="font-medium text-text-primary">{invoice.invoiceNumber}</p>
+                      </td>
+                      <td className="ta-table-td">
+                        <p className="font-medium text-text-primary">{invoice.clientName}</p>
+                        {invoice.projectName && (
+                          <p className="text-xs text-indigo-500 font-medium mt-1">Project: {invoice.projectName}</p>
                         )}
+                        <p className="text-sm text-text-muted">{invoice.clientEmail}</p>
+                      </td>
+                      <td className="ta-table-td">
+                        <p className="font-medium text-text-primary">₹{invoice.total.toLocaleString()}</p>
+                      </td>
+                      <td className="ta-table-td">
+                        <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(invoice.status)}`}>
+                          {invoice.status}
+                        </span>
+                      </td>
+                      <td className="ta-table-td">
+                        <span className="text-sm font-medium text-text-muted">
+                          {new Date(invoice.issueDate).toLocaleDateString()}
+                        </span>
+                      </td>
+                      <td className="ta-table-td">
+                        <span className="text-sm font-medium text-text-muted">
+                          {new Date(invoice.dueDate).toLocaleDateString()}
+                        </span>
+                      </td>
+                      <td className="ta-table-td">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setSelectedInvoice(invoice)}
+                            className="p-2 hover:bg-surface rounded-lg transition-colors text-text-muted hover:text-text-primary"
+                            title="View Invoice"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          {invoice.status === 'draft' && (
+                            <button
+                              onClick={() => {
+                                if (confirm(`Send invoice ${invoice.invoiceNumber} to client?`)) {
+                                  updateInvoiceStatus(invoice._id, 'sent');
+                                }
+                              }}
+                              className="ta-btn-primary !px-3 !py-1 text-xs"
+                              title="Send to Client"
+                            >
+                              Send
+                            </button>
+                          )}
                         {invoice.s3Url && (
                           <a
                             href={invoice.s3Url}
@@ -1034,9 +1039,10 @@ export default function InvoicesPage() {
                         )}
                       </div>
                     </td>
-                  </tr>
+                  </motion.tr>
                 ))
               )}
+              </AnimatePresence>
             </tbody>
           </table>
         </div>

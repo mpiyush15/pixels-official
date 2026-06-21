@@ -22,10 +22,13 @@ export default function NewExpensePage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   
+  const [expenseAccounts, setExpenseAccounts] = useState<any[]>([]);
+  const [assetAccounts, setAssetAccounts] = useState<any[]>([]);
+  
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
-    paidFrom: 'bank',
-    category: 'software',
+    paidFrom: '',
+    expenseAccountId: '',
     amount: '',
     vendorName: '',
     clientId: '',
@@ -39,10 +42,15 @@ export default function NewExpensePage() {
     // Fetch clients and projects for tagging
     Promise.all([
       fetch('/api/clients').then(res => res.json()),
-      fetch('/api/projects').then(res => res.json())
-    ]).then(([clientsData, projectsData]) => {
+      fetch('/api/projects').then(res => res.json()),
+      fetch('/api/finance/accounts').then(res => res.json())
+    ]).then(([clientsData, projectsData, accountsData]) => {
       setClients(Array.isArray(clientsData) ? clientsData : []);
       setProjects(Array.isArray(projectsData) ? projectsData : []);
+      
+      const accs = Array.isArray(accountsData) ? accountsData : [];
+      setExpenseAccounts(accs.filter(a => a.type === 'Expense'));
+      setAssetAccounts(accs.filter(a => a.type === 'Asset' && (a.subType === 'Bank' || a.subType === 'Cash')));
     }).catch(console.error);
   }, []);
 
@@ -61,6 +69,7 @@ export default function NewExpensePage() {
           ...formData,
           clientName: selectedClient?.company || selectedClient?.name || '',
           projectName: selectedProject?.projectName || selectedProject?.name || '',
+          category: expenseAccounts.find(a => a._id === formData.expenseAccountId)?.name || 'Direct Expense',
           paymentStatus: 'paid'
         }),
       });
@@ -81,24 +90,23 @@ export default function NewExpensePage() {
     : projects;
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-8 max-w-4xl mx-auto space-y-6">
       <button 
         onClick={() => router.back()}
-        className="flex items-center gap-2 text-sm text-gray-500 hover:text-black mb-6 transition-colors"
+        className="p-2 bg-surface hover:bg-surface/80 rounded-lg text-text-muted hover:text-text-primary transition-colors inline-flex"
       >
-        <ArrowLeft className="w-4 h-4" />
-        Back to Expenses
+        <ArrowLeft className="w-5 h-5" />
       </button>
 
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-6 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+      <div className="ta-card overflow-hidden !p-0">
+        <div className="p-6 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-red-100 text-red-600 rounded-lg">
+            <div className="p-2 bg-danger/10 text-danger rounded-lg">
               <Receipt className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-xl font-semibold text-gray-900">Payment Voucher (Expense)</h1>
-              <p className="text-sm text-gray-500">Record an outgoing payment</p>
+              <h1 className="text-xl font-semibold text-text-primary">Payment Voucher (Expense)</h1>
+              <p className="text-sm text-text-muted">Record an outgoing payment directly to the ledger</p>
             </div>
           </div>
         </div>
@@ -109,46 +117,37 @@ export default function NewExpensePage() {
             {/* Left Column: Basic Details */}
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Voucher Date *</label>
+                <label className="block text-sm font-medium text-text-muted mb-2">Voucher Date *</label>
                 <input
                   type="date"
                   required
                   value={formData.date}
                   onChange={e => setFormData({...formData, date: e.target.value})}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                  className="ta-input w-full"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Paid From (Ledger) *</label>
-                <div className="flex gap-4">
-                  <label className={`flex-1 flex items-center justify-center p-4 border rounded-xl cursor-pointer transition-all ${
-                    formData.paidFrom === 'cash' ? 'border-black bg-gray-50' : 'border-gray-200 hover:border-gray-300'
-                  }`}>
-                    <input type="radio" name="paidFrom" value="cash" className="sr-only" 
-                      checked={formData.paidFrom === 'cash'} 
-                      onChange={e => setFormData({...formData, paidFrom: e.target.value})} 
-                    />
-                    <span className={`font-medium ${formData.paidFrom === 'cash' ? 'text-black' : 'text-gray-500'}`}>Cash in Hand</span>
-                  </label>
-                  <label className={`flex-1 flex items-center justify-center p-4 border rounded-xl cursor-pointer transition-all ${
-                    formData.paidFrom === 'bank' ? 'border-black bg-blue-50' : 'border-gray-200 hover:border-gray-300'
-                  }`}>
-                    <input type="radio" name="paidFrom" value="bank" className="sr-only" 
-                      checked={formData.paidFrom === 'bank'} 
-                      onChange={e => setFormData({...formData, paidFrom: e.target.value})} 
-                    />
-                    <span className={`font-medium ${formData.paidFrom === 'bank' ? 'text-black' : 'text-gray-500'}`}>Bank Account</span>
-                  </label>
-                </div>
+                <label className="block text-sm font-medium text-text-muted mb-2">Paid From (Bank/Cash) *</label>
+                <select
+                  required
+                  value={formData.paidFrom}
+                  onChange={e => setFormData({...formData, paidFrom: e.target.value})}
+                  className="ta-input w-full"
+                >
+                  <option value="">Select Payment Source...</option>
+                  {assetAccounts.map(acc => (
+                    <option key={acc._id} value={acc._id}>{acc.name} ({acc.subType})</option>
+                  ))}
+                </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                <label className="block text-sm font-medium text-text-muted mb-2">Payment Method</label>
                 <select
                   value={formData.paymentMethod}
                   onChange={e => setFormData({...formData, paymentMethod: e.target.value})}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                  className="ta-input w-full"
                 >
                   <option value="bank_transfer">Bank Transfer (NEFT/RTGS/IMPS)</option>
                   <option value="upi">UPI</option>
@@ -162,7 +161,7 @@ export default function NewExpensePage() {
             {/* Right Column: Particulars & Amounts */}
             <div className="space-y-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Total Amount (₹) *</label>
+                <label className="block text-sm font-medium text-text-muted mb-2">Total Amount (₹) *</label>
                 <input
                   type="number"
                   required
@@ -170,56 +169,54 @@ export default function NewExpensePage() {
                   step="0.01"
                   value={formData.amount}
                   onChange={e => setFormData({...formData, amount: e.target.value})}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black text-xl font-bold"
+                  className="ta-input w-full text-xl font-bold"
                   placeholder="0.00"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Expense Category *</label>
+                <label className="block text-sm font-medium text-text-muted mb-2">Expense Category (Ledger Account) *</label>
                 <select
                   required
-                  value={formData.category}
-                  onChange={e => setFormData({...formData, category: e.target.value})}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                  value={formData.expenseAccountId}
+                  onChange={e => setFormData({...formData, expenseAccountId: e.target.value})}
+                  className="ta-input w-full"
                 >
-                  <option value="software">Software & Subscriptions</option>
-                  <option value="hosting">Hosting & Domains</option>
-                  <option value="internet">Internet & Utilities</option>
-                  <option value="marketing">Marketing & Ads</option>
-                  <option value="salary">Salaries</option>
-                  <option value="other">Other / General</option>
+                  <option value="">Select Expense Account...</option>
+                  {expenseAccounts.map(acc => (
+                    <option key={acc._id} value={acc._id}>{acc.name}</option>
+                  ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Payee / Vendor Name</label>
+                <label className="block text-sm font-medium text-text-muted mb-2">Payee / Vendor Name</label>
                 <input
                   type="text"
                   value={formData.vendorName}
                   onChange={e => setFormData({...formData, vendorName: e.target.value})}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                  className="ta-input w-full"
                   placeholder="e.g. AWS, Adobe, John Doe"
                 />
               </div>
             </div>
           </div>
 
-          <hr className="border-gray-100" />
+          <hr className="border-border" />
 
           {/* Allocation & Tagging */}
           <div className="grid md:grid-cols-2 gap-8">
             <div className="space-y-6">
-              <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">Client & Project Allocation</h3>
+              <h3 className="text-sm font-semibold text-text-primary border-b border-border pb-2">Client & Project Allocation</h3>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tag Client (Optional)</label>
+                <label className="block text-sm font-medium text-text-muted mb-2">Tag Client (Optional)</label>
                 <select
                   value={formData.clientId}
                   onChange={e => {
                     setFormData({...formData, clientId: e.target.value, projectId: ''}); // reset project when client changes
                   }}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                  className="ta-input w-full"
                 >
                   <option value="">-- General Business Expense --</option>
                   {clients.map(client => (
@@ -231,7 +228,7 @@ export default function NewExpensePage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tag Project (Optional)</label>
+                <label className="block text-sm font-medium text-text-muted mb-2">Tag Project (Optional)</label>
                 <select
                   value={formData.projectId}
                   onChange={e => {
@@ -239,7 +236,7 @@ export default function NewExpensePage() {
                     const p = projects.find(pr => pr._id === pid);
                     setFormData({...formData, projectId: pid, clientId: p ? p.clientId : formData.clientId});
                   }}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                  className="ta-input w-full"
                   disabled={projects.length === 0}
                 >
                   <option value="">-- No Specific Project --</option>
@@ -253,37 +250,37 @@ export default function NewExpensePage() {
             </div>
 
             <div className="space-y-6">
-              <h3 className="text-sm font-semibold text-gray-900 border-b pb-2">Ledger Details</h3>
+              <h3 className="text-sm font-semibold text-text-primary border-b border-border pb-2">Ledger Details</h3>
               
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Particulars / Description *</label>
+                <label className="block text-sm font-medium text-text-muted mb-2">Particulars / Description *</label>
                 <input
                   type="text"
                   required
                   value={formData.description}
                   onChange={e => setFormData({...formData, description: e.target.value})}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+                  className="ta-input w-full"
                   placeholder="Detailed description for ledger..."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Internal Notes</label>
+                <label className="block text-sm font-medium text-text-muted mb-2">Internal Notes</label>
                 <textarea
                   value={formData.notes}
                   onChange={e => setFormData({...formData, notes: e.target.value})}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light resize-none h-24"
+                  className="ta-input w-full resize-none h-24"
                   placeholder="Optional internal notes"
                 />
               </div>
             </div>
           </div>
 
-          <div className="pt-6 border-t border-gray-100 flex justify-end">
+          <div className="pt-6 border-t border-border flex justify-end">
             <button
               type="submit"
               disabled={loading || !formData.amount}
-              className="px-8 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-800 disabled:opacity-50 flex items-center gap-2"
+              className="ta-btn-primary flex items-center gap-2"
             >
               {loading ? (
                 <>

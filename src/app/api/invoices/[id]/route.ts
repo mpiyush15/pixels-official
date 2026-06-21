@@ -58,6 +58,10 @@ export async function PATCH(
       // If marking as cancelled, add cancelled date
       if (newStatus === 'cancelled') {
         updateData.cancelledAt = new Date();
+        
+        if (body.cancelReason) {
+          updateData.cancelReason = body.cancelReason;
+        }
 
         // Remove revenue from client if previously paid
         if (previousStatus === 'paid' && invoice.clientId) {

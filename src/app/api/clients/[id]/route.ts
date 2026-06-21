@@ -2,6 +2,29 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    const db = await getDatabase();
+    const client = await db.collection('clients').findOne({ _id: new ObjectId(id) });
+    
+    if (!client) {
+      return NextResponse.json({ error: 'Client not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(client);
+  } catch (error) {
+    console.error('Error fetching client:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch client' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

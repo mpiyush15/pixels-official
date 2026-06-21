@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
 import { MongoClient } from 'mongodb';
+import { FinanceDB } from '@/lib/finance';
 
 async function getReplysysRevenue(startDate: Date, endDate: Date) {
   try {
@@ -58,10 +59,11 @@ export async function GET(request: Request) {
       startDate.setMonth(now.getMonth() - 1); // default to monthly
     }
 
-    // 1. Fetch Pixels Cashflow Data
-    const cashflowCursor = await db.collection('cashflow').find({
-      createdAt: { $gte: startDate, $lte: now }
-    }).toArray();
+    // 1. Fetch Double Entry Ledger Data
+    const accounts = await FinanceDB.getAccounts();
+    const ledgerEntries = await FinanceDB.getLedgerEntries({
+      date: { $gte: startDate, $lte: now }
+    });
 
     let totalIncome = 0;
     let totalExpense = 0;
@@ -69,20 +71,31 @@ export async function GET(request: Request) {
     const incomeBreakdown: Record<string, number> = {};
     const expenseBreakdown: Record<string, number> = {};
 
-    cashflowCursor.forEach(entry => {
-      // Exclude transfers and opening balances from P&L, as they are not revenue/expense
-      if (entry.category === 'transfer' || entry.category === 'opening_balance') return;
-      if (entry.category === 'capital_injection') return; // Capital is not revenue
+    ledgerEntries.forEach(entry => {
+      const account = accounts.find(a => a._id?.toString() === entry.accountId.toString());
+      if (!account) return;
 
-      const amount = parseFloat(entry.amount) || 0;
-      const category = entry.category || 'other';
+      const amount = entry.amount || 0;
+      const category = account.name || 'Other';
 
-      if (entry.type === 'income') {
-        totalIncome += amount;
-        incomeBreakdown[category] = (incomeBreakdown[category] || 0) + amount;
-      } else if (entry.type === 'expense') {
-        totalExpense += amount;
-        expenseBreakdown[category] = (expenseBreakdown[category] || 0) + amount;
+      if (account.type === 'Revenue') {
+        // Normal balance for Revenue is Credit. If it's a Credit, it increases revenue.
+        if (entry.type === 'Credit') {
+          totalIncome += amount;
+          incomeBreakdown[category] = (incomeBreakdown[category] || 0) + amount;
+        } else {
+          totalIncome -= amount;
+          incomeBreakdown[category] = (incomeBreakdown[category] || 0) - amount;
+        }
+      } else if (account.type === 'Expense') {
+        // Normal balance for Expense is Debit. If it's a Debit, it increases expense.
+        if (entry.type === 'Debit') {
+          totalExpense += amount;
+          expenseBreakdown[category] = (expenseBreakdown[category] || 0) + amount;
+        } else {
+          totalExpense -= amount;
+          expenseBreakdown[category] = (expenseBreakdown[category] || 0) - amount;
+        }
       }
     });
 

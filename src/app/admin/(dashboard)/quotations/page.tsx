@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   FileCheck, 
   Plus, 
@@ -622,10 +622,10 @@ export default function QuotationsPage() {
 
   const getStatusBadge = (status: string) => {
     const styles = {
-      pending: 'bg-amber-50 text-amber-700 border-amber-200',
-      accepted: 'bg-green-50 text-green-700 border-green-200',
-      rejected: 'bg-red-50 text-red-700 border-red-200',
-      expired: 'bg-gray-100 text-gray-700 border-gray-300'
+      pending: 'bg-warning/10 text-warning border-warning/20',
+      accepted: 'bg-success/10 text-success border-success/20',
+      rejected: 'bg-danger/10 text-danger border-danger/20',
+      expired: 'bg-surface text-text-muted border-border'
     };
     
     const icons = {
@@ -664,14 +664,14 @@ export default function QuotationsPage() {
       {/* Header */}
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-light text-white mb-2">Quotations</h1>
-          <p className="text-gray-400">Manage and send quotations to clients</p>
+          <h1 className="text-3xl font-light text-text-primary mb-2">Quotations</h1>
+          <p className="text-text-muted">Manage and send quotations to clients</p>
         </div>
         <motion.button
           onClick={() => setShowCreateModal(true)}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
-          className="flex items-center gap-2 px-6 py-3 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors"
+          className="ta-btn-primary flex items-center gap-2"
         >
           <Plus className="w-5 h-5" />
           New Quotation
@@ -681,21 +681,21 @@ export default function QuotationsPage() {
       {/* Filters */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted w-5 h-5" />
           <input
             type="text"
             placeholder="Search quotations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-white/20"
+            className="w-full pl-10 pr-4 py-3 ta-input"
           />
         </div>
         <div className="relative">
-          <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text-muted w-5 h-5" />
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/20 appearance-none"
+            className="w-full pl-10 pr-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20 appearance-none"
           >
             <option value="all">All Statuses</option>
             <option value="pending">Pending</option>
@@ -707,67 +707,67 @@ export default function QuotationsPage() {
       </div>
 
       {/* Material UI Style Table */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="ta-table-container">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px]">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-6 py-4 text-left text-sm font-bold text-gray-900 w-[35%]">
+              <tr className="ta-table-header">
+                <th className="ta-table-th w-[35%]">
                   Quotation
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-gray-900 w-[30%]">
+                <th className="ta-table-th w-[30%]">
                   Client
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-gray-900 w-[15%]">
+                <th className="ta-table-th w-[15%]">
                   Amount
                 </th>
-                <th className="px-6 py-4 text-left text-sm font-bold text-gray-900 w-[20%]">
+                <th className="ta-table-th w-[20%]">
                   Valid Until
                 </th>
-                <th className="px-6 py-4 text-right text-sm font-bold text-gray-900">
+                <th className="ta-table-th text-right">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody>
+              <AnimatePresence mode="popLayout">
               {filteredQuotations.map((quotation, index) => (
                 <motion.tr
                   key={quotation._id}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${
-                    index % 2 === 0 ? 'bg-white' : 'bg-gray-50/50'
-                  }`}
+                  exit={{ opacity: 0 }}
+                  className="ta-table-row"
                 >
                   {/* Quotation Info */}
-                  <td className="px-6 py-4 w-[35%]">
+                  <td className="ta-table-td w-[35%]">
                     <div className="flex flex-col">
-                      <span className="text-sm font-bold text-gray-900">{quotation.title}</span>
-                      <span className="text-xs font-semibold text-gray-500 mt-0.5">{quotation.quotationNumber}</span>
+                      <span className="text-sm font-bold text-text-primary">{quotation.title}</span>
+                      <span className="text-xs font-semibold text-text-muted mt-0.5">{quotation.quotationNumber}</span>
                     </div>
                   </td>
 
                   {/* Client */}
-                  <td className="px-6 py-4 w-[30%]">
+                  <td className="ta-table-td w-[30%]">
                     <div className="flex flex-col">
-                      <span className="text-sm font-bold text-gray-900">{quotation.clientName}</span>
-                      <span className="text-xs font-medium text-gray-500 mt-0.5">{quotation.clientEmail}</span>
+                      <span className="text-sm font-bold text-text-primary">{quotation.clientName}</span>
+                      <span className="text-xs font-medium text-text-muted mt-0.5">{quotation.clientEmail}</span>
                     </div>
                   </td>
 
                   {/* Amount */}
-                  <td className="px-6 py-4 w-[15%]">
-                    <span className="text-sm font-bold text-gray-900">₹{quotation.total.toLocaleString('en-IN')}</span>
+                  <td className="ta-table-td w-[15%]">
+                    <span className="text-sm font-bold text-text-primary">₹{quotation.total.toLocaleString('en-IN')}</span>
                   </td>
 
                   {/* Valid Until */}
-                  <td className="px-6 py-4 w-[20%]">
+                  <td className="ta-table-td w-[20%]">
                     <div className="flex flex-col">
-                      <span className="text-sm font-semibold text-gray-900">
+                      <span className="text-sm font-semibold text-text-primary">
                         {new Date(quotation.validUntil).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </span>
                       {quotation.sentAt && (
-                        <span className="text-xs font-medium text-gray-500 mt-0.5">
+                        <span className="text-xs font-medium text-text-muted mt-0.5">
                           Sent: {new Date(quotation.sentAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
                         </span>
                       )}
@@ -775,7 +775,7 @@ export default function QuotationsPage() {
                   </td>
 
                   {/* Actions */}
-                  <td className="px-6 py-4">
+                  <td className="ta-table-td">
                     <div className="flex items-center justify-end gap-1">
                       {/* View */}
                       <motion.button
@@ -785,7 +785,7 @@ export default function QuotationsPage() {
                         }}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                        className="p-2 text-text-muted hover:bg-gray-100 rounded-lg transition-colors"
                         title="View Details"
                       >
                         <Eye className="w-5 h-5" />
@@ -796,7 +796,7 @@ export default function QuotationsPage() {
                         onClick={() => handleEditQuotation(quotation)}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                        className="p-2 text-text-muted hover:text-purple-500 hover:bg-purple-500/10 rounded-lg transition-colors"
                         title="Edit Quotation"
                       >
                         <Edit2 className="w-5 h-5" />
@@ -807,7 +807,7 @@ export default function QuotationsPage() {
                         onClick={() => handleDownloadPDF(quotation)}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="p-2 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                        className="p-2 text-text-muted hover:text-green-500 hover:bg-green-500/10 rounded-lg transition-colors"
                         title="Download PDF"
                       >
                         <Download className="w-5 h-5" />
@@ -819,7 +819,7 @@ export default function QuotationsPage() {
                           onClick={() => handleSendQuotation(quotation._id)}
                           whileHover={{ scale: 1.05 }}
                           whileTap={{ scale: 0.95 }}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                          className="p-2 text-text-muted hover:text-blue-500 hover:bg-blue-500/10 rounded-lg transition-colors"
                           title={quotation.sentAt ? 'Resend Email' : 'Send Email'}
                         >
                           <Send className="w-5 h-5" />
@@ -831,7 +831,7 @@ export default function QuotationsPage() {
                         onClick={() => handleDeleteQuotation(quotation._id)}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-2 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors"
                         title="Delete Quotation"
                       >
                         <Trash2 className="w-5 h-5" />
@@ -848,7 +848,7 @@ export default function QuotationsPage() {
                             }
                             e.target.value = 'pending';
                           }}
-                          className="ml-1 px-3 py-1.5 text-xs font-semibold border border-gray-300 rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer transition-colors"
+                          className="ml-1 px-3 py-1.5 text-xs font-semibold border border-border rounded-lg text-text-primary bg-surface hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent cursor-pointer transition-colors"
                           value="pending"
                         >
                           <option value="pending">Status</option>
@@ -860,39 +860,40 @@ export default function QuotationsPage() {
                   </td>
                 </motion.tr>
               ))}
+              </AnimatePresence>
             </tbody>
           </table>
         </div>
 
         {/* Empty State */}
         {filteredQuotations.length === 0 && (
-          <div className="text-center py-16 bg-gray-50">
-            <FileCheck className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <p className="text-gray-500 font-semibold">No quotations found</p>
-            <p className="text-gray-400 text-sm mt-1">Create your first quotation to get started</p>
+          <div className="text-center py-16 bg-surface">
+            <FileCheck className="w-16 h-16 text-text-muted mx-auto mb-4" />
+            <p className="text-text-muted font-semibold">No quotations found</p>
+            <p className="text-text-muted text-sm mt-1">Create your first quotation to get started</p>
           </div>
         )}
       </div>
 
       {/* Create Modal */}
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="fixed inset-0 ta-modal-overlay flex items-center justify-center z-50 p-4 overflow-y-auto">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-gray-900 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            className="ta-modal-content p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
           >
-            <h2 className="text-2xl font-light text-white mb-6">Create New Quotation</h2>
+            <h2 className="text-2xl font-light text-text-primary mb-6">Create New Quotation</h2>
             
             <form onSubmit={handleCreateQuotation} className="space-y-6">
               {/* Client Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Client *</label>
+                <label className="block text-sm font-medium text-text-primary mb-2">Client *</label>
                 <select
                   value={formData.clientId}
                   onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
                   required
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/20"
+                  className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
                 >
                   <option value="">Select a client</option>
                   {clients.map((client) => (
@@ -905,32 +906,32 @@ export default function QuotationsPage() {
 
               {/* Title */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Title *</label>
+                <label className="block text-sm font-medium text-text-primary mb-2">Title *</label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/20"
+                  className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
                   placeholder="e.g., Website Development Proposal"
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                <label className="block text-sm font-medium text-text-primary mb-2">Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/20"
+                  className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
                   placeholder="Brief description of the quotation"
                 />
               </div>
 
               {/* Items */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Items *</label>
+                <label className="block text-sm font-medium text-text-primary mb-2">Items *</label>
                 {formData.items.map((item, index) => (
                   <div key={index} className="grid grid-cols-12 gap-2 mb-2">
                     <input
@@ -939,7 +940,7 @@ export default function QuotationsPage() {
                       onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                       placeholder="Description"
                       required
-                      className="col-span-5 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-white/20"
+                      className="col-span-5 px-4 py-2 bg-surface/30 border border-white/10 rounded-lg text-text-primary text-sm focus:outline-none focus:border-white/20"
                     />
                     <input
                       type="number"
@@ -948,7 +949,7 @@ export default function QuotationsPage() {
                       placeholder="Qty"
                       required
                       min="1"
-                      className="col-span-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-white/20"
+                      className="col-span-2 px-4 py-2 bg-surface/30 border border-white/10 rounded-lg text-text-primary text-sm focus:outline-none focus:border-white/20"
                     />
                     <input
                       type="number"
@@ -958,9 +959,9 @@ export default function QuotationsPage() {
                       required
                       min="0"
                       step="0.01"
-                      className="col-span-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-white/20"
+                      className="col-span-2 px-4 py-2 bg-surface/30 border border-white/10 rounded-lg text-text-primary text-sm focus:outline-none focus:border-white/20"
                     />
-                    <div className="col-span-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm flex items-center">
+                    <div className="col-span-2 px-4 py-2 bg-surface/30 border border-white/10 rounded-lg text-text-primary text-sm flex items-center">
                       ₹{item.amount.toFixed(2)}
                     </div>
                     <button
@@ -975,7 +976,7 @@ export default function QuotationsPage() {
                 <button
                   type="button"
                   onClick={addItem}
-                  className="mt-2 px-4 py-2 bg-white/5 text-white rounded-lg hover:bg-white/10 transition-colors text-sm"
+                  className="mt-2 px-4 py-2 bg-surface/30 text-text-primary rounded-lg hover:bg-surface/50 transition-colors text-sm"
                 >
                   + Add Item
                 </button>
@@ -984,54 +985,54 @@ export default function QuotationsPage() {
               {/* Pricing */}
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Tax (%)</label>
+                  <label className="block text-sm font-medium text-text-primary mb-2">Tax (%)</label>
                   <input
                     type="number"
                     value={formData.tax}
                     onChange={(e) => setFormData({ ...formData, tax: parseFloat(e.target.value) || 0 })}
                     min="0"
                     step="0.01"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/20"
+                    className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Discount (₹)</label>
+                  <label className="block text-sm font-medium text-text-primary mb-2">Discount (₹)</label>
                   <input
                     type="number"
                     value={formData.discount}
                     onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
                     min="0"
                     step="0.01"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/20"
+                    className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Valid Until *</label>
+                  <label className="block text-sm font-medium text-text-primary mb-2">Valid Until *</label>
                   <input
                     type="date"
                     value={formData.validUntil}
                     onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
                     required
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/20"
+                    className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
                   />
                 </div>
               </div>
 
               {/* Total */}
-              <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-                <div className="flex justify-between text-gray-300 mb-2">
+              <div className="bg-surface/30 border border-white/10 rounded-lg p-4">
+                <div className="flex justify-between text-text-primary mb-2">
                   <span>Subtotal:</span>
                   <span>₹{calculateSubtotal().toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-gray-300 mb-2">
+                <div className="flex justify-between text-text-primary mb-2">
                   <span>Tax ({formData.tax}%):</span>
                   <span>₹{((calculateSubtotal() * (formData.tax || 0)) / 100).toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-gray-300 mb-2">
+                <div className="flex justify-between text-text-primary mb-2">
                   <span>Discount:</span>
                   <span>-₹{(formData.discount || 0).toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-white text-xl font-medium pt-2 border-t border-white/10">
+                <div className="flex justify-between text-text-primary text-xl font-medium pt-2 border-t border-white/10">
                   <span>Total:</span>
                   <span>₹{calculateTotal().toFixed(2)}</span>
                 </div>
@@ -1039,23 +1040,23 @@ export default function QuotationsPage() {
 
               {/* Terms & Notes */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Terms & Conditions</label>
+                <label className="block text-sm font-medium text-text-primary mb-2">Terms & Conditions</label>
                 <textarea
                   value={formData.terms}
                   onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/20"
+                  className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
                   placeholder="Payment terms, delivery timeline, etc."
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Additional Notes</label>
+                <label className="block text-sm font-medium text-text-primary mb-2">Additional Notes</label>
                 <textarea
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   rows={2}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/20"
+                  className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
                   placeholder="Any additional information"
                 />
               </div>
@@ -1066,7 +1067,7 @@ export default function QuotationsPage() {
                   type="submit"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="flex-1 py-3 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-medium"
+                  className="flex-1 py-3 bg-primary text-white rounded-lg hover:opacity-90 transition-colors font-medium"
                 >
                   Create Quotation
                 </motion.button>
@@ -1078,7 +1079,7 @@ export default function QuotationsPage() {
                   }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="px-8 py-3 bg-white/5 text-white rounded-lg hover:bg-white/10 transition-colors"
+                  className="px-8 py-3 bg-surface/30 text-text-primary rounded-lg hover:bg-surface/50 transition-colors"
                 >
                   Cancel
                 </motion.button>
@@ -1090,23 +1091,23 @@ export default function QuotationsPage() {
 
       {/* Edit Modal */}
       {showEditModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div className="fixed inset-0 ta-modal-overlay flex items-center justify-center z-50 p-4 overflow-y-auto">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-gray-900 rounded-lg p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+            className="ta-modal-content p-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto"
           >
-            <h2 className="text-2xl font-light text-white mb-6">Edit Quotation</h2>
+            <h2 className="text-2xl font-light text-text-primary mb-6">Edit Quotation</h2>
             
             <form onSubmit={handleUpdateQuotation} className="space-y-6">
               {/* Client Selection */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Client *</label>
+                <label className="block text-sm font-medium text-text-primary mb-2">Client *</label>
                 <select
                   value={formData.clientId}
                   onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
                   required
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/20"
+                  className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
                 >
                   <option value="">Select a client</option>
                   {clients.map((client) => (
@@ -1119,32 +1120,32 @@ export default function QuotationsPage() {
 
               {/* Title */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Title *</label>
+                <label className="block text-sm font-medium text-text-primary mb-2">Title *</label>
                 <input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   required
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/20"
+                  className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
                   placeholder="e.g., Website Development Proposal"
                 />
               </div>
 
               {/* Description */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Description</label>
+                <label className="block text-sm font-medium text-text-primary mb-2">Description</label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/20"
+                  className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
                   placeholder="Brief description of the quotation"
                 />
               </div>
 
               {/* Items */}
               <div>
-                <label className="block text-sm font-medium text-gray-300 mb-2">Items *</label>
+                <label className="block text-sm font-medium text-text-primary mb-2">Items *</label>
                 {formData.items.map((item, index) => (
                   <div key={index} className="grid grid-cols-12 gap-2 mb-2">
                     <input
@@ -1153,7 +1154,7 @@ export default function QuotationsPage() {
                       onChange={(e) => handleItemChange(index, 'description', e.target.value)}
                       placeholder="Description"
                       required
-                      className="col-span-5 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-white/20"
+                      className="col-span-5 px-4 py-2 bg-surface/30 border border-white/10 rounded-lg text-text-primary text-sm focus:outline-none focus:border-white/20"
                     />
                     <input
                       type="number"
@@ -1162,7 +1163,7 @@ export default function QuotationsPage() {
                       placeholder="Qty"
                       required
                       min="1"
-                      className="col-span-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-white/20"
+                      className="col-span-2 px-4 py-2 bg-surface/30 border border-white/10 rounded-lg text-text-primary text-sm focus:outline-none focus:border-white/20"
                     />
                     <input
                       type="number"
@@ -1172,9 +1173,9 @@ export default function QuotationsPage() {
                       required
                       min="0"
                       step="0.01"
-                      className="col-span-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm focus:outline-none focus:border-white/20"
+                      className="col-span-2 px-4 py-2 bg-surface/30 border border-white/10 rounded-lg text-text-primary text-sm focus:outline-none focus:border-white/20"
                     />
-                    <div className="col-span-2 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-white text-sm flex items-center">
+                    <div className="col-span-2 px-4 py-2 bg-surface/30 border border-white/10 rounded-lg text-text-primary text-sm flex items-center">
                       ₹{item.amount.toFixed(2)}
                     </div>
                     <button
@@ -1189,7 +1190,7 @@ export default function QuotationsPage() {
                 <button
                   type="button"
                   onClick={addItem}
-                  className="mt-2 px-4 py-2 bg-white/5 text-white rounded-lg hover:bg-white/10 transition-colors text-sm"
+                  className="mt-2 px-4 py-2 bg-surface/30 text-text-primary rounded-lg hover:bg-surface/50 transition-colors text-sm"
                 >
                   + Add Item
                 </button>
@@ -1198,54 +1199,54 @@ export default function QuotationsPage() {
               {/* Pricing */}
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Tax (%)</label>
+                  <label className="block text-sm font-medium text-text-primary mb-2">Tax (%)</label>
                   <input
                     type="number"
                     value={formData.tax}
                     onChange={(e) => setFormData({ ...formData, tax: parseFloat(e.target.value) || 0 })}
                     min="0"
                     step="0.01"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/20"
+                    className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Discount (₹)</label>
+                  <label className="block text-sm font-medium text-text-primary mb-2">Discount (₹)</label>
                   <input
                     type="number"
                     value={formData.discount}
                     onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
                     min="0"
                     step="0.01"
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/20"
+                    className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Valid Until *</label>
+                  <label className="block text-sm font-medium text-text-primary mb-2">Valid Until *</label>
                   <input
                     type="date"
                     value={formData.validUntil}
                     onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
                     required
-                    className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-lg text-white focus:outline-none focus:border-white/20"
+                    className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
                   />
                 </div>
               </div>
 
               {/* Total */}
-              <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-                <div className="flex justify-between text-gray-300 mb-2">
+              <div className="bg-surface/30 border border-white/10 rounded-lg p-4">
+                <div className="flex justify-between text-text-primary mb-2">
                   <span>Subtotal:</span>
                   <span>₹{calculateSubtotal().toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-gray-300 mb-2">
+                <div className="flex justify-between text-text-primary mb-2">
                   <span>Tax ({formData.tax}%):</span>
                   <span>₹{((calculateSubtotal() * (formData.tax || 0)) / 100).toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-gray-300 mb-2">
+                <div className="flex justify-between text-text-primary mb-2">
                   <span>Discount:</span>
                   <span>-₹{(formData.discount || 0).toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between text-white text-xl font-medium pt-2 border-t border-white/10">
+                <div className="flex justify-between text-text-primary text-xl font-medium pt-2 border-t border-white/10">
                   <span>Total:</span>
                   <span>₹{calculateTotal().toFixed(2)}</span>
                 </div>
@@ -1257,7 +1258,7 @@ export default function QuotationsPage() {
                   type="submit"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="flex-1 py-3 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors font-medium"
+                  className="flex-1 py-3 bg-purple-500 text-text-primary rounded-lg hover:bg-purple-600 transition-colors font-medium"
                 >
                   Update Quotation
                 </motion.button>
@@ -1270,7 +1271,7 @@ export default function QuotationsPage() {
                   }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="px-8 py-3 bg-white/5 text-white rounded-lg hover:bg-white/10 transition-colors"
+                  className="px-8 py-3 bg-surface/30 text-text-primary rounded-lg hover:bg-surface/50 transition-colors"
                 >
                   Cancel
                 </motion.button>
@@ -1282,56 +1283,56 @@ export default function QuotationsPage() {
 
       {/* View Modal */}
       {showViewModal && selectedQuotation && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 ta-modal-overlay flex items-center justify-center z-50 p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-gray-900 rounded-lg p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+            className="ta-modal-content p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto"
           >
             <div className="flex justify-between items-start mb-6">
               <div>
-                <h2 className="text-2xl font-light text-white mb-2">{selectedQuotation.title}</h2>
-                <p className="text-gray-400">{selectedQuotation.quotationNumber}</p>
+                <h2 className="text-2xl font-light text-text-primary mb-2">{selectedQuotation.title}</h2>
+                <p className="text-text-muted">{selectedQuotation.quotationNumber}</p>
               </div>
               {getStatusBadge(selectedQuotation.status)}
             </div>
 
             <div className="space-y-4 mb-6">
               <div>
-                <p className="text-sm text-gray-400">Client</p>
-                <p className="text-white">
+                <p className="text-sm text-text-muted">Client</p>
+                <p className="text-text-primary">
                   {selectedQuotation.clientSalutation && `${selectedQuotation.clientSalutation} `}
                   {selectedQuotation.clientName}
                 </p>
-                <p className="text-sm text-gray-500">{selectedQuotation.clientEmail}</p>
+                <p className="text-sm text-text-muted">{selectedQuotation.clientEmail}</p>
               </div>
 
               {selectedQuotation.description && (
                 <div>
-                  <p className="text-sm text-gray-400">Description</p>
-                  <p className="text-white">{selectedQuotation.description}</p>
+                  <p className="text-sm text-text-muted">Description</p>
+                  <p className="text-text-primary">{selectedQuotation.description}</p>
                 </div>
               )}
 
               <div>
-                <p className="text-sm text-gray-400 mb-2">Items</p>
-                <div className="bg-white/5 border border-white/10 rounded-lg overflow-hidden">
+                <p className="text-sm text-text-primary mb-2">Items</p>
+                <div className="bg-surface/30 border border-white/10 rounded-lg overflow-hidden">
                   <table className="w-full">
-                    <thead className="bg-white/5">
+                    <thead className="bg-surface/30">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-400">Description</th>
-                        <th className="px-4 py-2 text-right text-xs font-medium text-gray-400">Qty</th>
-                        <th className="px-4 py-2 text-right text-xs font-medium text-gray-400">Rate</th>
-                        <th className="px-4 py-2 text-right text-xs font-medium text-gray-400">Amount</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-text-muted">Description</th>
+                        <th className="px-4 py-2 text-right text-xs font-medium text-text-muted">Qty</th>
+                        <th className="px-4 py-2 text-right text-xs font-medium text-text-muted">Rate</th>
+                        <th className="px-4 py-2 text-right text-xs font-medium text-text-muted">Amount</th>
                       </tr>
                     </thead>
                     <tbody>
                       {selectedQuotation.items.map((item, index) => (
                         <tr key={index} className="border-t border-white/10">
-                          <td className="px-4 py-3 text-sm text-white">{item.description}</td>
-                          <td className="px-4 py-3 text-sm text-white text-right">{item.quantity}</td>
-                          <td className="px-4 py-3 text-sm text-white text-right">₹{item.rate.toFixed(2)}</td>
-                          <td className="px-4 py-3 text-sm text-white text-right">₹{item.amount.toFixed(2)}</td>
+                          <td className="px-4 py-3 text-sm text-text-primary">{item.description}</td>
+                          <td className="px-4 py-3 text-sm text-text-primary text-right">{item.quantity}</td>
+                          <td className="px-4 py-3 text-sm text-text-primary text-right">₹{item.rate.toFixed(2)}</td>
+                          <td className="px-4 py-3 text-sm text-text-primary text-right">₹{item.amount.toFixed(2)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1339,24 +1340,24 @@ export default function QuotationsPage() {
                 </div>
               </div>
 
-              <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-                <div className="flex justify-between text-gray-300 mb-2">
+              <div className="bg-surface/30 border border-white/10 rounded-lg p-4">
+                <div className="flex justify-between text-text-primary mb-2">
                   <span>Subtotal:</span>
                   <span>₹{selectedQuotation.subtotal.toFixed(2)}</span>
                 </div>
                 {selectedQuotation.tax && (
-                  <div className="flex justify-between text-gray-300 mb-2">
+                  <div className="flex justify-between text-text-primary mb-2">
                     <span>Tax:</span>
                     <span>₹{selectedQuotation.tax.toFixed(2)}</span>
                   </div>
                 )}
                 {selectedQuotation.discount && (
-                  <div className="flex justify-between text-gray-300 mb-2">
+                  <div className="flex justify-between text-text-primary mb-2">
                     <span>Discount:</span>
                     <span>-₹{selectedQuotation.discount.toFixed(2)}</span>
                   </div>
                 )}
-                <div className="flex justify-between text-white text-xl font-medium pt-2 border-t border-white/10">
+                <div className="flex justify-between text-text-primary text-xl font-medium pt-2 border-t border-white/10">
                   <span>Total:</span>
                   <span>₹{selectedQuotation.total.toFixed(2)}</span>
                 </div>
@@ -1364,16 +1365,16 @@ export default function QuotationsPage() {
 
               {selectedQuotation.terms && (
                 <div>
-                  <p className="text-sm text-gray-400 mb-2">Terms & Conditions</p>
+                  <p className="text-sm text-text-primary mb-2">Terms & Conditions</p>
                   <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-                    <p className="text-white text-sm whitespace-pre-wrap">{selectedQuotation.terms}</p>
+                    <p className="text-text-primary text-sm whitespace-pre-wrap">{selectedQuotation.terms}</p>
                   </div>
                 </div>
               )}
 
               {selectedQuotation.notes && (
                 <div>
-                  <p className="text-sm text-gray-400 mb-2">Additional Notes</p>
+                  <p className="text-sm text-text-primary mb-2">Additional Notes</p>
                   <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-lg p-4">
                     <p className="text-yellow-100 text-sm whitespace-pre-wrap">{selectedQuotation.notes}</p>
                   </div>
@@ -1382,23 +1383,23 @@ export default function QuotationsPage() {
 
               <div className="grid grid-cols-2 gap-4 text-sm">
                 <div>
-                  <p className="text-gray-400">Created</p>
-                  <p className="text-white">{new Date(selectedQuotation.createdAt).toLocaleString()}</p>
+                  <p className="text-text-muted">Created</p>
+                  <p className="text-text-primary">{new Date(selectedQuotation.createdAt).toLocaleString()}</p>
                 </div>
                 <div>
-                  <p className="text-gray-400">Valid Until</p>
-                  <p className="text-white">{new Date(selectedQuotation.validUntil).toLocaleDateString()}</p>
+                  <p className="text-text-muted">Valid Until</p>
+                  <p className="text-text-primary">{new Date(selectedQuotation.validUntil).toLocaleDateString()}</p>
                 </div>
                 {selectedQuotation.sentAt && (
                   <div>
-                    <p className="text-gray-400">Sent</p>
-                    <p className="text-white">{new Date(selectedQuotation.sentAt).toLocaleString()}</p>
+                    <p className="text-text-muted">Sent</p>
+                    <p className="text-text-primary">{new Date(selectedQuotation.sentAt).toLocaleString()}</p>
                   </div>
                 )}
                 {selectedQuotation.acceptedAt && (
                   <div>
-                    <p className="text-gray-400">Accepted</p>
-                    <p className="text-white">{new Date(selectedQuotation.acceptedAt).toLocaleString()}</p>
+                    <p className="text-text-muted">Accepted</p>
+                    <p className="text-text-primary">{new Date(selectedQuotation.acceptedAt).toLocaleString()}</p>
                   </div>
                 )}
               </div>
@@ -1416,7 +1417,7 @@ export default function QuotationsPage() {
                     }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors font-medium"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-emerald-500 text-text-primary rounded-lg hover:bg-emerald-600 transition-colors font-medium"
                   >
                     <CheckCircle className="w-5 h-5" />
                     Mark as Converted
@@ -1428,7 +1429,7 @@ export default function QuotationsPage() {
                     }}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors font-medium"
+                    className="flex-1 flex items-center justify-center gap-2 py-3 bg-orange-500 text-text-primary rounded-lg hover:bg-orange-600 transition-colors font-medium"
                   >
                     <XCircle className="w-5 h-5" />
                     Mark as Rejected
@@ -1442,7 +1443,7 @@ export default function QuotationsPage() {
                   onClick={() => handleDownloadPDF(selectedQuotation)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium"
+                  className="flex-1 flex items-center justify-center gap-2 py-3 bg-green-500 text-text-primary rounded-lg hover:bg-green-600 transition-colors font-medium"
                 >
                   <Download className="w-5 h-5" />
                   Download PDF
@@ -1451,7 +1452,7 @@ export default function QuotationsPage() {
                   onClick={() => setShowViewModal(false)}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="flex-1 py-3 bg-white/5 text-white rounded-lg hover:bg-white/10 transition-colors"
+                  className="flex-1 py-3 bg-surface/30 text-text-primary rounded-lg hover:bg-surface/50 transition-colors"
                 >
                   Close
                 </motion.button>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Receipt, Search, Calendar, IndianRupee, Eye, X, Edit, Trash2, Filter } from 'lucide-react';
 import Link from 'next/link';
 
@@ -194,11 +194,11 @@ export default function ExpensesPage() {
 
   const getBusinessTypeColor = (type: string) => {
     const colors: { [key: string]: string } = {
-      saas: 'bg-purple-100 text-purple-700',
-      pixels: 'bg-blue-100 text-blue-700',
-      both: 'bg-green-100 text-green-700',
+      saas: 'bg-purple-500/10 text-purple-500',
+      pixels: 'bg-blue-500/10 text-blue-500',
+      both: 'bg-emerald-500/10 text-emerald-500',
     };
-    return colors[type] || 'bg-gray-100 text-gray-700';
+    return colors[type] || 'bg-surface text-text-muted';
   };
 
   const filteredExpenses = expenses.filter(expense => {
@@ -215,64 +215,64 @@ export default function ExpensesPage() {
   const pixelsExpenses = expenses.filter(e => e.businessType === 'pixels' || e.businessType === 'both').reduce((sum, exp) => sum + exp.amount, 0);
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-background min-h-[calc(100vh-8rem)] rounded-2xl">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
-          <h1 className="text-4xl font-light text-black mb-2">Business Expenses</h1>
-          <p className="text-gray-600 font-light">Track and manage all business expenses</p>
+          <h1 className="text-4xl font-medium text-text-primary mb-2">Business Expenses</h1>
+          <p className="text-text-muted font-medium">Track and manage all business expenses</p>
         </div>
         <Link
           href="/admin/expenses/new"
-          className="bg-black text-white px-6 py-3 rounded-xl flex items-center gap-2 font-light hover:scale-105 active:scale-95 transition-transform"
+          className="ta-btn-primary flex items-center gap-2"
         >
-          <Plus className="w-5 h-5" strokeWidth={1.5} />
+          <Plus className="w-5 h-5" strokeWidth={2} />
           <span>Add Expense</span>
         </Link>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Total Expenses</p>
-          <p className="text-3xl font-light text-red-600 mt-2">
+        <div className="ta-card">
+          <p className="text-sm text-text-muted font-medium">Total Expenses</p>
+          <p className="text-3xl font-medium text-red-500 mt-2">
             ₹{totalExpenses.toLocaleString('en-IN')}
           </p>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">SaaS Expenses</p>
-          <p className="text-3xl font-light text-purple-600 mt-2">
+        <div className="ta-card">
+          <p className="text-sm text-text-muted font-medium">SaaS Expenses</p>
+          <p className="text-3xl font-medium text-purple-500 mt-2">
             ₹{saasExpenses.toLocaleString('en-IN')}
           </p>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Pixels Digital</p>
-          <p className="text-3xl font-light text-blue-600 mt-2">
+        <div className="ta-card">
+          <p className="text-sm text-text-muted font-medium">Pixels Digital</p>
+          <p className="text-3xl font-medium text-blue-500 mt-2">
             ₹{pixelsExpenses.toLocaleString('en-IN')}
           </p>
         </div>
-        <div className="bg-white rounded-xl p-6 border border-gray-200">
-          <p className="text-sm text-gray-600 font-light">Total Records</p>
-          <p className="text-3xl font-light text-black mt-2">{expenses.length}</p>
+        <div className="ta-card">
+          <p className="text-sm text-text-muted font-medium">Total Records</p>
+          <p className="text-3xl font-medium text-text-primary mt-2">{expenses.length}</p>
         </div>
       </div>
 
       {/* Search and Filters */}
       <div className="grid md:grid-cols-3 gap-4 mb-6">
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-text-muted w-5 h-5" />
           <input
             type="text"
             placeholder="Search expenses..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+            className="ta-input w-full pl-12"
           />
         </div>
         <select
           value={filterBusiness}
           onChange={(e) => setFilterBusiness(e.target.value)}
-          className="px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+          className="ta-input"
         >
           <option value="all">All Businesses</option>
           <option value="saas">SaaS Only</option>
@@ -282,7 +282,7 @@ export default function ExpensesPage() {
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
+          className="ta-input"
         >
           <option value="all">All Categories</option>
           {expenseCategories.map(cat => (
@@ -292,84 +292,90 @@ export default function ExpensesPage() {
       </div>
 
       {/* Expenses Table */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div className="ta-table-container">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+          <table className="w-full text-left border-collapse">
+            <thead className="ta-table-header">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Date</th>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Category</th>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Description</th>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Business</th>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Amount</th>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Actions</th>
+                <th className="ta-table-th">Date</th>
+                <th className="ta-table-th">Category</th>
+                <th className="ta-table-th">Description</th>
+                <th className="ta-table-th">Business</th>
+                <th className="ta-table-th">Amount</th>
+                <th className="ta-table-th">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500 font-light">
-                    Loading expenses...
-                  </td>
-                </tr>
-              ) : filteredExpenses.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500 font-light">
-                    {searchTerm || filterBusiness !== 'all' || filterCategory !== 'all'
-                      ? 'No expenses found matching your filters.'
-                      : 'No expenses recorded yet. Click "Add Expense" to get started.'}
-                  </td>
-                </tr>
-              ) : (
-                filteredExpenses.map((expense) => (
-                  <tr key={expense._id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-light text-gray-600 flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        {new Date(expense.date).toLocaleDateString('en-IN')}
-                      </span>
+            <tbody className={`transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+              <AnimatePresence mode="popLayout">
+                {filteredExpenses.length === 0 && !loading ? (
+                  <motion.tr
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <td colSpan={6} className="ta-table-td text-center py-8 text-text-muted">
+                      {searchTerm || filterBusiness !== 'all' || filterCategory !== 'all'
+                        ? 'No expenses found matching your filters.'
+                        : 'No expenses recorded yet. Click "Add Expense" to get started.'}
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-light text-gray-700">{expense.category}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-light text-black">{expense.description}</p>
-                      {expense.projectName && (
-                        <p className="text-xs text-indigo-600 font-light mt-1">Project: {expense.projectName}</p>
-                      )}
-                      {expense.vendorName && (
-                        <p className="text-xs text-gray-500 font-light mt-1">Vendor: {expense.vendorName}</p>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-light ${getBusinessTypeColor(expense.businessType || 'both')}`}>
-                        {getBusinessTypeLabel(expense.businessType || 'both')}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-light text-red-600 text-lg">₹{expense.amount.toLocaleString('en-IN')}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setSelectedExpense(expense)}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                          title="View Details"
-                        >
-                          <Eye className="w-4 h-4 text-gray-600" />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(expense._id)}
-                          className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete Expense"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
+                  </motion.tr>
+                ) : (
+                  filteredExpenses.map((expense) => (
+                    <motion.tr 
+                      key={expense._id} 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="border-b border-border hover:bg-surface"
+                    >
+                      <td className="ta-table-td">
+                        <span className="text-sm font-medium text-text-muted flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          {new Date(expense.date).toLocaleDateString('en-IN')}
+                        </span>
+                      </td>
+                      <td className="ta-table-td">
+                        <span className="text-sm font-medium text-text-muted">{expense.category}</span>
+                      </td>
+                      <td className="ta-table-td">
+                        <p className="font-medium text-text-primary">{expense.description}</p>
+                        {expense.projectName && (
+                          <p className="text-xs text-indigo-500 font-medium mt-1">Project: {expense.projectName}</p>
+                        )}
+                        {expense.vendorName && (
+                          <p className="text-xs text-text-muted font-medium mt-1">Vendor: {expense.vendorName}</p>
+                        )}
+                      </td>
+                      <td className="ta-table-td">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${getBusinessTypeColor(expense.businessType || 'both')}`}>
+                          {getBusinessTypeLabel(expense.businessType || 'both')}
+                        </span>
+                      </td>
+                      <td className="ta-table-td">
+                        <span className="bg-red-500/10 text-red-500 px-3 py-1 rounded-md font-medium inline-block text-lg">₹{expense.amount.toLocaleString('en-IN')}</span>
+                      </td>
+                      <td className="ta-table-td">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => setSelectedExpense(expense)}
+                            className="p-2 hover:bg-surface rounded-lg transition-colors text-text-muted hover:text-text-primary"
+                            title="View Details"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(expense._id)}
+                            className="p-2 hover:bg-red-50 text-red-500 rounded-lg transition-colors"
+                            title="Delete Expense"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))
+                )}
+              </AnimatePresence>
             </tbody>
           </table>
         </div>
@@ -381,13 +387,13 @@ export default function ExpensesPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-8 max-w-2xl w-full"
+            className="bg-background rounded-2xl p-8 max-w-2xl w-full"
           >
             <div className="flex justify-between items-start mb-6">
-              <h2 className="text-2xl font-light text-black">Expense Details</h2>
+              <h2 className="text-2xl font-medium text-text-primary">Expense Details</h2>
               <button
                 onClick={() => setSelectedExpense(null)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-surface rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -395,26 +401,26 @@ export default function ExpensesPage() {
 
             <div className="space-y-6">
               <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-                <p className="text-sm text-red-600 font-light mb-2">Expense Amount</p>
-                <p className="text-4xl font-light text-red-700">
+                <p className="text-sm text-red-600 font-medium mb-2">Expense Amount</p>
+                <p className="text-4xl font-medium text-red-700">
                   ₹{selectedExpense.amount.toLocaleString('en-IN')}
                 </p>
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
                 <div>
-                  <p className="text-sm text-gray-600 font-light mb-1">Category</p>
-                  <p className="text-lg font-light text-black">{selectedExpense.category}</p>
+                  <p className="text-sm text-text-muted font-medium mb-1">Category</p>
+                  <p className="text-lg font-medium text-text-primary">{selectedExpense.category}</p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 font-light mb-1">Business Type</p>
-                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-light ${getBusinessTypeColor(selectedExpense.businessType || 'both')}`}>
+                  <p className="text-sm text-text-muted font-medium mb-1">Business Type</p>
+                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${getBusinessTypeColor(selectedExpense.businessType || 'both')}`}>
                     {getBusinessTypeLabel(selectedExpense.businessType || 'both')}
                   </span>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 font-light mb-1">Date</p>
-                  <p className="text-lg font-light text-black">
+                  <p className="text-sm text-text-muted font-medium mb-1">Date</p>
+                  <p className="text-lg font-medium text-text-primary">
                     {new Date(selectedExpense.date).toLocaleDateString('en-IN', { 
                       year: 'numeric', 
                       month: 'long', 
@@ -423,37 +429,37 @@ export default function ExpensesPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 font-light mb-1">Payment Method</p>
-                  <p className="text-lg font-light text-black capitalize">{selectedExpense.paymentMethod.replace('_', ' ')}</p>
+                  <p className="text-sm text-text-muted font-medium mb-1">Payment Method</p>
+                  <p className="text-lg font-medium text-text-primary capitalize">{selectedExpense.paymentMethod.replace('_', ' ')}</p>
                 </div>
               </div>
 
               <div>
-                <p className="text-sm text-gray-600 font-light mb-2">Description</p>
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="font-light text-black">{selectedExpense.description}</p>
+                <p className="text-sm text-text-muted font-medium mb-2">Description</p>
+                <div className="bg-surface rounded-xl p-4">
+                  <p className="font-medium text-text-primary">{selectedExpense.description}</p>
                 </div>
               </div>
 
               {selectedExpense.vendorName && (
                 <div>
-                  <p className="text-sm text-gray-600 font-light mb-2">Vendor / Supplier</p>
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <p className="font-light text-black">{selectedExpense.vendorName}</p>
+                  <p className="text-sm text-text-muted font-medium mb-2">Vendor / Supplier</p>
+                  <div className="bg-surface rounded-xl p-4">
+                    <p className="font-medium text-text-primary">{selectedExpense.vendorName}</p>
                   </div>
                 </div>
               )}
 
               {selectedExpense.notes && (
                 <div>
-                  <p className="text-sm text-gray-600 font-light mb-2">Additional Notes</p>
-                  <div className="bg-gray-50 rounded-xl p-4">
-                    <p className="font-light text-black">{selectedExpense.notes}</p>
+                  <p className="text-sm text-text-muted font-medium mb-2">Additional Notes</p>
+                  <div className="bg-surface rounded-xl p-4">
+                    <p className="font-medium text-text-primary">{selectedExpense.notes}</p>
                   </div>
                 </div>
               )}
 
-              <div className="text-xs text-gray-500 font-light text-center pt-4 border-t">
+              <div className="text-xs text-text-muted font-medium text-center pt-4 border-t">
                 Recorded on {new Date(selectedExpense.createdAt).toLocaleString('en-IN')}
               </div>
             </div>

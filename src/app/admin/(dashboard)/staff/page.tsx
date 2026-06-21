@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Staff {
   _id: string;
@@ -168,8 +169,8 @@ export default function StaffManagementPage() {
     <div className="p-6">
       <div className="mb-6 flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Staff Management</h1>
-          <p className="mt-1 text-sm text-gray-600">
+          <h1 className="text-2xl font-bold text-text-primary">Staff Management</h1>
+          <p className="mt-1 text-sm text-text-muted">
             Manage staff members and their client assignments
           </p>
         </div>
@@ -181,62 +182,63 @@ export default function StaffManagementPage() {
         </button>
       </div>
 
-      <div className="bg-white shadow overflow-hidden sm:rounded-lg">
+      <div className="ta-table-container">
         {staff.length === 0 ? (
-          <div className="px-4 py-8 text-center text-gray-500">
+          <div className="px-4 py-8 text-center text-text-muted">
             No staff members found. Add one to get started.
           </div>
         ) : (
           <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+            <thead className="ta-table-header">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                   Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                   Role
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                   Assigned Clients
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-text-muted uppercase tracking-wider">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody>
+              <AnimatePresence mode="popLayout">
               {staff.map((member) => (
-                <tr key={member._id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                <motion.tr key={member._id} className="ta-table-row">
+                  <td className="ta-table-td whitespace-nowrap text-sm font-medium text-text-primary">
                     {member.name}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="ta-table-td whitespace-nowrap text-sm text-text-muted">
                     {member.email}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 capitalize">
+                  <td className="ta-table-td whitespace-nowrap text-sm text-text-primary capitalize">
                     {member.role}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="ta-table-td whitespace-nowrap text-sm text-text-muted">
                     {member.assignedClients?.length || 0} clients
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="ta-table-td whitespace-nowrap">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         member.isActive
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
+                          ? 'bg-success/10 text-success'
+                          : 'bg-danger/10 text-danger'
                       }`}
                     >
                       {member.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                  <td className="ta-table-td whitespace-nowrap text-sm font-medium space-x-2">
                     <button
                       onClick={() => handleOpenModal(member)}
                       className="text-indigo-600 hover:text-indigo-900"
@@ -250,8 +252,9 @@ export default function StaffManagementPage() {
                       Delete
                     </button>
                   </td>
-                </tr>
+                  </motion.tr>
               ))}
+              </AnimatePresence>
             </tbody>
           </table>
         )}
@@ -263,16 +266,16 @@ export default function StaffManagementPage() {
           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20">
             <div className="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" onClick={handleCloseModal}></div>
 
-            <div className="relative bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:max-w-lg w-full z-50">
+            <div className="relative ta-modal-content transform transition-all sm:my-8 sm:max-w-lg w-full z-50">
               <form onSubmit={handleSubmit}>
-                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">
+                <div className="ta-modal-content p-6">
+                  <h3 className="text-lg leading-6 font-medium text-text-primary mb-4">
                     {editingStaff ? 'Edit Staff Member' : 'Add New Staff Member'}
                   </h3>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-text-primary">
                         Name *
                       </label>
                       <input
@@ -280,12 +283,12 @@ export default function StaffManagementPage() {
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className="mt-1 block w-full border ta-input py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-text-primary">
                         Email *
                       </label>
                       <input
@@ -293,12 +296,12 @@ export default function StaffManagementPage() {
                         required
                         value={formData.email}
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className="mt-1 block w-full border ta-input py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-text-primary">
                         Password {editingStaff && '(leave blank to keep current)'}
                       </label>
                       <input
@@ -306,18 +309,18 @@ export default function StaffManagementPage() {
                         required={!editingStaff}
                         value={formData.password}
                         onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className="mt-1 block w-full border ta-input py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">
+                      <label className="block text-sm font-medium text-text-primary">
                         Role *
                       </label>
                       <select
                         value={formData.role}
                         onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        className="mt-1 block w-full border ta-input py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       >
                         <option value="content-creator">Content Creator</option>
                         <option value="video-editor">Video Editor</option>
@@ -329,12 +332,12 @@ export default function StaffManagementPage() {
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="block text-sm font-medium text-text-primary mb-2">
                         Assign Clients
                       </label>
-                      <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-md p-2">
+                      <div className="max-h-40 overflow-y-auto border-border rounded-md p-2">
                         {clients.length === 0 ? (
-                          <p className="text-sm text-gray-500">No clients available</p>
+                          <p className="text-sm text-text-muted">No clients available</p>
                         ) : (
                           clients.map((client) => (
                             <label key={client._id} className="flex items-center py-1">
@@ -342,9 +345,9 @@ export default function StaffManagementPage() {
                                 type="checkbox"
                                 checked={formData.assignedClients.includes(client._id)}
                                 onChange={() => toggleClientAssignment(client._id)}
-                                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                                className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
                               />
-                              <span className="ml-2 text-sm text-gray-700">{client.name}</span>
+                              <span className="ml-2 text-sm text-text-primary">{client.name}</span>
                             </label>
                           ))
                         )}
@@ -356,26 +359,26 @@ export default function StaffManagementPage() {
                         type="checkbox"
                         checked={formData.isActive}
                         onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+                        className="h-4 w-4 text-primary focus:ring-primary border-border rounded"
                       />
-                      <label className="ml-2 block text-sm text-gray-900">
+                      <label className="ml-2 block text-sm text-text-primary">
                         Active
                       </label>
                     </div>
                   </div>
                 </div>
 
-                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <div className="bg-surface/30 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse rounded-b-xl border-t border-border mt-6">
                   <button
                     type="submit"
-                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-indigo-600 text-base font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:ml-3 sm:w-auto sm:text-sm"
+                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 ta-btn-primary sm:ml-3 sm:w-auto sm:text-sm"
                   >
                     {editingStaff ? 'Update' : 'Create'}
                   </button>
                   <button
                     type="button"
                     onClick={handleCloseModal}
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                    className="mt-3 w-full inline-flex justify-center rounded-md border-border shadow-sm px-4 py-2 bg-surface/30 text-base font-medium text-text-primary hover:bg-surface focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                   >
                     Cancel
                   </button>

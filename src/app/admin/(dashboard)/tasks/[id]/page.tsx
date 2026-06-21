@@ -7,7 +7,6 @@ import {
   ArrowLeft, Calendar, User, FileText, Clock, CheckCircle, XCircle,
   Download, MessageSquare, AlertCircle, Upload, Eye, CheckCircle2
 } from 'lucide-react';
-import AdminTopBar from '@/components/AdminTopBar';
 import FileThumbnail from '@/components/FileThumbnail';
 import FilePreviewModal from '@/components/FilePreviewModal';
 import RevisionHistoryTable from '@/components/RevisionHistoryTable';
@@ -242,8 +241,7 @@ export default function AdminTaskReviewPage() {
   const canReview = task.status === 'submitted';
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <AdminTopBar />
+    <div className="min-h-screen bg-transparent">
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Back Button */}

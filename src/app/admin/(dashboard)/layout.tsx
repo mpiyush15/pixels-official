@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import AdminSidebar from '@/components/AdminSidebar';
 import AdminTopBar from '@/components/AdminTopBar';
+import { usePathname } from 'next/navigation';
 import { useAutoLogout } from '@/hooks/useAutoLogout';
 
 export default function AdminLayout({
@@ -9,6 +11,9 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
+
   // Auto logout after 5 minutes of inactivity
   useAutoLogout({
     timeout: 5 * 60 * 1000, // 5 minutes
@@ -18,14 +23,30 @@ export default function AdminLayout({
   });
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <AdminSidebar />
-      <main className="flex-1 overflow-y-auto flex flex-col pt-[73px] lg:pt-0">
-        <AdminTopBar />
-        <div className="flex-1">
-          {children}
+    <div className="bg-background text-text-primary transition-colors duration-300">
+      {/* <!-- ===== Page Wrapper Start ===== --> */}
+      <div className="flex h-screen overflow-hidden">
+        {/* <!-- ===== Sidebar Start ===== --> */}
+        <AdminSidebar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+        {/* <!-- ===== Sidebar End ===== --> */}
+
+        {/* <!-- ===== Content Area Start ===== --> */}
+        <div className="relative flex flex-1 flex-col overflow-y-auto overflow-x-hidden">
+          {/* <!-- ===== Header Start ===== --> */}
+          <AdminTopBar sidebarOpen={sidebarOpen} setSidebarOpen={setSidebarOpen} />
+          {/* <!-- ===== Header End ===== --> */}
+
+          {/* <!-- ===== Main Content Start ===== --> */}
+          <main>
+            <div className="mx-auto max-w-screen-2xl p-4 md:p-6 2xl:p-10">
+              {children}
+            </div>
+          </main>
+          {/* <!-- ===== Main Content End ===== --> */}
         </div>
-      </main>
+        {/* <!-- ===== Content Area End ===== --> */}
+      </div>
+      {/* <!-- ===== Page Wrapper End ===== --> */}
     </div>
   );
 }

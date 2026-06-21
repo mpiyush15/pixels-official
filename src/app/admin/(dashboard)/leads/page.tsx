@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Mail, Phone, Calendar, Trash2, Eye, X, UserPlus } from 'lucide-react';
 
 interface Lead {
@@ -86,28 +86,28 @@ export default function LeadsPage() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'new': return 'bg-blue-100 text-blue-700';
-      case 'contacted': return 'bg-yellow-100 text-yellow-700';
-      case 'converted': return 'bg-green-100 text-green-700';
-      case 'closed': return 'bg-gray-100 text-gray-700';
-      default: return 'bg-gray-100 text-gray-700';
+      case 'new': return 'bg-blue-500/10 text-blue-500';
+      case 'contacted': return 'bg-orange-500/10 text-orange-500';
+      case 'converted': return 'bg-emerald-500/10 text-emerald-500';
+      case 'closed': return 'bg-gray-100 text-text-primary';
+      default: return 'bg-gray-100 text-text-primary';
     }
   };
 
   return (
-    <div className="p-8">
+    <div className="p-8 bg-background min-h-[calc(100vh-8rem)] rounded-2xl">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-4xl font-light text-black mb-2">Leads Management</h1>
-        <p className="text-gray-600 font-light">Manage and track all your leads from the website</p>
+        <h1 className="text-4xl font-medium text-text-primary mb-2">Leads Management</h1>
+        <p className="text-text-muted font-medium">Manage and track all your leads from the website</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
         {['new', 'contacted', 'converted', 'closed'].map((status) => (
-          <div key={status} className="bg-white rounded-xl p-4 border border-gray-200">
-            <p className="text-sm text-gray-600 font-light capitalize">{status}</p>
-            <p className="text-2xl font-light text-black mt-1">
+          <div key={status} className="ta-card">
+            <p className="text-sm text-text-muted font-medium capitalize">{status}</p>
+            <p className="text-2xl font-medium text-text-primary mt-1">
               {leads.filter(l => l.status === status).length}
             </p>
           </div>
@@ -115,103 +115,111 @@ export default function LeadsPage() {
       </div>
 
       {/* Leads Table */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div className="ta-table-container">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="ta-table-header">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Name</th>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Contact</th>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Source</th>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Status</th>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Date</th>
-                <th className="px-6 py-4 text-left text-sm font-light text-gray-600">Actions</th>
+                <th className="ta-table-th uppercase">Name</th>
+                <th className="ta-table-th uppercase">Contact</th>
+                <th className="ta-table-th uppercase">Source</th>
+                <th className="ta-table-th uppercase">Status</th>
+                <th className="ta-table-th uppercase">Date</th>
+                <th className="ta-table-th uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500 font-light">
-                    Loading leads...
-                  </td>
-                </tr>
-              ) : leads.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500 font-light">
-                    No leads yet
-                  </td>
-                </tr>
-              ) : (
-                leads.map((lead) => (
-                  <tr key={lead._id} className="border-b border-gray-100 hover:bg-gray-50">
-                    <td className="px-6 py-4">
-                      <p className="font-light text-black">{lead.name}</p>
+            <tbody className={`transition-opacity duration-300 ${loading ? 'opacity-50 pointer-events-none' : 'opacity-100'}`}>
+              <AnimatePresence mode="popLayout">
+                {loading ? (
+                  <motion.tr initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <td colSpan={6} className="px-6 py-8 text-center text-text-muted font-medium">
+                      Loading leads...
                     </td>
-                    <td className="px-6 py-4">
-                      <div className="space-y-1">
-                        <p className="text-sm font-light text-gray-600 flex items-center gap-2">
-                          <Mail className="w-4 h-4" />
-                          {lead.email}
-                        </p>
-                        {lead.phone && (
-                          <p className="text-sm font-light text-gray-600 flex items-center gap-2">
-                            <Phone className="w-4 h-4" />
-                            {lead.phone}
+                  </motion.tr>
+                ) : leads.length === 0 ? (
+                  <motion.tr initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <td colSpan={6} className="px-6 py-8 text-center text-text-muted font-medium">
+                      No leads yet
+                    </td>
+                  </motion.tr>
+                ) : (
+                  leads.map((lead) => (
+                    <motion.tr 
+                      key={lead._id} 
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="border-b border-border hover:bg-surface"
+                    >
+                      <td className="ta-table-td">
+                        <p className="font-medium text-text-primary">{lead.name}</p>
+                      </td>
+                      <td className="ta-table-td">
+                        <div className="space-y-1">
+                          <p className="text-sm font-medium text-text-muted flex items-center gap-2">
+                            <Mail className="w-4 h-4" />
+                            {lead.email}
                           </p>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-light text-gray-600">{lead.source}</span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <select
-                        value={lead.status}
-                        onChange={(e) => updateLeadStatus(lead._id, e.target.value)}
-                        className={`px-3 py-1 rounded-full text-sm font-light ${getStatusColor(lead.status)}`}
-                      >
-                        <option value="new">New</option>
-                        <option value="contacted">Contacted</option>
-                        <option value="converted">Converted</option>
-                        <option value="closed">Closed</option>
-                      </select>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-light text-gray-600 flex items-center gap-2">
-                        <Calendar className="w-4 h-4" />
-                        {new Date(lead.createdAt).toLocaleDateString()}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => setSelectedLead(lead)}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                          title="View Details"
+                          {lead.phone && (
+                            <p className="text-sm font-medium text-text-muted flex items-center gap-2">
+                              <Phone className="w-4 h-4" />
+                              {lead.phone}
+                            </p>
+                          )}
+                        </div>
+                      </td>
+                      <td className="ta-table-td">
+                        <span className="text-sm font-medium text-text-muted">{lead.source}</span>
+                      </td>
+                      <td className="ta-table-td">
+                        <select
+                          value={lead.status}
+                          onChange={(e) => updateLeadStatus(lead._id, e.target.value)}
+                          className={`ta-input !py-1 !px-3 rounded-full text-sm font-medium ${getStatusColor(lead.status)}`}
                         >
-                          <Eye className="w-4 h-4 text-gray-600" />
-                        </button>
-                        {lead.status !== 'converted' && (
+                          <option value="new">New</option>
+                          <option value="contacted">Contacted</option>
+                          <option value="converted">Converted</option>
+                          <option value="closed">Closed</option>
+                        </select>
+                      </td>
+                      <td className="ta-table-td">
+                        <span className="text-sm font-medium text-text-muted flex items-center gap-2">
+                          <Calendar className="w-4 h-4" />
+                          {new Date(lead.createdAt).toLocaleDateString()}
+                        </span>
+                      </td>
+                      <td className="ta-table-td">
+                        <div className="flex items-center gap-2">
                           <button
-                            onClick={() => convertToClient(lead._id)}
-                            className="p-2 hover:bg-green-50 rounded-lg transition-colors"
-                            title="Convert to Client"
+                            onClick={() => setSelectedLead(lead)}
+                            className="p-2 hover:bg-surface rounded-lg transition-colors"
+                            title="View Details"
                           >
-                            <UserPlus className="w-4 h-4 text-green-600" />
+                            <Eye className="w-4 h-4 text-text-muted" />
                           </button>
-                        )}
-                        <button
-                          onClick={() => deleteLead(lead._id)}
-                          className="p-2 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete Lead"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-600" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              )}
+                          {lead.status !== 'converted' && (
+                            <button
+                              onClick={() => convertToClient(lead._id)}
+                              className="p-2 hover:bg-emerald-500/10 rounded-lg transition-colors"
+                              title="Convert to Client"
+                            >
+                              <UserPlus className="w-4 h-4 text-emerald-500" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => deleteLead(lead._id)}
+                            className="p-2 hover:bg-red-500/10 rounded-lg transition-colors"
+                            title="Delete Lead"
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </button>
+                        </div>
+                      </td>
+                    </motion.tr>
+                  ))
+                )}
+              </AnimatePresence>
             </tbody>
           </table>
         </div>
@@ -223,13 +231,13 @@ export default function LeadsPage() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl p-8 max-w-2xl w-full"
+            className="ta-card max-w-2xl w-full p-8"
           >
             <div className="flex justify-between items-start mb-6">
-              <h2 className="text-2xl font-light text-black">Lead Details</h2>
+              <h2 className="text-2xl font-medium text-text-primary">Lead Details</h2>
               <button
                 onClick={() => setSelectedLead(null)}
-                className="p-2 hover:bg-gray-100 rounded-lg"
+                className="p-2 hover:bg-surface rounded-lg"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -237,30 +245,30 @@ export default function LeadsPage() {
 
             <div className="space-y-4">
               <div>
-                <label className="text-sm text-gray-600 font-light">Name</label>
-                <p className="text-lg font-light text-black">{selectedLead.name}</p>
+                <label className="text-sm text-text-muted font-medium">Name</label>
+                <p className="text-lg font-medium text-text-primary">{selectedLead.name}</p>
               </div>
               <div>
-                <label className="text-sm text-gray-600 font-light">Email</label>
-                <p className="text-lg font-light text-black">{selectedLead.email}</p>
+                <label className="text-sm text-text-muted font-medium">Email</label>
+                <p className="text-lg font-medium text-text-primary">{selectedLead.email}</p>
               </div>
               {selectedLead.phone && (
                 <div>
-                  <label className="text-sm text-gray-600 font-light">Phone</label>
-                  <p className="text-lg font-light text-black">{selectedLead.phone}</p>
+                  <label className="text-sm text-text-muted font-medium">Phone</label>
+                  <p className="text-lg font-medium text-text-primary">{selectedLead.phone}</p>
                 </div>
               )}
               <div>
-                <label className="text-sm text-gray-600 font-light">Message</label>
-                <p className="text-base font-light text-black mt-1">{selectedLead.message}</p>
+                <label className="text-sm text-text-muted font-medium">Message</label>
+                <p className="text-base font-medium text-text-primary mt-1">{selectedLead.message}</p>
               </div>
               <div>
-                <label className="text-sm text-gray-600 font-light">Source</label>
-                <p className="text-lg font-light text-black">{selectedLead.source}</p>
+                <label className="text-sm text-text-muted font-medium">Source</label>
+                <p className="text-lg font-medium text-text-primary">{selectedLead.source}</p>
               </div>
               <div>
-                <label className="text-sm text-gray-600 font-light">Date</label>
-                <p className="text-lg font-light text-black">
+                <label className="text-sm text-text-muted font-medium">Date</label>
+                <p className="text-lg font-medium text-text-primary">
                   {new Date(selectedLead.createdAt).toLocaleString()}
                 </p>
               </div>
@@ -273,7 +281,7 @@ export default function LeadsPage() {
                     convertToClient(selectedLead._id);
                     setSelectedLead(null);
                   }}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-light transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-medium transition-colors flex items-center justify-center gap-2"
                 >
                   <UserPlus className="w-5 h-5" />
                   Convert to Client
@@ -282,8 +290,8 @@ export default function LeadsPage() {
             )}
 
             {selectedLead.status === 'converted' && (
-              <div className="mt-6 bg-green-50 border border-green-200 rounded-xl p-4">
-                <p className="text-green-700 font-light text-center">
+              <div className="mt-6 bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-4">
+                <p className="text-emerald-500 font-medium text-center">
                   ✓ This lead has been converted to a client
                 </p>
               </div>
