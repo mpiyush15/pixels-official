@@ -173,10 +173,6 @@ export async function PATCH(
            }
         }
       }
-
-      const totalMilestones = body.milestones.length;
-      const completedMilestones = body.milestones.filter((m: any) => m.status === 'completed').length;
-      body.progress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
     }
 
     const { _id, ...updateData } = body;

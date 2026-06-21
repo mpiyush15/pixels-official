@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, CheckCircle, Clock, Calendar, IndianRupee, Edit2, Save, X, Target, FileText, ListTodo } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, Calendar, IndianRupee, Edit2, Save, X, Target, FileText, ListTodo, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 
 interface Milestone {
@@ -243,6 +243,20 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                             <input type="number" className="ta-input w-full" value={editForm.budget} onChange={(e) => setEditForm({...editForm, budget: parseFloat(e.target.value) || 0})} />
                           </div>
                         </div>
+                        <div>
+                          <label className="block text-sm text-text-muted mb-1">Overall Work Progress (%)</label>
+                          <div className="flex items-center gap-4">
+                            <input 
+                              type="range" 
+                              min="0" max="100" 
+                              className="w-full accent-primary" 
+                              value={editForm.progress || 0} 
+                              onChange={(e) => setEditForm({...editForm, progress: parseInt(e.target.value)})} 
+                            />
+                            <span className="font-bold text-text-primary w-12 text-right">{editForm.progress || 0}%</span>
+                          </div>
+                          <p className="text-xs text-text-muted mt-1">Manually adjust the progress during phases.</p>
+                        </div>
                       </div>
                     ) : (
                       <div className="space-y-4 text-sm">
@@ -419,31 +433,73 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                     </div>
                   ) : (
                     <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-border before:to-transparent">
-                      <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-surface text-text-muted group-[.is-active]:bg-primary group-[.is-active]:text-white group-[.is-active]:border-primary shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
-                          <Calendar className="w-5 h-5" />
-                        </div>
-                        <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-background p-4 rounded-xl border border-border shadow-sm">
-                          <div className="flex items-center justify-between space-x-2 mb-1">
-                            <div className="font-bold text-text-primary">Project Started</div>
-                            <time className="text-xs font-medium text-text-muted">{new Date(project.startDate).toLocaleDateString()}</time>
-                          </div>
-                          <div className="text-sm text-text-muted">Initial kickoff and planning phase began.</div>
-                        </div>
-                      </div>
+                      {(() => {
+                        const timelineEvents = [
+                          {
+                            id: 'start',
+                            title: 'Project Started',
+                            date: project.startDate,
+                            description: 'Initial kickoff and planning phase began.',
+                            icon: Calendar,
+                            colorClass: 'bg-primary text-white border-primary'
+                          }
+                        ];
 
-                      <div className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full border border-white bg-surface text-text-muted shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2">
-                          <Clock className="w-5 h-5" />
-                        </div>
-                        <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-background p-4 rounded-xl border border-border shadow-sm opacity-60">
-                          <div className="flex items-center justify-between space-x-2 mb-1">
-                            <div className="font-bold text-text-primary">Target Completion</div>
-                            <time className="text-xs font-medium text-text-muted">{new Date(project.endDate).toLocaleDateString()}</time>
-                          </div>
-                          <div className="text-sm text-text-muted">Expected delivery date based on current schedule.</div>
-                        </div>
-                      </div>
+                        if (project.milestones) {
+                          project.milestones.forEach((m: any, i: number) => {
+                            if (m.status === 'completed') {
+                              timelineEvents.push({
+                                id: `completed-${i}`,
+                                title: `Phase Completed: ${m.name}`,
+                                date: m.dueDate,
+                                description: `Project phase was successfully completed.`,
+                                icon: CheckCircle,
+                                colorClass: 'bg-green-500 text-white border-green-500'
+                              });
+                            }
+                            if (m.paymentStatus === 'paid') {
+                              timelineEvents.push({
+                                id: `paid-${i}`,
+                                title: `Payment Received: ${m.name}`,
+                                date: m.dueDate, // using dueDate as a proxy for timeline sorting
+                                description: `Payment of ₹${m.amount} was received and logged.`,
+                                icon: CreditCard,
+                                colorClass: 'bg-blue-500 text-white border-blue-500'
+                              });
+                            }
+                          });
+                        }
+
+                        timelineEvents.push({
+                          id: 'end',
+                          title: 'Target Completion',
+                          date: project.endDate,
+                          description: 'Expected delivery date based on current schedule.',
+                          icon: Clock,
+                          colorClass: 'bg-surface text-text-muted opacity-60'
+                        });
+
+                        // Sort chronologically
+                        timelineEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+                        return timelineEvents.map((event, index) => {
+                          const Icon = event.icon;
+                          return (
+                            <div key={event.id} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                              <div className={`flex items-center justify-center w-10 h-10 rounded-full border border-white shadow shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 ${event.colorClass}`}>
+                                <Icon className="w-5 h-5" />
+                              </div>
+                              <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] bg-background p-4 rounded-xl border border-border shadow-sm">
+                                <div className="flex items-center justify-between space-x-2 mb-1">
+                                  <div className="font-bold text-text-primary">{event.title}</div>
+                                  <time className="text-xs font-medium text-text-muted">{new Date(event.date).toLocaleDateString()}</time>
+                                </div>
+                                <div className="text-sm text-text-muted">{event.description}</div>
+                              </div>
+                            </div>
+                          );
+                        });
+                      })()}
                     </div>
                   )}
                 </div>
@@ -461,12 +517,12 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                       />
                     </svg>
                     <div className="text-center">
-                      <span className="text-5xl font-bold text-text-primary">{project.progress}%</span>
-                      <p className="text-sm text-text-muted mt-1">Completed Tasks</p>
+                      <span className="text-5xl font-bold text-text-primary">{project.progress || 0}%</span>
+                      <p className="text-sm text-text-muted mt-1">Completed Work</p>
                     </div>
                   </div>
                   <p className="text-center text-text-muted mt-8 max-w-sm">
-                    Progress is automatically calculated based on the number of completed phases in the Milestones tab.
+                    Progress is manually updated during phases. Click "Edit Project" to adjust the percentage.
                   </p>
                 </div>
 
