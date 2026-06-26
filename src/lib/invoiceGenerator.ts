@@ -396,8 +396,8 @@ export function generateInvoiceHTML(invoice: InvoiceData): string {
           <div class="company-info">
             <h1>PIXELS DIGITAL SOLUTIONS</h1>
             <p>Web Development Company</p>
-            <p>info@pixelsdigital.tech</p>
-            <p>www.pixelsdigital.tech</p>
+            <p>info@pixelsdigitalsolutions.com</p>
+            <p>pixelsdigitalsolutions.com</p>
           </div>
           <div class="invoice-details">
             <h2>INVOICE</h2>
@@ -414,7 +414,7 @@ export function generateInvoiceHTML(invoice: InvoiceData): string {
             <p><strong>Pixels Digital Solutions</strong></p>
             <p>Web Development Company</p>
             <p>Akola, India</p>
-            <p>info@pixelsdigital.tech</p>
+            <p>info@pixelsdigitalsolutions.com</p>
           </div>
           <div class="party-box">
             <h3>Bill To</h3>

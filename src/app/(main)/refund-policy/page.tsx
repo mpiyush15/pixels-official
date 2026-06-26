@@ -193,7 +193,7 @@ export default function RefundPolicyPage() {
                 <ul className="space-y-2 text-gray-600 font-light text-lg">
                   <li className="flex items-start gap-3">
                     <span className="w-2 h-2 bg-black rounded-full mt-2 flex-shrink-0"></span>
-                    <span>Email: <a href="mailto:info@pixelsdigital.tech" className="text-black hover:underline">info@pixelsdigital.tech</a></span>
+                    <span>Email: <a href="mailto:info@pixelsdigitalsolutions.com" className="text-black hover:underline">info@pixelsdigitalsolutions.com</a></span>
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-2 h-2 bg-black rounded-full mt-2 flex-shrink-0"></span>
@@ -240,7 +240,7 @@ export default function RefundPolicyPage() {
             </p>
             <div className="space-y-2">
               <p className="text-gray-300 font-light">
-                Email: <a href="mailto:info@pixelsdigital.tech" className="text-white hover:underline">info@pixelsdigital.tech</a>
+                Email: <a href="mailto:info@pixelsdigitalsolutions.com" className="text-white hover:underline">info@pixelsdigitalsolutions.com</a>
               </p>
               <p className="text-gray-300 font-light">
                 Phone: <a href="tel:+919766504856" className="text-white hover:underline">+91 976-650-4856</a>

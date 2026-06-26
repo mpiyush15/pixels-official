@@ -136,7 +136,7 @@ export default function TestEmailsPage() {
         <ol className="space-y-2 text-sm text-blue-800">
           <li><strong>1.</strong> Get Resend API key from <a href="https://resend.com" target="_blank" className="underline">resend.com</a></li>
           <li><strong>2.</strong> Add <code className="bg-blue-100 px-2 py-1 rounded">RESEND_API_KEY</code> to your environment variables</li>
-          <li><strong>3.</strong> Add <code className="bg-blue-100 px-2 py-1 rounded">EMAIL_FROM=noreply@pixelsdigital.tech</code></li>
+          <li><strong>3.</strong> Add <code className="bg-blue-100 px-2 py-1 rounded">EMAIL_FROM=noreply@pixelsdigitalsolutions.com</code></li>
           <li><strong>4.</strong> Enter your email above and click any test button</li>
           <li><strong>5.</strong> Check your inbox for the test email</li>
         </ol>

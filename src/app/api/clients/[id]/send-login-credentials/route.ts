@@ -53,7 +53,7 @@ export async function POST(
       }
     );
 
-    const portalUrl = 'https://www.pixelsdigital.tech/client-portal/login';
+    const portalUrl = 'https://pixelsdigitalsolutions.com/client-portal/login';
 
     console.log('[SEND LOGIN CREDENTIALS] Sending login credentials to:', client.email);
     console.log('[SEND LOGIN CREDENTIALS] Generated password:', autoPassword);

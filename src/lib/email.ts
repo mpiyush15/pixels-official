@@ -739,7 +739,7 @@ export async function sendQuotationEmail(
     )
     .join('');
 
-  const portalUrl = 'https://www.pixelsdigital.tech/client-portal/login';
+  const portalUrl = 'https://pixelsdigitalsolutions.com/client-portal/login';
   const validDate = new Date(validUntil).toLocaleDateString('en-IN', {
     year: 'numeric',
     month: 'long',
@@ -882,7 +882,7 @@ export async function sendProposalEmail(
             <li>Once completed, you'll receive your portal login and we will begin work!</li>
           </ul>
 
-          <p>If you have any questions, feel free to contact us at <a href="mailto:${process.env.SUPPORT_EMAIL || 'support@pixelsdigital.tech'}">${process.env.SUPPORT_EMAIL || 'support@pixelsdigital.tech'}</a>.</p>
+          <p>If you have any questions, feel free to contact us at <a href="mailto:${process.env.SUPPORT_EMAIL || 'support@pixelsdigitalsolutions.com'}">${process.env.SUPPORT_EMAIL || 'support@pixelsdigitalsolutions.com'}</a>.</p>
 
           <p>Best regards,<br>The Team</p>
         </div>

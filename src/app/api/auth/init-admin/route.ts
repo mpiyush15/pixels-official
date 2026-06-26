@@ -8,7 +8,7 @@ export async function POST() {
     
     // Check if admin already exists
     const existingAdmin = await db.collection('admins').findOne({ 
-      email: 'piyush@pixelsdigital.tech' 
+      email: 'piyush@pixelsdigitalsolutions.com' 
     });
 
     if (existingAdmin) {
@@ -21,7 +21,7 @@ export async function POST() {
     const hashedPassword = await hashPassword('Pm@22442232');
     
     await db.collection('admins').insertOne({
-      email: 'piyush@pixelsdigital.tech',
+      email: 'piyush@pixelsdigitalsolutions.com',
       password: hashedPassword,
       name: 'Piyush Magar',
       role: 'superadmin',

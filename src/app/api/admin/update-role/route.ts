@@ -7,7 +7,7 @@ export async function POST() {
     
     // Update admin to superadmin
     const result = await db.collection('admins').updateOne(
-      { email: 'piyush@pixelsdigital.tech' },
+      { email: 'piyush@pixelsdigitalsolutions.com' },
       { $set: { role: 'superadmin' } }
     );
 

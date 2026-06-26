@@ -131,7 +131,7 @@ export default function TermsConditionsPage() {
             </p>
             <div className="space-y-2">
               <p className="text-gray-300 font-light">
-                Email: <a href="mailto:info@pixelsdigital.tech" className="text-white hover:underline">info@pixelsdigital.tech</a>
+                Email: <a href="mailto:info@pixelsdigitalsolutions.com" className="text-white hover:underline">info@pixelsdigitalsolutions.com</a>
               </p>
               <p className="text-gray-300 font-light">
                 Phone: <a href="tel:+919766504856" className="text-white hover:underline">+91 976-650-4856</a>

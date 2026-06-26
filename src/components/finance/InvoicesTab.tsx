@@ -527,8 +527,8 @@ export default function InvoicesPage() {
                     <div class="brand-line"></div>
                     <div class="brand-info">
                       <div>Digital Marketing & Web Solutions</div>
-                      <div><strong>Email:</strong> info@pixelsdigital.tech</div>
-                      <div><strong>Website:</strong> pixelsdigital.tech</div>
+                      <div><strong>Email:</strong> info@pixelsdigitalsolutions.com</div>
+                      <div><strong>Website:</strong> pixelsdigitalsolutions.com</div>
                     </div>
                   </div>
                   <div class="invoice-title">
@@ -641,7 +641,7 @@ export default function InvoicesPage() {
 
                 <div class="thank-you">
                   <div class="company-footer">PIXELS DIGITAL SOLUTIONS</div>
-                  <div class="contact-footer">info@pixelsdigital.tech | pixelsdigital.tech</div>
+                  <div class="contact-footer">info@pixelsdigitalsolutions.com | pixelsdigitalsolutions.com</div>
                   <div class="contact-footer" style="margin-top: 6px;">Thank you for your business!</div>
                 </div>
               </div>
@@ -1493,10 +1493,10 @@ export default function InvoicesPage() {
                   </div>
                   <p className="text-xs md:text-sm text-gray-600 font-light mb-1">Digital Marketing & Web Solutions</p>
                   <p className="text-xs md:text-sm text-gray-600 font-light mb-1">
-                    <span className="font-medium">Email:</span> info@pixelsdigital.tech
+                    <span className="font-medium">Email:</span> info@pixelsdigitalsolutions.com
                   </p>
                   <p className="text-xs md:text-sm text-gray-600 font-light">
-                    <span className="font-medium">Website:</span> pixelsdigital.tech
+                    <span className="font-medium">Website:</span> pixelsdigitalsolutions.com
                   </p>
                 </div>
                 <div className="text-left md:text-right">
@@ -1640,7 +1640,7 @@ export default function InvoicesPage() {
               <div className="border-t border-gray-200 pt-8 mt-12">
                 <div className="text-center">
                   <p className="text-sm font-medium text-black mb-1">PIXELS DIGITAL SOLUTIONS</p>
-                  <p className="text-xs text-gray-500 font-light">info@pixelsdigital.tech | pixelsdigital.tech</p>
+                  <p className="text-xs text-gray-500 font-light">info@pixelsdigitalsolutions.com | pixelsdigitalsolutions.com</p>
                   <p className="text-xs text-gray-500 font-light mt-2">Thank you for your business!</p>
                 </div>
               </div>

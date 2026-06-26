@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       },
       body: JSON.stringify({
         from: {
-          address: process.env.EMAIL_FROM || 'noreply@pixelsdigital.tech',
+          address: process.env.EMAIL_FROM || 'noreply@pixelsdigitalsolutions.com',
           name: 'Pixels Digital'
         },
         to: [{

@@ -4,7 +4,7 @@ import { sendWelcomeEmail } from '@/lib/email';
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams;
-    const email = searchParams.get('email') || 'piyush@pixelsdigital.tech';
+    const email = searchParams.get('email') || 'piyush@pixelsdigitalsolutions.com';
     const name = searchParams.get('name') || 'Test Client';
     
     const loginUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/client-portal/login`;

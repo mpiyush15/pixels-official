@@ -44,7 +44,7 @@ export async function POST(
 
     const orderId = `INV_${invoice.invoiceNumber}_${Date.now()}`;
     
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.pixelsdigital.tech';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://pixelsdigitalsolutions.com';
 
     console.log('Creating Cashfree V2 invoice payment order:', {
       orderId,

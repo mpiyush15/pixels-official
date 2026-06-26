@@ -5,7 +5,7 @@ export async function GET(request: NextRequest) {
   try {
     // Test email
     const result = await sendEmail({
-      to: 'piyush@pixelsdigital.tech',
+      to: 'piyush@pixelsdigitalsolutions.com',
       subject: 'Test Email from Pixels Digital - Zeptomail Setup',
       html: `
         <!DOCTYPE html>
@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
             </div>
             <div class="footer">
               <p>© ${new Date().getFullYear()} Pixels Digital Solutions. All rights reserved.</p>
-              <p>info@pixelsdigital.tech | pixelsdigital.tech</p>
+              <p>info@pixelsdigitalsolutions.com | pixelsdigitalsolutions.com</p>
             </div>
           </div>
         </body>

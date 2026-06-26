@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
 
         <div class="footer">
           <p>Thank you for your business!</p>
-          <p>Pixels Digital | support@pixelsdigital.tech</p>
+          <p>Pixels Digital | support@pixelsdigitalsolutions.com</p>
           <p>© ${new Date().getFullYear()} Pixels Digital. All rights reserved.</p>
         </div>
       </body>

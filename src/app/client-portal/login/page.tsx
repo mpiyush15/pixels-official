@@ -126,10 +126,10 @@ export default function ClientLoginPage() {
           <p>Don't have access?</p>
           <p className="mt-1">Contact us at{' '}
             <a
-              href="mailto:info@pixelsdigital.tech"
+              href="mailto:info@pixelsdigitalsolutions.com"
               className="text-black hover:underline"
             >
-              info@pixelsdigital.tech
+              info@pixelsdigitalsolutions.com
             </a>
           </p>
         </div>

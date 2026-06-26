@@ -769,7 +769,7 @@ export default function ClientDashboard() {
           Our team is here to assist you with any questions
         </p>
         <a
-          href="mailto:info@pixelsdigital.tech"
+          href="mailto:info@pixelsdigitalsolutions.com"
           className="inline-block px-5 md:px-6 py-2.5 md:py-3 bg-black text-white rounded-xl font-light hover:bg-gray-900 transition-colors text-sm md:text-base"
         >
           Contact Support

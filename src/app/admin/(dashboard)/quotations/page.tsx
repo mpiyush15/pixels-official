@@ -477,9 +477,9 @@ export default function QuotationsPage() {
           <div class="company-info">
             <div class="section-title">From</div>
             <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">PIXELS DIGITAL</div>
-            <div class="info-line">Email: info@pixelsdigital.tech</div>
+            <div class="info-line">Email: info@pixelsdigitalsolutions.com</div>
             <div class="info-line">Phone: +91 9766504856</div>
-            <div class="info-line">Web: www.pixelsdigital.tech</div>
+            <div class="info-line">Web: pixelsdigitalsolutions.com</div>
           </div>
 
           <!-- Client Info - Right -->
