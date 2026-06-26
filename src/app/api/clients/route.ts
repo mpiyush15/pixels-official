@@ -41,8 +41,8 @@ export async function POST(request: NextRequest) {
 
     const result = await db.collection('clients').insertOne(client);
 
-    // Send welcome email if client has email and portal access enabled
-    if (client.email && client.portalAccessEnabled) {
+    // Send welcome email if client has email
+    if (client.email) {
       const loginUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/client-portal/login`;
       sendWelcomeEmail(
         client.email,
