@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, CheckCircle, Clock, Calendar, IndianRupee, Edit2, Save, X, Target, FileText, ListTodo, CreditCard } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, Calendar, IndianRupee, Edit2, Save, X, Target, FileText, ListTodo, CreditCard, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 
 interface Milestone {
@@ -30,6 +30,10 @@ interface Project {
   projectRevision?: string;
   agreementText?: string;
   milestones: Milestone[];
+  whatsappPhoneNumberId?: string;
+  whatsappBusinessAccountId?: string;
+  whatsappAccessToken?: string;
+  whatsappPhoneNumber?: string;
 }
 
 export default function ProjectDetailsPage({ params }: { params: Promise<{ id: string }> }) {
@@ -38,7 +42,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const [project, setProject] = useState<Project | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeTab, setActiveTab] = useState<'milestones' | 'report' | 'timeline'>('milestones');
+  const [activeTab, setActiveTab] = useState<'milestones' | 'report' | 'timeline' | 'whatsapp'>('milestones');
 
   // Edit states
   const [isEditing, setIsEditing] = useState(false);
@@ -157,6 +161,7 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     { id: 'milestones', label: 'Milestones', icon: Target },
     { id: 'report', label: 'Project Report', icon: FileText },
     { id: 'timeline', label: 'Project Timeline', icon: ListTodo },
+    { id: 'whatsapp', label: 'WhatsApp', icon: MessageSquare },
   ];
 
   return (
@@ -539,6 +544,67 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                   </p>
                 </div>
 
+              </div>
+            </motion.div>
+          )}
+
+          {/* TAB 4: WHATSAPP */}
+          {activeTab === 'whatsapp' && (
+            <motion.div key="whatsapp" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
+              <div className="ta-card max-w-3xl">
+                <h2 className="text-lg font-semibold text-text-primary border-b border-border pb-3 mb-4">WhatsApp API Configuration</h2>
+                
+                {isEditing ? (
+                  <div className="space-y-5">
+                    <div>
+                      <label className="block text-sm font-medium text-text-primary mb-1">WhatsApp Phone Number ID</label>
+                      <input type="text" className="ta-input w-full" value={editForm.whatsappPhoneNumberId || ''} onChange={(e) => setEditForm({...editForm, whatsappPhoneNumberId: e.target.value})} placeholder="e.g. 123456789012345" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-text-primary mb-1">WhatsApp Business Account ID (WABA ID)</label>
+                      <input type="text" className="ta-input w-full" value={editForm.whatsappBusinessAccountId || ''} onChange={(e) => setEditForm({...editForm, whatsappBusinessAccountId: e.target.value})} placeholder="e.g. 123456789012345" />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-text-primary mb-1">System Access Token (Optional)</label>
+                      <p className="text-xs text-text-muted mb-2">Leave blank to use the default system token from .env</p>
+                      <input type="text" className="ta-input w-full" value={editForm.whatsappAccessToken || ''} onChange={(e) => setEditForm({...editForm, whatsappAccessToken: e.target.value})} placeholder="EAAd..." />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-text-primary mb-1">Display Phone Number (Optional)</label>
+                      <input type="text" className="ta-input w-full" value={editForm.whatsappPhoneNumber || ''} onChange={(e) => setEditForm({...editForm, whatsappPhoneNumber: e.target.value})} placeholder="e.g. +91 9876543210" />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    <div className="bg-surface/50 p-6 rounded-xl border border-border">
+                      <p className="text-sm font-semibold text-text-primary mb-3">Connection Details</p>
+                      {!project.whatsappPhoneNumberId && !project.whatsappBusinessAccountId ? (
+                        <p className="text-text-muted italic text-sm">WhatsApp API is not connected to this project yet. Click "Edit Project" to add credentials.</p>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-xs text-text-muted">Phone Number ID</p>
+                            <p className="font-medium text-text-primary">{project.whatsappPhoneNumberId || 'N/A'}</p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-text-muted">WABA ID</p>
+                            <p className="font-medium text-text-primary">{project.whatsappBusinessAccountId || 'N/A'}</p>
+                          </div>
+                          <div className="md:col-span-2">
+                            <p className="text-xs text-text-muted">Access Token</p>
+                            <p className="font-mono text-xs text-text-primary truncate">{project.whatsappAccessToken ? project.whatsappAccessToken.substring(0, 20) + '...' : 'Using Default .env Token'}</p>
+                          </div>
+                          {project.whatsappPhoneNumber && (
+                            <div>
+                              <p className="text-xs text-text-muted">Display Phone</p>
+                              <p className="font-medium text-text-primary">{project.whatsappPhoneNumber}</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             </motion.div>
           )}

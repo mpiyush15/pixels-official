@@ -1,24 +1,23 @@
 import { Resend } from 'resend';
-import nodemailer from 'nodemailer';
+// @ts-ignore - Type declaration issue with zeptomail package
+import { SendMailClient } from 'zeptomail';
 
-// Initialize Nodemailer with Zeptomail SMTP
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.zeptomail.in',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  auth: {
-    user: process.env.SMTP_USER || 'emailapikey',
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
+// Initialize Zeptomail client with correct endpoint
+const zeptomailClient = process.env.ZEPTOMAIL_API_TOKEN 
+  ? new SendMailClient({
+      url: 'api.zeptomail.in/', // SDK handles https and path automatically
+      token: process.env.ZEPTOMAIL_API_TOKEN
+    })
+  : null;
 
 // Initialize Resend (optional - as backup)
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 // Email configuration
-const FROM_EMAIL = process.env.EMAIL_FROM || 'noreply@pixelsdigital.tech';
+const FROM_EMAIL = process.env.EMAIL_FROM || 'noreply@pixelsdigitalsolutions.com';
 const FROM_NAME = 'Pixels Digital';
 const COMPANY_NAME = 'Pixels Digital Solutions';
-const SUPPORT_EMAIL = 'info@pixelsdigital.tech';
+const SUPPORT_EMAIL = 'info@pixelsdigitalsolutions.com';
 const LOGO_URL = 'https://pixels-official.s3.ap-south-1.amazonaws.com/images/logo.png';
 
 export interface EmailOptions {
@@ -34,39 +33,55 @@ export interface EmailOptions {
 export async function sendEmail(options: EmailOptions): Promise<{ success: boolean; error?: string; messageId?: string }> {
   try {
     // Check if any email service is configured
-    if (!process.env.SMTP_PASSWORD && !resend) {
+    if (!zeptomailClient && !resend) {
       console.warn('No email service configured. Email would have been sent to:', options.to);
       return { success: false, error: 'Email service not configured' };
     }
 
-    // Priority 1: Use Nodemailer with Zeptomail SMTP
-    if (process.env.SMTP_PASSWORD) {
+    // Priority 1: Use Zeptomail SDK
+    if (zeptomailClient) {
       try {
-        console.log('📧 Attempting to send email via Nodemailer SMTP to:', options.to);
+        console.log('📧 Attempting to send email via Zeptomail API to:', options.to);
         
-        const mailOptions = {
-          from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
-          to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
+        const toAddresses = Array.isArray(options.to) 
+          ? options.to.map(email => ({
+              email_address: {
+                address: email,
+                name: email.split('@')[0]
+              }
+            }))
+          : [{
+              email_address: {
+                address: options.to,
+                name: options.to.split('@')[0]
+              }
+            }];
+
+        const mailResponse = await zeptomailClient.sendMail({
+          from: {
+            address: FROM_EMAIL,
+            name: FROM_NAME
+          },
+          to: toAddresses,
           subject: options.subject,
-          html: options.html,
-          text: options.text || stripHtml(options.html),
-        };
+          htmlbody: options.html,
+          textbody: options.text || stripHtml(options.html),
+        });
 
-        const info = await transporter.sendMail(mailOptions);
-
-        console.log('📧 Email sent successfully via SMTP');
-        console.log('  Message ID:', info.messageId);
-        return { success: true, messageId: info.messageId };
-      } catch (smtpError: any) {
-        console.error('❌ SMTP Error:', smtpError.message);
+        console.log('📧 Email sent successfully via Zeptomail API');
+        console.log('  Request ID:', (mailResponse as any)?.request_id || (mailResponse as any)?.id || 'Unknown');
+        return { success: true, messageId: (mailResponse as any)?.request_id || (mailResponse as any)?.id || 'sent' };
+      } catch (zeptomailError: any) {
+        console.error('❌ Zeptomail Error:', zeptomailError?.message || zeptomailError);
+        console.error('Zeptomail Error Details:', zeptomailError?.error || zeptomailError?.response);
         
         // If Resend is available, fall back to it
         if (resend) {
-          console.log('⚠️  SMTP failed, falling back to Resend...');
+          console.log('⚠️  Zeptomail failed, falling back to Resend...');
         } else {
           return { 
             success: false, 
-            error: `SMTP Error: ${smtpError.message}` 
+            error: `Zeptomail Error: ${zeptomailError?.message || 'Unknown error'}` 
           };
         }
       }
