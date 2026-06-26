@@ -1,16 +1,15 @@
 import { Resend } from 'resend';
-// @ts-ignore - Type declaration issue with zeptomail package
-import { SendMailClient } from 'zeptomail';
+import nodemailer from 'nodemailer';
 
-// Initialize Zeptomail client with correct endpoint and mail agent alias
-const zeptomailClient = process.env.ZEPTOMAIL_API_TOKEN 
-  ? new SendMailClient({
-      url: 'https://api.zeptomail.in/v1.1/email',
-      token: process.env.ZEPTOMAIL_API_TOKEN,
-      // Mail Agent Alias for routing
-      mailAgentAlias: process.env.ZEPTOMAIL_MAIL_AGENT_ALIAS || '7ba3f22116c7e67b'
-    } as any)
-  : null;
+// Initialize Nodemailer with Zeptomail SMTP
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST || 'smtp.zeptomail.in',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  auth: {
+    user: process.env.SMTP_USER || 'emailapikey',
+    pass: process.env.SMTP_PASSWORD,
+  },
+});
 
 // Initialize Resend (optional - as backup)
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
@@ -35,65 +34,39 @@ export interface EmailOptions {
 export async function sendEmail(options: EmailOptions): Promise<{ success: boolean; error?: string; messageId?: string }> {
   try {
     // Check if any email service is configured
-    if (!zeptomailClient && !resend) {
+    if (!process.env.SMTP_PASSWORD && !resend) {
       console.warn('No email service configured. Email would have been sent to:', options.to);
       return { success: false, error: 'Email service not configured' };
     }
 
-    // Priority 1: Use Zeptomail SDK if client is initialized
-    if (zeptomailClient) {
+    // Priority 1: Use Nodemailer with Zeptomail SMTP
+    if (process.env.SMTP_PASSWORD) {
       try {
-        console.log('📧 Attempting to send email via Zeptomail to:', options.to);
-        console.log('  From:', FROM_EMAIL);
+        console.log('📧 Attempting to send email via Nodemailer SMTP to:', options.to);
         
-        const toAddresses = Array.isArray(options.to) 
-          ? options.to.map(email => ({
-              email_address: {
-                address: email,
-                name: email.split('@')[0]
-              }
-            }))
-          : [{
-              email_address: {
-                address: options.to,
-                name: options.to.split('@')[0]
-              }
-            }];
-
-        const mailResponse = await zeptomailClient.sendMail({
-          from: {
-            address: FROM_EMAIL,
-            name: FROM_NAME
-          },
-          to: toAddresses,
+        const mailOptions = {
+          from: `"${FROM_NAME}" <${FROM_EMAIL}>`,
+          to: Array.isArray(options.to) ? options.to.join(', ') : options.to,
           subject: options.subject,
-          htmlbody: options.html,
-          textbody: options.text || stripHtml(options.html),
-        });
+          html: options.html,
+          text: options.text || stripHtml(options.html),
+        };
 
-        console.log('📧 Email sent successfully via Zeptomail');
-        console.log('  From:', `${FROM_NAME} <${FROM_EMAIL}>`);
-        console.log('  To:', Array.isArray(options.to) ? options.to.join(', ') : options.to);
-        console.log('  Subject:', options.subject);
-        console.log('  Request ID:', (mailResponse as any)?.request_id || (mailResponse as any)?.id || 'Unknown');
-        return { success: true, messageId: (mailResponse as any)?.request_id || (mailResponse as any)?.id || 'sent' };
-      } catch (zeptomailError: any) {
-        const errorMessage = zeptomailError?.message || 'Failed to send email';
-        const errorDetails = zeptomailError?.response || zeptomailError;
-        
-        console.error('❌ Zeptomail Error:', {
-          message: errorMessage,
-          details: errorDetails,
-          status: zeptomailError?.status || 'Unknown'
-        });
+        const info = await transporter.sendMail(mailOptions);
+
+        console.log('📧 Email sent successfully via SMTP');
+        console.log('  Message ID:', info.messageId);
+        return { success: true, messageId: info.messageId };
+      } catch (smtpError: any) {
+        console.error('❌ SMTP Error:', smtpError.message);
         
         // If Resend is available, fall back to it
         if (resend) {
-          console.log('⚠️  Zeptomail failed, falling back to Resend...');
+          console.log('⚠️  SMTP failed, falling back to Resend...');
         } else {
           return { 
             success: false, 
-            error: `Zeptomail Error: ${errorMessage}` 
+            error: `SMTP Error: ${smtpError.message}` 
           };
         }
       }
@@ -847,6 +820,68 @@ export async function sendQuotationEmail(
   return sendEmail({
     to,
     subject: `New Quotation ${quotationNumber} - ${title}`,
+    html,
+  });
+}
+
+// Send Proposal/Contract Email (Public Link)
+export async function sendProposalEmail(
+  to: string,
+  clientName: string,
+  projectName: string,
+  proposalLink: string
+) {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; }
+        .button { display: inline-block; padding: 15px 35px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; text-align: center; font-size: 16px; font-weight: bold; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>📋 Project Proposal & Contract</h1>
+          <p>Ready for your review</p>
+        </div>
+        <div class="content">
+          <h2>Hi ${clientName},</h2>
+          <p>We're excited to start working on <strong>${projectName}</strong>! We have prepared the project proposal and terms for your review.</p>
+          
+          <p style="text-align: center; margin: 30px 0;">
+            <a href="${proposalLink}" class="button">Review & Accept Proposal</a>
+          </p>
+
+          <p><strong>What's Next?</strong></p>
+          <ul>
+            <li>Click the link above to review the project details.</li>
+            <li>Accept the terms and conditions.</li>
+            <li>Complete the initial payment securely online.</li>
+            <li>Once completed, you'll receive your portal login and we will begin work!</li>
+          </ul>
+
+          <p>If you have any questions, feel free to contact us at <a href="mailto:${process.env.SUPPORT_EMAIL || 'support@pixelsdigital.tech'}">${process.env.SUPPORT_EMAIL || 'support@pixelsdigital.tech'}</a>.</p>
+
+          <p>Best regards,<br>The Team</p>
+        </div>
+        <div class="footer">
+          <p>© ${new Date().getFullYear()} All rights reserved.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to,
+    subject: `Project Proposal & Contract: ${projectName}`,
     html,
   });
 }

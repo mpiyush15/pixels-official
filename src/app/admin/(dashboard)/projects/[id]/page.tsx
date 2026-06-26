@@ -26,8 +26,9 @@ interface Project {
   startDate: string;
   endDate: string;
   clientEmail?: string;
-  projectReportUrl?: string;
+  projectReportText?: string;
   projectRevision?: string;
+  agreementText?: string;
   milestones: Milestone[];
 }
 
@@ -378,26 +379,31 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                 {isEditing ? (
                   <div className="space-y-5">
                     <div>
-                      <label className="block text-sm font-medium text-text-primary mb-1">Project Report URL</label>
-                      <p className="text-xs text-text-muted mb-2">Link to the final report, Google Drive folder, or Figma file.</p>
-                      <input type="url" placeholder="https://..." className="ta-input w-full" value={editForm.projectReportUrl || ''} onChange={(e) => setEditForm({...editForm, projectReportUrl: e.target.value})} />
+                      <label className="block text-sm font-medium text-text-primary mb-1">Project Report</label>
+                      <p className="text-xs text-text-muted mb-2">Detailed report, deliverables, or summary of the project.</p>
+                      <textarea rows={6} placeholder="Type the full project report here..." className="ta-input w-full" value={editForm.projectReportText || ''} onChange={(e) => setEditForm({...editForm, projectReportText: e.target.value})} />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-text-primary mb-1">Current Revision / Version</label>
                       <p className="text-xs text-text-muted mb-2">Track the current version of the deliverables (e.g. v1.2, Final).</p>
                       <input type="text" placeholder="e.g. v1.2" className="ta-input w-full md:w-1/2" value={editForm.projectRevision || ''} onChange={(e) => setEditForm({...editForm, projectRevision: e.target.value})} />
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-text-primary mb-1">Project Agreement / Terms</label>
+                      <p className="text-xs text-text-muted mb-2">The contract text the client needs to agree to.</p>
+                      <textarea rows={6} className="ta-input w-full font-mono text-sm" value={editForm.agreementText || ''} onChange={(e) => setEditForm({...editForm, agreementText: e.target.value})} placeholder="Enter the full contract terms here..." />
+                    </div>
                   </div>
                 ) : (
                   <div className="space-y-6">
                     <div className="bg-surface/50 p-6 rounded-xl border border-border">
-                      <p className="text-sm text-text-muted mb-1">Project Report</p>
-                      {project.projectReportUrl ? (
-                        <a href={project.projectReportUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary font-medium rounded-lg hover:bg-primary/20 transition-colors">
-                          <FileText className="w-5 h-5" /> View Project Report ↗
-                        </a>
+                      <p className="text-sm font-semibold text-text-primary mb-3">Project Report</p>
+                      {project.projectReportText ? (
+                        <div className="bg-white p-4 border border-border rounded-lg text-sm text-text-secondary whitespace-pre-wrap">
+                          {project.projectReportText}
+                        </div>
                       ) : (
-                        <p className="text-text-muted italic">No report linked yet.</p>
+                        <p className="text-text-muted italic text-sm">No project report has been written yet.</p>
                       )}
                     </div>
                     
@@ -406,6 +412,13 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                       <p className="text-xl font-bold text-text-primary">
                         {project.projectRevision || 'N/A'}
                       </p>
+                    </div>
+
+                    <div className="bg-surface/50 p-6 rounded-xl border border-border">
+                      <p className="text-sm font-semibold text-text-primary mb-3">Project Agreement / Terms</p>
+                      <div className="bg-white p-4 border border-border rounded-lg h-48 overflow-y-auto text-sm text-text-secondary whitespace-pre-wrap font-mono">
+                        {project.agreementText || 'Standard terms and conditions apply.'}
+                      </div>
                     </div>
                   </div>
                 )}

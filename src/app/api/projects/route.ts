@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
-
-// Get all projects for a client OR all projects for admin
+import crypto from 'crypto';
+import { sendProposalEmail } from '@/lib/email';// Get all projects for a client OR all projects for admin
 export async function GET(request: NextRequest) {
   try {
     const clientId = request.cookies.get('client-session')?.value;
@@ -65,14 +65,19 @@ export async function POST(request: NextRequest) {
 
     // 🔥 CRITICAL: Fetch client email from clientId to ensure proper linking
     let clientEmail = body.clientEmail;
+    let clientName = body.clientName || 'Valued Client';
     if (body.clientId && !clientEmail) {
       const client = await db.collection('clients').findOne({
         _id: new ObjectId(body.clientId),
       });
       if (client) {
         clientEmail = client.email;
+        clientName = client.name || clientName;
       }
     }
+
+    // Generate secure 32-character proposal token
+    const proposalToken = crypto.randomBytes(16).toString('hex');
 
     // Auto-calculate progress based on milestones
     const milestones = body.milestones || [];
@@ -94,9 +99,17 @@ export async function POST(request: NextRequest) {
       phases: body.phases || [],
       // Video-based project support (Video Production, Content Marketing)
       videos: body.videos || [],
+      proposalToken: proposalToken, // Generated for public contract acceptance
+      agreementText: body.agreementText || 'Standard terms and conditions apply.',
     };
 
     const result = await db.collection('projects').insertOne(project);
+
+    // Send proposal email
+    if (clientEmail) {
+      const proposalLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/contract/${proposalToken}`;
+      await sendProposalEmail(clientEmail, clientName, project.projectName, proposalLink);
+    }
 
     return NextResponse.json({
       success: true,

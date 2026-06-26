@@ -25,6 +25,7 @@ export default function NewProjectPage() {
     startDate: '',
     endDate: '',
     description: '',
+    agreementText: '',
     budget: '',
     milestones: [] as { name: string; dueDate: string; amount: string; paymentStatus: string }[],
   });
@@ -186,6 +187,17 @@ export default function NewProjectPage() {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="ta-input w-full"
                 placeholder="Briefly describe the project scope and goals..."
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-text-primary mb-2">Project Agreement / Terms (Shown to client for acceptance) *</label>
+              <textarea
+                rows={6}
+                required
+                value={formData.agreementText}
+                onChange={(e) => setFormData({ ...formData, agreementText: e.target.value })}
+                className="ta-input w-full font-mono text-sm"
+                placeholder="Enter the full contract terms, deliverables, and conditions here..."
               />
             </div>
           </div>
