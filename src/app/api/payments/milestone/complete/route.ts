@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
+import crypto from 'crypto';
 import { ObjectId } from 'mongodb';
 import { sendPaymentConfirmationEmail } from '@/lib/email';
 
@@ -50,7 +51,16 @@ export async function POST(req: NextRequest) {
           progress: calculatedProgress,
           updatedAt: new Date()
         },
-      }
+        $push: {
+          activityLog: {
+            id: crypto.randomBytes(8).toString('hex'),
+            title: `Payment Received: ${updatedMilestones[milestoneIndex].name || 'Milestone'}`,
+            description: `Payment of ₹${amount} was received via Cashfree.`,
+            date: new Date().toISOString(),
+            type: 'payment',
+          }
+        }
+      } as any
     );
 
     if (result.matchedCount === 0) {
@@ -146,7 +156,7 @@ export async function POST(req: NextRequest) {
     console.error('Complete milestone payment error:', error);
     return NextResponse.json(
       { error: 'Failed to complete milestone payment' },
-      { status: 500 }
+      { status: 500 } as any
     );
   }
 }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
+import crypto from 'crypto';
 import { ObjectId } from 'mongodb';
 import { sendPaymentConfirmationEmail } from '@/lib/email';
 
@@ -47,6 +48,21 @@ export async function POST(
     };
 
     const paymentResult = await db.collection('payments').insertOne(paymentRecord);
+
+    await db.collection('projects').updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $push: {
+          activityLog: {
+            id: crypto.randomBytes(8).toString('hex'),
+            title: 'Payment Logged',
+            description: `Payment of ₹${amount} was manually logged by admin.`,
+            date: new Date().toISOString(),
+            type: 'payment',
+          }
+        }
+      } as any
+    );
 
     // Auto-generate invoice for this payment
     const invoiceNumber = `INV-${Date.now()}`;
@@ -107,7 +123,7 @@ export async function POST(
     console.error('Error logging payment:', error);
     return NextResponse.json(
       { error: 'Failed to log payment' },
-      { status: 500 }
+      { status: 500 } as any
     );
   }
 }

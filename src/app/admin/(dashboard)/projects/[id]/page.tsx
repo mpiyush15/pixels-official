@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, CheckCircle, Clock, Calendar, IndianRupee, Edit2, Save, X, Target, FileText, ListTodo, CreditCard, MessageSquare } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, Calendar, IndianRupee, Edit2, Save, X, Target, FileText, ListTodo, CreditCard, MessageSquare, Mail } from 'lucide-react';
 import Link from 'next/link';
 
 interface Milestone {
@@ -455,47 +455,70 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                         const timelineEvents = [
                           {
                             id: 'start',
-                            title: 'Project Started',
-                            date: project.startDate,
-                            description: 'Initial kickoff and planning phase began.',
+                            title: 'Project Setup Initiated',
+                            date: (project as any).createdAt || project.startDate,
+                            description: 'Project was created in the system.',
                             icon: Calendar,
                             colorClass: 'bg-primary text-white border-primary'
                           }
                         ];
 
+                        if ((project as any).activityLog && (project as any).activityLog.length > 0) {
+                          (project as any).activityLog.forEach((log: any) => {
+                            let icon = Calendar;
+                            let colorClass = 'bg-gray-500 text-white border-gray-500';
+                            
+                            if (log.type === 'email') {
+                              icon = Mail;
+                              colorClass = 'bg-blue-400 text-white border-blue-400';
+                            } else if (log.type === 'payment') {
+                              icon = CreditCard;
+                              colorClass = 'bg-green-500 text-white border-green-500';
+                            } else if (log.type === 'contract') {
+                              icon = CheckCircle;
+                              colorClass = 'bg-indigo-500 text-white border-indigo-500';
+                            } else if (log.type === 'system') {
+                              icon = CheckCircle;
+                              colorClass = 'bg-purple-500 text-white border-purple-500';
+                            }
+
+                            timelineEvents.push({
+                              id: log.id || Math.random().toString(),
+                              title: log.title,
+                              date: log.date,
+                              description: log.description,
+                              icon,
+                              colorClass
+                            });
+                          });
+                        }
+
+                        // Also include milestone completions if not logged explicitly
                         if (project.milestones) {
                           project.milestones.forEach((m: any, i: number) => {
                             if (m.status === 'completed') {
                               timelineEvents.push({
                                 id: `completed-${i}`,
                                 title: `Phase Completed: ${m.name}`,
-                                date: m.dueDate,
+                                date: m.dueDate, // or m.completedAt if available
                                 description: `Project phase was successfully completed.`,
                                 icon: CheckCircle,
-                                colorClass: 'bg-green-500 text-white border-green-500'
-                              });
-                            }
-                            if (m.paymentStatus === 'paid') {
-                              timelineEvents.push({
-                                id: `paid-${i}`,
-                                title: `Payment Received: ${m.name}`,
-                                date: m.dueDate, // using dueDate as a proxy for timeline sorting
-                                description: `Payment of ₹${m.amount} was received and logged.`,
-                                icon: CreditCard,
-                                colorClass: 'bg-blue-500 text-white border-blue-500'
+                                colorClass: 'bg-emerald-500 text-white border-emerald-500'
                               });
                             }
                           });
                         }
 
-                        timelineEvents.push({
-                          id: 'end',
-                          title: 'Target Completion',
-                          date: project.endDate,
-                          description: 'Expected delivery date based on current schedule.',
-                          icon: Clock,
-                          colorClass: 'bg-surface text-text-muted opacity-60'
-                        });
+                        if (project.status !== 'completed' && project.endDate) {
+                          timelineEvents.push({
+                            id: 'end',
+                            title: 'Target Completion',
+                            date: project.endDate,
+                            description: 'Expected delivery date based on current schedule.',
+                            icon: Clock,
+                            colorClass: 'bg-surface text-text-muted opacity-60'
+                          });
+                        }
 
                         // Sort chronologically
                         timelineEvents.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());

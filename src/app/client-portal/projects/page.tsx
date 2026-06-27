@@ -20,6 +20,8 @@ import {
   IndianRupee,
   ChevronDown,
   ChevronUp,
+  CreditCard,
+  Mail,
 } from 'lucide-react';
 import ProjectChat from '@/components/ProjectChat';
 import WorkSubmissionForm from '@/components/WorkSubmissionForm';
@@ -41,6 +43,7 @@ interface Project {
   contractContent?: string;
   canModifyUntil?: string;
   contractLocked?: boolean;
+  activityLog?: any[];
   milestones: Array<{
     name: string;
     description?: string;
@@ -487,6 +490,51 @@ export default function ClientProjectsPage() {
                         )}
                       </div>
                     ))}
+                  </div>
+                  )}
+                </div>
+              )}
+
+              {/* Activity Log */}
+              {project.activityLog && project.activityLog.length > 0 && (
+                <div className="border-t border-gray-200 pt-4 mt-4">
+                  <button
+                    onClick={() => toggleProjectMilestones(project._id + '-activity')}
+                    className="flex items-center justify-between w-full text-sm font-medium text-gray-700 mb-3 hover:text-black transition-colors"
+                  >
+                    <span>Activity Log ({project.activityLog.length})</span>
+                    {expandedProjects[project._id + '-activity'] ? (
+                      <ChevronUp className="w-4 h-4" />
+                    ) : (
+                      <ChevronDown className="w-4 h-4" />
+                    )}
+                  </button>
+                  
+                  {expandedProjects[project._id + '-activity'] && (
+                  <div className="space-y-3 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-gray-200 before:to-transparent">
+                    {project.activityLog.sort((a: any,b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()).map((log: any, idx: number) => {
+                      let Icon = Calendar;
+                      let iconColor = 'text-gray-500 bg-gray-100 border-gray-200';
+                      if (log.type === 'email') { Icon = Mail; iconColor = 'text-blue-500 bg-blue-50 border-blue-200'; }
+                      else if (log.type === 'payment') { Icon = CreditCard; iconColor = 'text-green-600 bg-green-50 border-green-200'; }
+                      else if (log.type === 'contract') { Icon = CheckCircle; iconColor = 'text-indigo-600 bg-indigo-50 border-indigo-200'; }
+                      else if (log.type === 'system') { Icon = CheckCircle; iconColor = 'text-purple-600 bg-purple-50 border-purple-200'; }
+                      
+                      return (
+                        <div key={idx} className="relative flex items-center justify-between group is-active mb-3">
+                          <div className={`flex items-center justify-center w-10 h-10 rounded-full border shadow-sm shrink-0 z-10 ${iconColor}`}>
+                            <Icon className="w-4 h-4" />
+                          </div>
+                          <div className="w-[calc(100%-3rem)] bg-white p-3 rounded-lg border border-gray-200 shadow-sm ml-4">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-semibold text-gray-800 text-sm">{log.title}</span>
+                              <span className="text-xs text-gray-500">{new Date(log.date).toLocaleDateString()}</span>
+                            </div>
+                            <p className="text-sm text-gray-600">{log.description}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                   )}
                 </div>

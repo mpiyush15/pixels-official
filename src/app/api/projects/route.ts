@@ -85,6 +85,26 @@ export async function POST(request: NextRequest) {
     const completedMilestones = milestones.filter((m: any) => m.status === 'completed').length;
     const calculatedProgress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
 
+    const activityLog = [
+      {
+        id: crypto.randomBytes(8).toString('hex'),
+        title: 'Project Created',
+        description: `Project setup initiated for ${clientName}.`,
+        date: new Date().toISOString(),
+        type: 'system',
+      }
+    ];
+
+    if (clientEmail) {
+      activityLog.push({
+        id: crypto.randomBytes(8).toString('hex'),
+        title: 'Proposal Email Sent',
+        description: `Project proposal and contract sent to ${clientEmail}.`,
+        date: new Date().toISOString(),
+        type: 'email',
+      });
+    }
+
     const project = {
       ...body,
       clientId: body.clientId, // 🔥 Ensure clientId is set
@@ -95,12 +115,11 @@ export async function POST(request: NextRequest) {
       updatedAt: new Date(),
       milestones: milestones,
       tasks: body.tasks || [],
-      // Phase-based project support (Web Dev, E-commerce, etc.)
       phases: body.phases || [],
-      // Video-based project support (Video Production, Content Marketing)
       videos: body.videos || [],
       proposalToken: proposalToken, // Generated for public contract acceptance
       agreementText: body.agreementText || 'Standard terms and conditions apply.',
+      activityLog: activityLog,
     };
 
     const result = await db.collection('projects').insertOne(project);

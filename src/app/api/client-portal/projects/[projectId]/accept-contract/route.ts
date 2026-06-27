@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import clientPromise from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import crypto from 'crypto';
 
 export async function POST(
   request: NextRequest,
@@ -71,7 +72,16 @@ export async function POST(
           contractAcceptedAt: new Date(),
           contractAcceptedBy: clientDoc.email,
         },
-      }
+        $push: {
+          activityLog: {
+            id: crypto.randomBytes(8).toString('hex'),
+            title: 'Contract Accepted',
+            description: `Client (${clientDoc.email}) reviewed and accepted the project proposal and contract.`,
+            date: new Date().toISOString(),
+            type: 'contract',
+          }
+        }
+      } as any
     );
 
     console.log('Update result:', { modifiedCount: result.modifiedCount });
@@ -92,7 +102,7 @@ export async function POST(
     console.error('Contract acceptance error:', error);
     return NextResponse.json(
       { error: 'Failed to accept contract: ' + (error instanceof Error ? error.message : 'Unknown error') },
-      { status: 500 }
+      { status: 500 } as any
     );
   }
 }

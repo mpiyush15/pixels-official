@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
+import crypto from 'crypto';
 
 export async function GET(
   request: NextRequest,
@@ -42,7 +43,7 @@ export async function GET(
     console.error('Error fetching proposal:', error);
     return NextResponse.json(
       { error: 'Failed to fetch proposal' },
-      { status: 500 }
+      { status: 500 } as any
     );
   }
 }
@@ -76,7 +77,16 @@ export async function POST(
           contractAcceptedAt: new Date(),
           status: 'active'
         },
-      }
+        $push: {
+          activityLog: {
+            id: crypto.randomBytes(8).toString('hex'),
+            title: 'Contract Accepted',
+            description: 'Client reviewed and accepted the project proposal and contract.',
+            date: new Date().toISOString(),
+            type: 'contract',
+          }
+        }
+      } as any
     );
 
     if (result.modifiedCount === 0) {
@@ -94,7 +104,7 @@ export async function POST(
     console.error('Contract acceptance error:', error);
     return NextResponse.json(
       { error: 'Failed to accept contract' },
-      { status: 500 }
+      { status: 500 } as any
     );
   }
 }
