@@ -15,6 +15,7 @@ export default function ContractPage() {
   
   const [agreed, setAgreed] = useState(false);
   const [processing, setProcessing] = useState(false);
+  const [justAccepted, setJustAccepted] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -43,7 +44,7 @@ export default function ContractPage() {
       const data = await res.json();
 
       if (data.success) {
-        router.push('/client-portal/login?success=contract_accepted');
+        setJustAccepted(true);
       } else {
         throw new Error(data.error || 'Failed to accept contract');
       }
@@ -62,22 +63,39 @@ export default function ContractPage() {
     );
   }
 
-  if (error || project?.contractAccepted) {
+  if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
-          <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            {project?.contractAccepted ? 'Contract Already Accepted' : 'Proposal Expired or Invalid'}
-          </h2>
-          <p className="text-gray-600 mb-6">
-            {project?.contractAccepted 
-              ? 'This contract has already been accepted and the project is active. Please log in to your portal to view details.'
-              : error}
-          </p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">Proposal Expired or Invalid</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
           <button 
             onClick={() => router.push('/client-portal/login')}
             className="w-full bg-indigo-600 text-white py-3 rounded-lg font-medium hover:bg-indigo-700 transition-colors"
+          >
+            Go to Client Portal
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (project?.contractAccepted || justAccepted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <div className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center">
+          <CheckCircle className="w-20 h-20 text-blue-500 mx-auto mb-6" />
+          <h2 className="text-3xl font-bold text-gray-800 mb-4">
+            {justAccepted ? 'Contract Accepted!' : 'Contract Already Accepted'}
+          </h2>
+          <p className="text-gray-600 mb-8 text-lg">
+            {justAccepted 
+              ? 'Thank you for your confirmation. The project is now active and we are ready to begin work!'
+              : 'This contract has already been accepted and the project is active. Please log in to your portal to view details.'}
+          </p>
+          <button 
+            onClick={() => router.push('/client-portal/login')}
+            className="w-full bg-blue-600 text-white py-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors shadow-md"
           >
             Go to Client Portal
           </button>
