@@ -99,8 +99,8 @@ export async function POST(req: NextRequest) {
         customerName: client.name,
         customerEmail: client.email,
         customerPhone: client.phone || "9999999999",
-        returnUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://pixelsdigitalsolutions.com'}/payment/callback?type=milestone&project_id=${projectId}&milestone_index=${milestoneIndex}`,
-        notifyUrl: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://pixelsdigitalsolutions.com'}/api/cashfree/webhook`,
+        returnUrl: `${'https://pixelsdigitalsolutions.com'}/payment/callback?type=milestone&project_id=${projectId}&milestone_index=${milestoneIndex}`,
+        notifyUrl: `${'https://pixelsdigitalsolutions.com'}/api/cashfree/webhook`,
         orderNote: `Payment for ${project.projectName} - ${milestone.name}`,
       }),
     });

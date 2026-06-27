@@ -120,14 +120,14 @@ export async function POST(request: NextRequest) {
       fs.writeFileSync(filepath, buffer);
       
       driveFileId = filename;
-      driveFileUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/uploads/${filename}`;
+      driveFileUrl = `${'https://pixelsdigitalsolutions.com'}/uploads/${filename}`;
       
       console.log('File saved locally at:', filepath);
       console.log('Access at:', driveFileUrl);
     }
 
     // Create daily content entry
-    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/daily-content`, {
+    const response = await fetch(`${'https://pixelsdigitalsolutions.com'}/api/daily-content`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

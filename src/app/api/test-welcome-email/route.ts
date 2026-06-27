@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
     const email = searchParams.get('email') || 'piyush@pixelsdigitalsolutions.com';
     const name = searchParams.get('name') || 'Test Client';
     
-    const loginUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/client-portal/login`;
+    const loginUrl = `${'https://pixelsdigitalsolutions.com'}/client-portal/login`;
     
     console.log('Sending welcome email to:', email);
     console.log('Login URL:', loginUrl);

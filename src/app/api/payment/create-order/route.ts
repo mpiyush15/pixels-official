@@ -39,8 +39,8 @@ export async function POST(request: NextRequest) {
         customer_name: project.clientName || 'Client'
       },
       order_meta: {
-        return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/client-portal/login?order_id={order_id}`,
-        notify_url: `${process.env.NEXT_PUBLIC_BASE_URL}/api/payment/webhook` // Optional webhook
+        return_url: `${'https://pixelsdigitalsolutions.com'}/client-portal/login?order_id={order_id}`,
+        notify_url: `${'https://pixelsdigitalsolutions.com'}/api/payment/webhook` // Optional webhook
       }
     };
 

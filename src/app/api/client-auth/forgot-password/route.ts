@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Create reset URL
-    const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/client-portal/reset-password?token=${resetToken}`;
+    const resetUrl = `${'https://pixelsdigitalsolutions.com'}/client-portal/reset-password?token=${resetToken}`;
 
     // Send email
     const emailSent = await sendEmail({

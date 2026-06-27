@@ -375,7 +375,7 @@ export async function sendPaymentReminderEmail(
             <p><strong>Due Date:</strong> ${dueDate.toLocaleDateString()}</p>
           </div>
           <p style="text-align: center;">
-            <a href="${process.env.NEXT_PUBLIC_BASE_URL}/client-portal/payments" class="button">Make Payment</a>
+            <a href="${'https://pixelsdigitalsolutions.com'}/client-portal/payments" class="button">Make Payment</a>
           </p>
           <p>If you've already made this payment, please disregard this reminder.</p>
           <p>Questions? Contact us at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a></p>
@@ -453,7 +453,7 @@ export async function sendInvoiceEmail(
           </div>
           ${downloadButton}
           <p style="text-align: center;">
-            <a href="${process.env.NEXT_PUBLIC_BASE_URL}/client-portal/invoices" class="button">View in Portal</a>
+            <a href="${'https://pixelsdigitalsolutions.com'}/client-portal/invoices" class="button">View in Portal</a>
           </p>
           <p>If you have any questions, contact us at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a></p>
           <p>Best regards,<br>The ${COMPANY_NAME} Team</p>
@@ -507,7 +507,7 @@ export async function sendProjectUpdateEmail(
             <p>${updateMessage}</p>
           </div>
           <p style="text-align: center;">
-            <a href="${process.env.NEXT_PUBLIC_BASE_URL}/client-portal/projects" class="button">View Project</a>
+            <a href="${'https://pixelsdigitalsolutions.com'}/client-portal/projects" class="button">View Project</a>
           </p>
           <p>Best regards,<br>The ${COMPANY_NAME} Team</p>
         </div>
@@ -539,7 +539,7 @@ export async function sendContractAcceptanceEmail(
     day: 'numeric'
   });
   
-  const portalUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/client-portal/projects`;
+  const portalUrl = `${'https://pixelsdigitalsolutions.com'}/client-portal/projects`;
 
   const html = `
     <!DOCTYPE html>

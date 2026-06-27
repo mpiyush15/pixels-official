@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
 
     // Send proposal email
     if (clientEmail) {
-      const proposalLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/contract/${proposalToken}`;
+      const proposalLink = `${'https://pixelsdigitalsolutions.com'}/contract/${proposalToken}`;
       await sendProposalEmail(clientEmail, clientName, project.projectName, proposalLink);
     }
 

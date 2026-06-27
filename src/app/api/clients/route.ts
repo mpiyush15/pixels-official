@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
 
     // Send welcome email if client has email
     if (client.email) {
-      const loginUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/client-portal/login`;
+      const loginUrl = `${'https://pixelsdigitalsolutions.com'}/client-portal/login`;
       sendWelcomeEmail(
         client.email,
         client.name,

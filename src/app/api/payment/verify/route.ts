@@ -131,7 +131,7 @@ export async function POST(request: NextRequest) {
 
     // 7. Send Emails (Non-blocking)
     try {
-      const portalUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/client-portal/login`;
+      const portalUrl = `${'https://pixelsdigitalsolutions.com'}/client-portal/login`;
       
       // Send Contract Acceptance Email
       await sendContractAcceptanceEmail(

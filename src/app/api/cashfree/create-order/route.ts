@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
         customer_phone: customerPhone,
       },
       order_meta: {
-        return_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/callback?order_id=${orderId}`,
+        return_url: `${'https://pixelsdigitalsolutions.com'}/payment/callback?order_id=${orderId}`,
       },
       order_note: `Payment for ${planName} - Social Media Marketing Plan`,
     };
