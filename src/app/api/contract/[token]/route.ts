@@ -46,3 +46,55 @@ export async function GET(
     );
   }
 }
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ token: string }> }
+) {
+  try {
+    const { token } = await params;
+    
+    if (!token) {
+      return NextResponse.json({ error: 'Token is required' }, { status: 400 });
+    }
+
+    const db = await getDatabase();
+    
+    // Find project by token
+    const project = await db.collection('projects').findOne({ proposalToken: token });
+
+    if (!project) {
+      return NextResponse.json({ error: 'Proposal not found or already accepted' }, { status: 404 });
+    }
+    
+    // Update project with contract acceptance
+    const result = await db.collection('projects').updateOne(
+      { proposalToken: token },
+      {
+        $set: {
+          contractAccepted: true,
+          contractAcceptedAt: new Date(),
+          status: 'active'
+        },
+      }
+    );
+
+    if (result.modifiedCount === 0) {
+      return NextResponse.json(
+        { error: 'Failed to accept contract - no changes made' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Contract accepted successfully',
+    });
+  } catch (error) {
+    console.error('Contract acceptance error:', error);
+    return NextResponse.json(
+      { error: 'Failed to accept contract' },
+      { status: 500 }
+    );
+  }
+}

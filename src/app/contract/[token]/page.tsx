@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { CheckCircle, ShieldCheck, ChevronRight, FileText, CheckSquare, Square } from 'lucide-react';
-import { load } from '@cashfreepayments/cashfree-js';
 
 export default function ContractPage() {
   const params = useParams();
@@ -15,7 +14,7 @@ export default function ContractPage() {
   const [error, setError] = useState('');
   
   const [agreed, setAgreed] = useState(false);
-  const [processingPayment, setProcessingPayment] = useState(false);
+  const [processing, setProcessing] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -33,68 +32,25 @@ export default function ContractPage() {
       .finally(() => setLoading(false));
   }, [token]);
 
-  const handlePayment = async () => {
+  const handleAcceptContract = async () => {
     if (!agreed) return;
-    setProcessingPayment(true);
+    setProcessing(true);
 
     try {
-      // 1. Create order on backend
-      const orderRes = await fetch('/api/payment/create-order', {
+      const res = await fetch(`/api/contract/${token}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token })
       });
-      const orderData = await orderRes.json();
+      const data = await res.json();
 
-      if (!orderRes.ok || !orderData.paymentSessionId) {
-        throw new Error(orderData.error || 'Failed to initialize payment');
+      if (data.success) {
+        router.push('/client-portal/login?success=contract_accepted');
+      } else {
+        throw new Error(data.error || 'Failed to accept contract');
       }
-
-      // 2. Load Cashfree SDK
-      const cashfree = await load({
-        mode: process.env.NEXT_PUBLIC_CASHFREE_MODE === 'sandbox' ? 'sandbox' : 'production'
-      });
-
-      // 3. Initiate Checkout
-      const checkoutOptions = {
-        paymentSessionId: orderData.paymentSessionId,
-        redirectTarget: '_modal' as const,
-      };
-
-      cashfree.checkout(checkoutOptions).then(async (result: any) => {
-        if (result.error) {
-          console.error('Payment Error:', result.error);
-          setProcessingPayment(false);
-          alert('Payment failed or was cancelled: ' + result.error.message);
-        }
-        if (result.redirect) {
-          // Cashfree handles redirect
-        }
-        if (result.paymentDetails) {
-          // 4. Verify payment on success
-          console.log('Payment completed, verifying...');
-          const verifyRes = await fetch('/api/payment/verify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
-              orderId: orderData.orderId,
-              token: token
-            })
-          });
-          const verifyData = await verifyRes.json();
-          
-          if (verifyData.success) {
-            router.push('/client-portal/login?success=contract_accepted');
-          } else {
-            alert('Payment verification failed. Please contact support.');
-            setProcessingPayment(false);
-          }
-        }
-      });
     } catch (err: any) {
       console.error(err);
-      alert(err.message || 'An error occurred during payment.');
-      setProcessingPayment(false);
+      alert(err.message || 'An error occurred while accepting the contract.');
+      setProcessing(false);
     }
   };
 
@@ -130,19 +86,13 @@ export default function ContractPage() {
     );
   }
 
-  // Find the first milestone that isn't completed to get payment amount
-  // If no milestones exist, fallback to total budget
-  const nextMilestone = project.milestones?.find((m: any) => m.status !== 'completed');
-  const amountToPay = nextMilestone ? (nextMilestone.amount || 0) : (project.budget || 0);
-  const paymentDescription = nextMilestone ? `Advance for ${nextMilestone.name}` : 'Project Advance Payment';
-
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">Project Proposal & Contract</h1>
           <p className="mt-3 max-w-2xl mx-auto text-xl text-gray-500 sm:mt-4">
-            Review the project details and complete the initial payment to begin.
+            Review the project details and confirm your agreement to begin.
           </p>
         </div>
 
@@ -171,14 +121,13 @@ export default function ContractPage() {
                 <h4 className="text-md font-semibold text-gray-900 mb-3">Milestones & Payments</h4>
                 <div className="border border-gray-200 rounded-md divide-y divide-gray-200 mb-6">
                   {project.milestones.map((milestone: any, index: number) => (
-                    <div key={index} className={`p-4 flex justify-between items-center ${index === 0 ? 'bg-indigo-50' : 'bg-white'}`}>
+                    <div key={index} className="p-4 flex justify-between items-center bg-white">
                       <div>
                         <p className="text-sm font-medium text-gray-900">{milestone.name}</p>
                         <p className="text-xs text-gray-500">Due: {milestone.dueDate ? new Date(milestone.dueDate).toLocaleDateString() : 'TBD'}</p>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-bold text-gray-900">₹{milestone.amount?.toLocaleString('en-IN') || 0}</p>
-                        {index === 0 && <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 mt-1">Due Now</span>}
                       </div>
                     </div>
                   ))}
@@ -191,7 +140,7 @@ export default function ContractPage() {
         {/* Terms and Payment Section */}
         <div className="bg-white shadow sm:rounded-lg overflow-hidden">
           <div className="px-4 py-5 sm:p-6 bg-gradient-to-r from-gray-50 to-white">
-            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Terms & Initial Payment</h3>
+            <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Terms & Agreement</h3>
             
             <div className="bg-white p-6 border border-gray-200 rounded-md mb-6">
               <h4 className="text-md font-semibold text-gray-900 mb-3">Terms & Conditions</h4>
@@ -213,43 +162,32 @@ export default function ContractPage() {
               </div>
               <div className="ml-3 text-sm">
                 <label className="font-medium text-gray-700 cursor-pointer">
-                  I agree to the terms and conditions and authorize the payment
+                  I agree to the terms and conditions and authorize the project to begin
                 </label>
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-5 flex items-center justify-between">
-              <div>
-                <p className="text-sm text-gray-500">Amount Due Now</p>
-                <p className="text-2xl font-bold text-gray-900">₹{amountToPay.toLocaleString('en-IN')}</p>
-                <p className="text-xs text-gray-500">{paymentDescription}</p>
-              </div>
-              
+            <div className="border-t border-gray-200 pt-5 flex items-center justify-end">
               <button
-                disabled={!agreed || processingPayment}
-                onClick={handlePayment}
+                disabled={!agreed || processing}
+                onClick={handleAcceptContract}
                 className={`inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white ${
-                  agreed && !processingPayment ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-400 cursor-not-allowed'
+                  agreed && !processing ? 'bg-indigo-600 hover:bg-indigo-700' : 'bg-gray-400 cursor-not-allowed'
                 } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors`}
               >
-                {processingPayment ? (
+                {processing ? (
                   <>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
                     Processing...
                   </>
                 ) : (
                   <>
-                    <ShieldCheck className="w-5 h-5 mr-2" />
-                    Pay & Start Project
+                    <CheckCircle className="w-5 h-5 mr-2" />
+                    Confirm & Submit
                     <ChevronRight className="w-5 h-5 ml-1" />
                   </>
                 )}
               </button>
-            </div>
-            
-            <div className="mt-4 flex justify-center items-center text-xs text-gray-500">
-              <ShieldCheck className="w-4 h-4 mr-1 text-green-500" />
-              Secured by Cashfree Payments
             </div>
           </div>
         </div>
