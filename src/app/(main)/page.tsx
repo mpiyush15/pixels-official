@@ -795,24 +795,26 @@ export default function Home() {
         <div className="max-w-7xl mx-auto">
           <div className="grid md:grid-cols-4 gap-12 mb-12">
             <div>
-              <h3 className="text-3xl font-light text-black mb-4 tracking-tight">PIXELS DIGITAL</h3>
-              <p className="text-gray-500 mb-6 font-light">A digital service provider from Pixels Digital Solutions Akola</p>
+              <h3 className="text-3xl font-light text-black mb-4 tracking-tight">Pixels Digital Solutions</h3>
+              <p className="text-gray-500 mb-6 font-light">A digital service provider based in Akola & Mumbai</p>
             </div>
 
             <div>
               <h4 className="text-xl font-light text-black mb-4">Company</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-500 hover:text-black transition-colors font-light">About Us</a></li>
-                <li><a href="#" className="text-gray-500 hover:text-black transition-colors font-light">Contact Us</a></li>
-                <li><a href="#" className="text-gray-500 hover:text-black transition-colors font-light">Terms and Conditions</a></li>
+                <li><a href="#about" className="text-gray-500 hover:text-black transition-colors font-light">About Us</a></li>
+                <li><a href="#contact" className="text-gray-500 hover:text-black transition-colors font-light">Contact Us</a></li>
+                <li><a href="/privacy-policy" className="text-gray-500 hover:text-black transition-colors font-light">Privacy Policy</a></li>
+                <li><a href="/terms-conditions" className="text-gray-500 hover:text-black transition-colors font-light">Terms and Conditions</a></li>
               </ul>
             </div>
 
             <div>
               <h4 className="text-xl font-light text-black mb-4">Services</h4>
               <ul className="space-y-2">
-                <li><a href="#" className="text-gray-500 hover:text-black transition-colors font-light">Website Development</a></li>
-                <li><a href="#" className="text-gray-500 hover:text-black transition-colors font-light">Video Contents</a></li>
+                <li><a href="#services" className="text-gray-500 hover:text-black transition-colors font-light">Web Development</a></li>
+                <li><a href="#services" className="text-gray-500 hover:text-black transition-colors font-light">SaaS</a></li>
+                <li><a href="#services" className="text-gray-500 hover:text-black transition-colors font-light">Web Design Consultants</a></li>
               </ul>
             </div>
 
@@ -832,7 +834,7 @@ export default function Home() {
           </div>
 
           <div className="border-t border-gray-200 pt-8 text-center">
-            <p className="text-gray-500 font-light">© 2024 Created with PIXELS DIGITAL SOLUTIONS</p>
+            <p className="text-gray-500 font-light">© 2024 Pixels Digital Solutions. All rights reserved.</p>
           </div>
         </div>
       </footer>
