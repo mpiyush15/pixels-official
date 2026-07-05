@@ -90,7 +90,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-light text-black mb-1">Phone</h3>
-                  <p className="text-gray-600 font-light">976-650-4856</p>
+                  <p className="text-gray-600 font-light">8087131777 | 9766504856</p>
                 </div>
               </div>
 
@@ -100,7 +100,7 @@ export default function ContactPage() {
                 </div>
                 <div>
                   <h3 className="text-lg font-light text-black mb-1">Email</h3>
-                  <p className="text-gray-600 font-light">info@pixelsdigitalsolutions.com</p>
+                  <p className="text-gray-600 font-light">pixelsadvertise@gmail.com</p>
                 </div>
               </div>
 
@@ -122,6 +122,19 @@ export default function ContactPage() {
                 <p>Saturday: 10:00 AM - 4:00 PM</p>
                 <p>Sunday: Closed</p>
               </div>
+            </div>
+
+            <div className="mt-8 rounded-3xl overflow-hidden shadow-sm h-64 relative">
+              <iframe 
+                src="https://maps.google.com/maps?q=Pixels+Digital+Solutions,+Akola&t=&z=13&ie=UTF8&iwloc=&output=embed" 
+                width="100%" 
+                height="100%" 
+                style={{ border: 0 }} 
+                allowFullScreen={true} 
+                loading="lazy" 
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Google Maps - Pixels Digital Solutions"
+              ></iframe>
             </div>
           </motion.div>
 

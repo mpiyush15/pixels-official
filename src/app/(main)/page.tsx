@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, useScroll, useTransform } from 'framer-motion';
-import { ArrowRight, Code, Video, Users, TrendingUp, Star, CheckCircle2, Phone, MapPin, Sparkles, Zap, Target, Rocket } from 'lucide-react';
+import { ArrowRight, Code, Video, Users, TrendingUp, Star, CheckCircle2, Phone, MapPin, Sparkles, Zap, Target, Rocket, Mail } from 'lucide-react';
 import { useRef } from 'react';
 import { usePageTracking } from '@/lib/analytics';
 
@@ -803,7 +803,7 @@ export default function Home() {
               <h4 className="text-xl font-light text-black mb-4">Company</h4>
               <ul className="space-y-2">
                 <li><a href="#about" className="text-gray-500 hover:text-black transition-colors font-light">About Us</a></li>
-                <li><a href="#contact" className="text-gray-500 hover:text-black transition-colors font-light">Contact Us</a></li>
+                <li><a href="/contact" className="text-gray-500 hover:text-black transition-colors font-light">Contact Us</a></li>
                 <li><a href="/privacy-policy" className="text-gray-500 hover:text-black transition-colors font-light">Privacy Policy</a></li>
                 <li><a href="/terms-conditions" className="text-gray-500 hover:text-black transition-colors font-light">Terms and Conditions</a></li>
               </ul>
@@ -823,11 +823,15 @@ export default function Home() {
               <ul className="space-y-3">
                 <li className="flex items-center gap-2 text-gray-500 font-light">
                   <Phone className="w-5 h-5" strokeWidth={1.5} />
-                  976-650-4856
+                  8087131777 | 9766504856
                 </li>
                 <li className="flex items-center gap-2 text-gray-500 font-light">
                   <MapPin className="w-5 h-5" strokeWidth={1.5} />
                   Akola | Mumbai
+                </li>
+                <li className="flex items-center gap-2 text-gray-500 font-light">
+                  <Mail className="w-5 h-5" strokeWidth={1.5} />
+                  pixelsadvertise@gmail.com
                 </li>
               </ul>
             </div>

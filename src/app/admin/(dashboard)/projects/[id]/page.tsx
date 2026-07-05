@@ -106,6 +106,52 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
     }
   };
 
+  const handleDownloadAgreement = () => {
+    if (!project) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Agreement - ${project.projectName}</title>
+        <style>
+          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+          .header { text-align: center; margin-bottom: 40px; }
+          .header h1 { color: #1a1a1a; margin-bottom: 10px; }
+          .details { margin-bottom: 30px; }
+          .details div { margin-bottom: 5px; }
+          .agreement { white-space: pre-wrap; font-family: monospace; background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; }
+          @media print {
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Project Agreement</h1>
+          <p>${project.projectName}</p>
+        </div>
+        <div class="details">
+          <div><strong>Project Type:</strong> ${project.projectType || 'N/A'}</div>
+          <div><strong>Date:</strong> ${new Date().toLocaleDateString()}</div>
+        </div>
+        <div class="agreement">${project.agreementText ? project.agreementText.replace(/</g, '&lt;').replace(/>/g, '&gt;') : 'Standard terms and conditions apply.'}</div>
+        <div class="no-print" style="position: fixed; bottom: 20px; right: 20px;">
+          <button onclick="window.print()" style="background: #1565C0; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Print / Save PDF</button>
+        </div>
+        <script>
+          setTimeout(() => { window.print(); }, 500);
+        </script>
+      </body>
+      </html>
+    `;
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
   const updateMilestone = (index: number, field: keyof Milestone, value: string) => {
     const newMilestones = [...(editForm.milestones || [])];
     newMilestones[index] = { ...newMilestones[index], [field]: value };
@@ -420,7 +466,16 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
                     </div>
 
                     <div className="bg-surface/50 p-6 rounded-xl border border-border">
-                      <p className="text-sm font-semibold text-text-primary mb-3">Project Agreement / Terms</p>
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-semibold text-text-primary">Project Agreement / Terms</p>
+                        <button 
+                          onClick={handleDownloadAgreement}
+                          className="text-xs flex items-center gap-1 bg-white border border-border px-3 py-1.5 rounded-md hover:bg-gray-50 text-text-primary font-medium transition-colors"
+                        >
+                          <FileText className="w-3.5 h-3.5" />
+                          Download PDF
+                        </button>
+                      </div>
                       <div className="bg-white p-4 border border-border rounded-lg h-48 overflow-y-auto text-sm text-text-secondary whitespace-pre-wrap font-mono">
                         {project.agreementText || 'Standard terms and conditions apply.'}
                       </div>

@@ -55,6 +55,52 @@ export default function ContractPage() {
     }
   };
 
+  const handleDownloadAgreement = () => {
+    if (!project) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Agreement - ${project.projectName}</title>
+        <style>
+          body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+          .header { text-align: center; margin-bottom: 40px; }
+          .header h1 { color: #1a1a1a; margin-bottom: 10px; }
+          .details { margin-bottom: 30px; }
+          .details div { margin-bottom: 5px; }
+          .agreement { white-space: pre-wrap; font-family: monospace; background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; }
+          @media print {
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Project Agreement</h1>
+          <p>${project.projectName}</p>
+        </div>
+        <div class="details">
+          <div><strong>Client:</strong> ${project.clientName || 'N/A'}</div>
+          <div><strong>Date:</strong> ${new Date().toLocaleDateString()}</div>
+        </div>
+        <div class="agreement">${project.agreementText ? project.agreementText.replace(/</g, '&lt;').replace(/>/g, '&gt;') : 'Standard terms and conditions apply.'}</div>
+        <div class="no-print" style="position: fixed; bottom: 20px; right: 20px;">
+          <button onclick="window.print()" style="background: #1565C0; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Print / Save PDF</button>
+        </div>
+        <script>
+          setTimeout(() => { window.print(); }, 500);
+        </script>
+      </body>
+      </html>
+    `;
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -161,7 +207,16 @@ export default function ContractPage() {
             <h3 className="text-lg leading-6 font-medium text-gray-900 mb-4">Terms & Agreement</h3>
             
             <div className="bg-white p-6 border border-gray-200 rounded-md mb-6">
-              <h4 className="text-md font-semibold text-gray-900 mb-3">Terms & Conditions</h4>
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-md font-semibold text-gray-900">Terms & Conditions</h4>
+                <button 
+                  onClick={handleDownloadAgreement}
+                  className="text-xs flex items-center gap-1 bg-white border border-gray-300 px-3 py-1.5 rounded-md hover:bg-gray-50 text-gray-700 font-medium transition-colors"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  Download PDF
+                </button>
+              </div>
               <div className="bg-gray-50 p-4 border border-gray-200 rounded-md h-64 overflow-y-auto mb-4 text-sm text-gray-600 whitespace-pre-wrap">
                 {project.agreementText || 'Standard terms and conditions apply. Please refer to the official proposal document.'}
               </div>
