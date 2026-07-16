@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Calendar as CalendarIcon, 
   ChevronLeft, 
@@ -13,7 +13,12 @@ import {
   CheckCircle2,
   Circle,
   AlertCircle,
-  X
+  X,
+  Video,
+  AlignLeft,
+  CalendarDays,
+  Edit2,
+  Eye
 } from 'lucide-react';
 
 interface Project {
@@ -39,16 +44,52 @@ interface Task {
   projectId?: string;
   projectName?: string;
   clientName?: string;
-  status: 'pending' | 'in-progress' | 'completed';
-  type: 'task' | 'project-deadline' | 'project-start';
+  status: 'pending' | 'in-progress' | 'completed' | 'cancelled';
+  type: 'task' | 'project-deadline' | 'project-start' | 'meeting';
 }
+
+// Helper to format Date to YYYY-MM-DD in local timezone (to avoid UTC shift)
+const formatLocalDate = (date: Date) => {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+// Generate time options in 30-minute intervals
+const generateTimeOptions = () => {
+  const times = [];
+  for (let i = 0; i < 24; i++) {
+    for (let j = 0; j < 60; j += 30) {
+      const hour = i === 0 ? 12 : i > 12 ? i - 12 : i;
+      const ampm = i < 12 ? 'AM' : 'PM';
+      const min = j === 0 ? '00' : '30';
+      const value = `${i.toString().padStart(2, '0')}:${min}`;
+      const label = `${hour}:${min} ${ampm}`;
+      times.push({ value, label });
+    }
+  }
+  return times;
+};
+const timeOptions = generateTimeOptions();
 
 export default function SchedulePage() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [projects, setProjects] = useState<Project[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [showTaskModal, setShowTaskModal] = useState(false);
+  const [viewingTask, setViewingTask] = useState<Task | null>(null);
+  
+  // Custom Date Picker State
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [pickerMonthDate, setPickerMonthDate] = useState(new Date());
+  const datePickerRef = useRef<HTMLDivElement>(null);
+
+  // Custom Time Picker State
+  const [showTimePicker, setShowTimePicker] = useState(false);
+  const timePickerRef = useRef<HTMLDivElement>(null);
+
   const [newTask, setNewTask] = useState<Task>({
     title: '',
     description: '',
@@ -57,18 +98,33 @@ export default function SchedulePage() {
     status: 'pending',
     type: 'task'
   });
-  const [viewMode, setViewMode] = useState<'month' | 'week' | 'day'>('month');
 
   useEffect(() => {
     fetchProjects();
     fetchTasks();
   }, []);
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
+        setShowDatePicker(false);
+      }
+      if (timePickerRef.current && !timePickerRef.current.contains(event.target as Node)) {
+        setShowTimePicker(false);
+      }
+    };
+    if (showDatePicker || showTimePicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDatePicker, showTimePicker]);
+
   const fetchProjects = async () => {
     try {
       const response = await fetch('/api/projects');
       const data = await response.json();
-      // API returns array directly, not wrapped in success object
       if (Array.isArray(data)) {
         setProjects(data);
       }
@@ -90,19 +146,16 @@ export default function SchedulePage() {
   };
 
   const getEventsForDate = (date: Date): Task[] => {
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = formatLocalDate(date);
     const events: Task[] = [];
 
-    // Add custom tasks
     const customTasks = tasks.filter(t => t.date === dateStr);
     events.push(...customTasks);
 
-    // Add project milestones as deadlines
     projects.forEach(project => {
-      // Add project start date
       if (project.startDate) {
-        const startDate = new Date(project.startDate).toISOString().split('T')[0];
-        if (startDate === dateStr) {
+        const startDate = new Date(project.startDate);
+        if (formatLocalDate(startDate) === dateStr) {
           events.push({
             title: `${project.projectName} - Start`,
             date: dateStr,
@@ -115,12 +168,11 @@ export default function SchedulePage() {
         }
       }
 
-      // Add milestone deadlines
       if (project.milestones && project.milestones.length > 0) {
         project.milestones.forEach(milestone => {
           if (milestone.dueDate) {
-            const dueDate = new Date(milestone.dueDate).toISOString().split('T')[0];
-            if (dueDate === dateStr) {
+            const dueDate = new Date(milestone.dueDate);
+            if (formatLocalDate(dueDate) === dateStr) {
               events.push({
                 title: `${project.projectName} - ${milestone.name}`,
                 date: dateStr,
@@ -148,17 +200,12 @@ export default function SchedulePage() {
     const startingDayOfWeek = firstDay.getDay();
 
     const days = [];
-    
-    // Add empty cells for days before month starts
     for (let i = 0; i < startingDayOfWeek; i++) {
       days.push(null);
     }
-    
-    // Add days of month
     for (let i = 1; i <= daysInMonth; i++) {
       days.push(new Date(year, month, i));
     }
-
     return days;
   };
 
@@ -169,7 +216,7 @@ export default function SchedulePage() {
   };
 
   const isSelectedDate = (date: Date | null) => {
-    if (!date || !selectedDate) return false;
+    if (!date) return false;
     return date.toDateString() === selectedDate.toDateString();
   };
 
@@ -188,27 +235,50 @@ export default function SchedulePage() {
     }
 
     try {
-      const response = await fetch('/api/schedule/tasks', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newTask)
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setTasks([...tasks, data.task]);
-        setShowTaskModal(false);
-        setNewTask({
-          title: '',
-          description: '',
-          date: '',
-          time: '',
-          status: 'pending',
-          type: 'task'
+      if (newTask._id) {
+        // Update existing task
+        const response = await fetch(`/api/schedule/tasks/${newTask._id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newTask)
         });
+
+        if (response.ok) {
+          setTasks(tasks.map(t => t._id === newTask._id ? { ...newTask } : t));
+          setShowTaskModal(false);
+          setNewTask({
+            title: '',
+            description: '',
+            date: '',
+            time: '',
+            status: 'pending',
+            type: 'task'
+          });
+        }
+      } else {
+        // Create new task
+        const response = await fetch('/api/schedule/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newTask)
+        });
+
+        const data = await response.json();
+        if (data.success) {
+          setTasks([...tasks, data.task]);
+          setShowTaskModal(false);
+          setNewTask({
+            title: '',
+            description: '',
+            date: '',
+            time: '',
+            status: 'pending',
+            type: 'task'
+          });
+        }
       }
     } catch (error) {
-      console.error('Error adding task:', error);
+      console.error('Error saving task:', error);
     }
   };
 
@@ -228,24 +298,91 @@ export default function SchedulePage() {
     }
   };
 
-  const monthYear = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const handleDragStart = (e: React.DragEvent, eventId: string, eventType: string) => {
+    e.dataTransfer.setData('eventId', eventId);
+    e.dataTransfer.setData('eventType', eventType);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = async (e: React.DragEvent, dateStr: string) => {
+    e.preventDefault();
+    const eventId = e.dataTransfer.getData('eventId');
+    const eventType = e.dataTransfer.getData('eventType');
+
+    if (!eventId || eventType === 'project-start' || eventType === 'project-deadline') return;
+
+    try {
+      const response = await fetch(`/api/schedule/tasks/${eventId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: dateStr })
+      });
+
+      if (response.ok) {
+        setTasks(tasks.map(t => t._id === eventId ? { ...t, date: dateStr } : t));
+      }
+    } catch (error) {
+      console.error('Error updating task date:', error);
+    }
+  };
+
+  const getEventColorClass = (status: Task['status'], type: Task['type']) => {
+    if (type === 'project-start') return 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20';
+    if (type === 'project-deadline') return 'bg-red-500/10 text-red-600 border border-red-500/20';
+    if (status === 'completed') return 'bg-surface text-text-muted border border-border line-through opacity-70';
+    if (status === 'cancelled') return 'bg-red-900/10 text-red-500 border border-red-900/20 opacity-70';
+    if (status === 'in-progress') return 'bg-blue-500/10 text-blue-600 border border-blue-500/20';
+    return 'bg-amber-500/10 text-amber-600 border border-amber-500/20';
+  };
+
+  const monthYear = currentDate.toLocaleString('en-US', { month: 'long', year: 'numeric' });
   const days = getDaysInMonth(currentDate);
   const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  
+  const selectedDateEvents = getEventsForDate(selectedDate);
+  
+  // Format string for date picker display
+  const formatPickerDate = (dateStr: string) => {
+    if (!dateStr) return 'Select date';
+    // Convert YYYY-MM-DD local to Date taking timezone out of the picture
+    const [year, month, day] = dateStr.split('-').map(Number);
+    const d = new Date(year, month - 1, day);
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
+  };
 
   return (
-    <div className="p-8 bg-background min-h-[calc(100vh-8rem)] rounded-2xl">
+    <div className="p-4 bg-background h-[calc(100vh-2rem)] flex flex-col rounded-2xl overflow-hidden">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-medium text-text-primary mb-2">Schedule & Calendar</h1>
-        <p className="text-text-muted">Manage your projects, deadlines, and daily tasks</p>
+      <div className="flex justify-between items-center mb-4 shrink-0">
+        <div>
+          <h1 className="text-2xl font-medium text-text-primary mb-0.5">Schedule & Calendar</h1>
+          <p className="text-xs text-text-muted">Manage your projects, meetings, and daily tasks</p>
+        </div>
+        <button
+          onClick={() => {
+            setShowTaskModal(true);
+            const initialDate = formatLocalDate(selectedDate);
+            setNewTask({ ...newTask, date: initialDate, time: '12:00' });
+            setPickerMonthDate(new Date(selectedDate));
+          }}
+          className="px-3 py-1.5 bg-primary text-background rounded-lg text-sm font-semibold hover:shadow-lg transition flex items-center space-x-2"
+        >
+          <Plus className="w-4 h-4" />
+          <span>Add Event</span>
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {/* Calendar */}
-        <div className="lg:col-span-2 xl:col-span-3">
-          <div className="ta-card">
+      {/* Main Split */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1 min-h-0">
+        
+        {/* Calendar Column */}
+        <div className="lg:col-span-2 flex flex-col bg-surface/30 rounded-xl border border-border overflow-hidden">
+          <div className="p-4 flex flex-col h-full">
             {/* Calendar Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4 shrink-0">
               <h2 className="text-xl font-semibold text-text-primary">{monthYear}</h2>
               <div className="flex items-center space-x-2">
                 <button
@@ -255,8 +392,11 @@ export default function SchedulePage() {
                   <ChevronLeft className="w-5 h-5" />
                 </button>
                 <button
-                  onClick={() => setCurrentDate(new Date())}
-                  className="px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-blue-100 transition text-sm font-medium"
+                  onClick={() => {
+                    setCurrentDate(new Date());
+                    setSelectedDate(new Date());
+                  }}
+                  className="px-4 py-1.5 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition text-sm font-medium"
                 >
                   Today
                 </button>
@@ -270,7 +410,7 @@ export default function SchedulePage() {
             </div>
 
             {/* Week Days */}
-            <div className="grid grid-cols-7 gap-2 mb-2">
+            <div className="grid grid-cols-7 gap-2 mb-2 shrink-0">
               {weekDays.map(day => (
                 <div key={day} className="text-center text-xs font-semibold text-text-muted py-2">
                   {day}
@@ -278,243 +418,367 @@ export default function SchedulePage() {
               ))}
             </div>
 
-            {/* Calendar Days */}
-            <div className="grid grid-cols-7 gap-2">
-              {days.map((date, index) => {
-                const events = date ? getEventsForDate(date) : [];
-                const hasEvents = events.length > 0;
-                
-                return (
-                  <motion.div
-                    key={index}
-                    whileHover={date ? { scale: 1.05 } : {}}
-                    className={`
-                      min-h-[80px] p-2 rounded-lg border transition cursor-pointer
-                      ${!date ? 'bg-surface border-border' : ''}
-                      ${date && isToday(date) ? 'bg-primary/10 border-primary/30 ring-2 ring-primary/20' : ''}
-                      ${date && isSelectedDate(date) ? 'bg-purple-500/10 border-purple-500/30' : ''}
-                      ${date && !isToday(date) && !isSelectedDate(date) ? 'bg-background border-border hover:border-primary/30' : ''}
-                    `}
-                    onClick={() => date && setSelectedDate(date)}
-                  >
-                    {date && (
-                      <>
-                        <div className={`
-                          text-sm font-semibold mb-1
-                          ${isToday(date) ? 'text-primary' : 'text-text-primary'}
-                        `}>
-                          {date.getDate()}
-                        </div>
-                        <div className="space-y-1">
-                          {events.slice(0, 2).map((event, i) => (
-                            <div
-                              key={i}
-                              className={`
-                                text-xs px-2 py-1 rounded truncate
-                                ${event.type === 'project-deadline' ? 'bg-red-500/10 text-red-500' : ''}
-                                ${event.type === 'project-start' ? 'bg-emerald-500/10 text-emerald-500' : ''}
-                                ${event.type === 'task' && event.status === 'completed' ? 'bg-surface text-text-muted line-through' : ''}
-                                ${event.type === 'task' && event.status !== 'completed' ? 'bg-blue-500/10 text-blue-500' : ''}
-                              `}
-                            >
-                              {event.title}
-                            </div>
-                          ))}
-                          {events.length > 2 && (
-                            <div className="text-xs text-text-muted px-2">
-                              +{events.length - 2} more
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </motion.div>
-                );
-              })}
+            {/* Calendar Days (Scrollable) */}
+            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+              <div className="grid grid-cols-7 gap-2">
+                {days.map((date, index) => {
+                  const dateStr = date ? formatLocalDate(date) : '';
+                  const events = date ? getEventsForDate(date) : [];
+                  
+                  return (
+                    <div
+                      key={index}
+                      onDragOver={date ? handleDragOver : undefined}
+                      onDrop={date ? (e) => handleDrop(e, dateStr) : undefined}
+                      onClick={() => {
+                        if (date) setSelectedDate(date);
+                      }}
+                      className={`
+                        h-[85px] p-1.5 rounded-lg border transition-colors relative flex flex-col group
+                        ${!date ? 'bg-surface/50 border-transparent' : 'bg-background border-border hover:border-primary/50 cursor-pointer'}
+                        ${date && isSelectedDate(date) ? 'ring-2 ring-primary bg-primary/5 border-transparent' : ''}
+                      `}
+                    >
+                      {date && (
+                        <>
+                          <div className={`
+                            text-xs font-semibold mb-2 self-end w-6 h-6 flex items-center justify-center rounded-full
+                            ${isToday(date) ? 'bg-primary text-background' : 'text-text-primary group-hover:bg-surface'}
+                            ${isSelectedDate(date) && !isToday(date) ? 'bg-primary/10 text-primary' : ''}
+                          `}>
+                            {date.getDate()}
+                          </div>
+                          <div className="space-y-1 flex-1 overflow-y-auto pr-1 custom-scrollbar">
+                            {events.map((event, i) => (
+                              <div
+                                key={i}
+                                draggable={!!event._id && (event.type === 'task' || event.type === 'meeting')}
+                                onDragStart={(e) => {
+                                  if (event._id) {
+                                    e.stopPropagation();
+                                    handleDragStart(e, event._id, event.type);
+                                  }
+                                }}
+                                className={`
+                                  text-[10px] px-1.5 py-1 rounded flex flex-col gap-0.5 w-full truncate
+                                  ${getEventColorClass(event.status, event.type)}
+                                  ${!!event._id && (event.type === 'task' || event.type === 'meeting') ? 'cursor-grab active:cursor-grabbing' : ''}
+                                `}
+                              >
+                                <div className="flex items-center gap-1 font-medium truncate">
+                                  {event.type === 'meeting' && <Video className="w-2.5 h-2.5 shrink-0" />}
+                                  <span className="truncate">{event.title}</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Add Task Button */}
-          <button
-            onClick={() => {
-              setShowTaskModal(true);
-              setNewTask({
-                ...newTask,
-                date: selectedDate ? selectedDate.toISOString().split('T')[0] : ''
-              });
-            }}
-            className="w-full py-3 bg-primary text-background rounded-lg font-semibold hover:shadow-lg transition flex items-center justify-center space-x-2"
-          >
-            <Plus className="w-5 h-5" />
-            <span>Add Task</span>
-          </button>
-
-          {/* Selected Date Events */}
-          {selectedDate && (
-            <div className="ta-card">
-              <h3 className="font-semibold text-text-primary mb-4">
-                {selectedDate.toLocaleDateString('default', { 
-                  weekday: 'long', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </h3>
-              <div className="space-y-3">
-                {getEventsForDate(selectedDate).map((event, index) => (
-                  <div
-                    key={index}
-                    className="p-3 bg-surface rounded-lg border border-border"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="font-medium text-text-primary mb-1">{event.title}</div>
+        {/* Details Column */}
+        <div className="lg:col-span-1 flex flex-col bg-surface/30 rounded-xl border border-border overflow-hidden">
+          <div className="p-4 flex flex-col h-full">
+            <div className="flex justify-between items-center mb-4 shrink-0">
+              <div>
+                <h3 className="font-semibold text-lg text-text-primary">
+                  {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+                </h3>
+                <p className="text-xs text-text-muted mt-1">{selectedDateEvents.length} events scheduled</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowTaskModal(true);
+                  const initialDate = formatLocalDate(selectedDate);
+                  setNewTask({ ...newTask, date: initialDate, time: '12:00' });
+                  setPickerMonthDate(new Date(selectedDate));
+                }}
+                className="p-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition"
+                title="Add event for this day"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="overflow-y-auto custom-scrollbar flex-1 space-y-3 pr-2">
+              {selectedDateEvents.length === 0 ? (
+                <div className="text-center py-10 flex flex-col items-center text-text-muted">
+                  <CalendarIcon className="w-10 h-10 mb-3 opacity-20" />
+                  <p className="text-sm">No events scheduled for this day.</p>
+                </div>
+              ) : (
+                selectedDateEvents.map((event, index) => (
+                  <div key={index} className={`p-4 rounded-xl border bg-background flex flex-col gap-3 ${getEventColorClass(event.status, event.type).split(' ')[0]} bg-opacity-30`}>
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          {event.type === 'meeting' && <Video className="w-4 h-4 text-text-muted" />}
+                          {event.type === 'task' && <CheckCircle2 className="w-4 h-4 text-text-muted" />}
+                          {(event.type === 'project-start' || event.type === 'project-deadline') && <AlertCircle className="w-4 h-4 text-text-muted" />}
+                          <h4 className="font-semibold text-text-primary truncate">{event.title}</h4>
+                        </div>
+                        
                         {event.clientName && (
-                          <div className="text-xs text-text-muted flex items-center space-x-1">
-                            <User className="w-3 h-3" />
-                            <span>{event.clientName}</span>
+                          <div className="text-xs text-text-muted flex items-center space-x-1 mt-1.5">
+                            <User className="w-3.5 h-3.5" />
+                            <span className="truncate">{event.clientName}</span>
+                          </div>
+                        )}
+                        {event.projectName && (
+                          <div className="text-xs text-text-muted flex items-center space-x-1 mt-1">
+                            <FolderKanban className="w-3.5 h-3.5" />
+                            <span className="truncate">{event.projectName}</span>
                           </div>
                         )}
                         {event.time && (
                           <div className="text-xs text-text-muted flex items-center space-x-1 mt-1">
-                            <Clock className="w-3 h-3" />
-                            <span>{event.time}</span>
+                            <Clock className="w-3.5 h-3.5" />
+                            <span>{timeOptions.find(t => t.value === event.time)?.label || event.time}</span>
                           </div>
                         )}
                       </div>
-                      {event._id && event.type === 'task' && (
-                        <select
-                          value={event.status}
-                          onChange={(e) => updateTaskStatus(event._id!, e.target.value as Task['status'])}
-                          className="ta-input text-xs px-2 py-1 h-auto"
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="in-progress">In Progress</option>
-                          <option value="completed">Completed</option>
-                        </select>
+                      
+                      {event._id && (event.type === 'task' || event.type === 'meeting') && (
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() => setViewingTask(event)}
+                            className="p-1.5 hover:bg-surface rounded-lg text-text-muted hover:text-primary transition"
+                            title="View Event"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setNewTask({ ...event });
+                              setPickerMonthDate(new Date(event.date));
+                              setShowTaskModal(true);
+                            }}
+                            className="p-1.5 hover:bg-surface rounded-lg text-text-muted hover:text-primary transition"
+                            title="Edit Event"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <select
+                            value={event.status}
+                            onChange={(e) => updateTaskStatus(event._id!, e.target.value as Task['status'])}
+                            className="ta-input text-xs px-2 py-1 h-auto w-auto bg-background"
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                          </select>
+                        </div>
                       )}
                     </div>
+                    
+                    {event.description && (
+                      <div className="text-xs text-text-muted bg-surface/50 p-2 rounded-lg border border-border/50 flex gap-2 items-start">
+                        <AlignLeft className="w-3.5 h-3.5 mt-0.5 shrink-0 opacity-50" />
+                        <p className="break-words line-clamp-3">{event.description}</p>
+                      </div>
+                    )}
                   </div>
-                ))}
-                {getEventsForDate(selectedDate).length === 0 && (
-                  <p className="text-sm text-text-muted text-center py-4">No events scheduled</p>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Upcoming Deadlines */}
-          <div className="ta-card">
-            <h3 className="font-semibold text-text-primary mb-4 flex items-center space-x-2">
-              <AlertCircle className="w-5 h-5 text-red-500" />
-              <span>Upcoming Deadlines</span>
-            </h3>
-            <div className="space-y-2">
-              {projects
-                .filter(p => p.milestones && p.milestones.length > 0 && p.status !== 'completed')
-                .flatMap(project => 
-                  (project.milestones || [])
-                    .filter(m => m.dueDate && new Date(m.dueDate) > new Date() && m.status !== 'completed')
-                    .map(milestone => ({
-                      ...project,
-                      milestoneName: milestone.name,
-                      milestoneDate: milestone.dueDate
-                    }))
-                )
-                .sort((a, b) => new Date(a.milestoneDate).getTime() - new Date(b.milestoneDate).getTime())
-                .slice(0, 5)
-                .map((item, index) => (
-                  <div key={index} className="p-3 bg-red-500/5 rounded-lg border border-red-500/20">
-                    <div className="font-medium text-sm text-text-primary">{item.projectName}</div>
-                    <div className="text-xs text-text-muted">{item.clientName}</div>
-                    <div className="text-xs text-primary mt-1">{item.milestoneName}</div>
-                    <div className="text-xs text-red-500 mt-1">
-                      Due: {new Date(item.milestoneDate).toLocaleDateString()}
-                    </div>
-                  </div>
-                ))}
-              {projects.filter(p => p.milestones && p.milestones.length > 0).length === 0 && (
-                <p className="text-sm text-text-muted text-center py-4">No upcoming deadlines</p>
+                ))
               )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Add Task Modal */}
+      {/* Add Task/Event Modal */}
       {showTaskModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-background rounded-xl shadow-2xl max-w-md w-full p-6"
+            className="bg-background rounded-xl shadow-2xl max-w-md w-full p-6 border border-border"
           >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-xl font-semibold">Add New Task</h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-text-primary">
+                {newTask._id ? 'Edit Event' : 'Add New Event'}
+              </h3>
               <button
                 onClick={() => setShowTaskModal(false)}
-                className="p-2 hover:bg-surface rounded-lg text-text-muted"
+                className="p-2 hover:bg-surface rounded-lg text-text-muted transition"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-2">
+                  Event Type
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => setNewTask({ ...newTask, type: 'task' })}
+                    className={`py-2 px-4 rounded-lg text-sm font-medium border transition flex items-center justify-center gap-2 ${
+                      newTask.type === 'task'
+                        ? 'bg-primary/10 text-primary border-primary'
+                        : 'bg-surface text-text-primary border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    Task
+                  </button>
+                  <button
+                    onClick={() => setNewTask({ ...newTask, type: 'meeting' })}
+                    className={`py-2 px-4 rounded-lg text-sm font-medium border transition flex items-center justify-center gap-2 ${
+                      newTask.type === 'meeting'
+                        ? 'bg-primary/10 text-primary border-primary'
+                        : 'bg-surface text-text-primary border-border hover:border-primary/50'
+                    }`}
+                  >
+                    <Video className="w-4 h-4" />
+                    Meeting
+                  </button>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-text-primary mb-1">
-                  Task Title *
+                  Title
                 </label>
                 <input
                   type="text"
                   value={newTask.title}
                   onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Enter task title"
+                  className="w-full px-4 py-2.5 bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary outline-none"
+                  placeholder="Enter event title"
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="relative" ref={datePickerRef}>
+                  <label className="block text-sm font-medium text-text-primary mb-1">
+                    Date
+                  </label>
+                  <button
+                    onClick={() => setShowDatePicker(!showDatePicker)}
+                    className="w-full px-4 py-2.5 bg-surface border border-border rounded-lg text-text-primary outline-none flex items-center gap-2 hover:border-primary/50 transition text-sm"
+                  >
+                    <CalendarDays className="w-4 h-4 text-text-muted" />
+                    {formatPickerDate(newTask.date)}
+                  </button>
+                  
+                  {/* Custom Date Picker Popover */}
+                  <AnimatePresence>
+                    {showDatePicker && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute top-full left-0 mt-2 p-3 bg-background border border-border shadow-2xl rounded-xl z-50 w-[280px]"
+                      >
+                        <div className="flex justify-between items-center mb-3">
+                          <button
+                            onClick={() => setPickerMonthDate(new Date(pickerMonthDate.getFullYear(), pickerMonthDate.getMonth() - 1))}
+                            className="p-1 hover:bg-surface rounded-md"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <div className="text-sm font-semibold">
+                            {pickerMonthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                          </div>
+                          <button
+                            onClick={() => setPickerMonthDate(new Date(pickerMonthDate.getFullYear(), pickerMonthDate.getMonth() + 1))}
+                            className="p-1 hover:bg-surface rounded-md"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
+                        <div className="grid grid-cols-7 gap-1 mb-1">
+                          {weekDays.map(d => (
+                            <div key={d} className="text-center text-[10px] text-text-muted font-medium">{d.slice(0,2)}</div>
+                          ))}
+                        </div>
+                        <div className="grid grid-cols-7 gap-1">
+                          {getDaysInMonth(pickerMonthDate).map((d, i) => (
+                            <button
+                              key={i}
+                              disabled={!d}
+                              onClick={() => {
+                                if (d) {
+                                  setNewTask({ ...newTask, date: formatLocalDate(d) });
+                                  setShowDatePicker(false);
+                                }
+                              }}
+                              className={`
+                                h-8 w-8 rounded-full flex items-center justify-center text-xs
+                                ${!d ? 'invisible' : 'hover:bg-surface'}
+                                ${d && formatLocalDate(d) === newTask.date ? 'bg-primary text-background hover:bg-primary' : ''}
+                                ${d && isToday(d) && formatLocalDate(d) !== newTask.date ? 'text-primary font-bold' : ''}
+                              `}
+                            >
+                              {d?.getDate()}
+                            </button>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+                
+                <div className="relative" ref={timePickerRef}>
+                  <label className="block text-sm font-medium text-text-primary mb-1">
+                    Time
+                  </label>
+                  <button
+                    onClick={() => setShowTimePicker(!showTimePicker)}
+                    className="w-full px-4 py-2.5 bg-surface border border-border rounded-lg text-text-primary outline-none flex items-center justify-between hover:border-primary/50 transition text-sm"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4 text-text-muted" />
+                      <span>{timeOptions.find(t => t.value === newTask.time)?.label || 'All Day'}</span>
+                    </div>
+                  </button>
+                  
+                  <AnimatePresence>
+                    {showTimePicker && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute top-full left-0 mt-2 bg-background border border-border shadow-2xl rounded-xl z-50 w-full max-h-60 overflow-y-auto custom-scrollbar py-2"
+                      >
+                        <button
+                          onClick={() => {
+                            setNewTask({ ...newTask, time: '' });
+                            setShowTimePicker(false);
+                          }}
+                          className={`w-full text-left px-4 py-2 text-sm hover:bg-surface transition ${!newTask.time ? 'bg-primary/10 text-primary font-medium' : 'text-text-primary'}`}
+                        >
+                          All Day
+                        </button>
+                        {timeOptions.map((t) => (
+                          <button
+                            key={t.value}
+                            onClick={() => {
+                              setNewTask({ ...newTask, time: t.value });
+                              setShowTimePicker(false);
+                            }}
+                            className={`w-full text-left px-4 py-2 text-sm hover:bg-surface transition ${newTask.time === t.value ? 'bg-primary/10 text-primary font-medium' : 'text-text-primary'}`}
+                          >
+                            {t.label}
+                          </button>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-text-primary mb-1">
-                  Description
-                </label>
-                <textarea
-                  value={newTask.description}
-                  onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows={3}
-                  placeholder="Enter task description"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">
-                  Date *
-                </label>
-                <input
-                  type="date"
-                  value={newTask.date}
-                  onChange={(e) => setNewTask({ ...newTask, date: e.target.value })}
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">
-                  Time (Optional)
-                </label>
-                <input
-                  type="time"
-                  value={newTask.time}
-                  onChange={(e) => setNewTask({ ...newTask, time: e.target.value })}
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-text-primary mb-1">
-                  Link to Project (Optional)
+                  Project Link (Optional)
                 </label>
                 <select
                   value={newTask.projectId || ''}
@@ -527,9 +791,9 @@ export default function SchedulePage() {
                       clientName: project?.clientName
                     });
                   }}
-                  className="w-full px-4 py-2 border border-border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-2.5 bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary outline-none text-sm"
                 >
-                  <option value="">No project</option>
+                  <option value="">Select a project...</option>
                   {projects.map(project => (
                     <option key={project._id} value={project._id}>
                       {project.projectName} - {project.clientName}
@@ -538,19 +802,87 @@ export default function SchedulePage() {
                 </select>
               </div>
 
-              <div className="flex space-x-3 pt-4">
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={newTask.description}
+                  onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-surface border border-border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-text-primary outline-none resize-none text-sm"
+                  rows={2}
+                  placeholder="Enter details..."
+                />
+              </div>
+
+              <div className="flex space-x-3 pt-2">
                 <button
                   onClick={() => setShowTaskModal(false)}
-                  className="flex-1 px-4 py-2 border border-border text-text-primary rounded-lg hover:bg-surface transition"
+                  className="flex-1 px-4 py-2.5 border border-border text-text-primary font-medium rounded-lg hover:bg-surface transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAddTask}
-                  className="flex-1 px-4 py-2 bg-primary text-background rounded-lg hover:shadow-lg transition"
+                  className="flex-1 px-4 py-2.5 bg-primary text-background font-semibold rounded-lg hover:shadow-lg hover:shadow-primary/20 transition"
                 >
-                  Add Task
+                  Save Event
                 </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* View Event Modal */}
+      {viewingTask && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-background rounded-xl shadow-2xl max-w-md w-full p-6 border border-border"
+          >
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-text-primary">View Event</h3>
+              <button
+                onClick={() => setViewingTask(null)}
+                className="p-2 hover:bg-surface rounded-lg text-text-muted transition"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Title</span>
+                <p className="text-text-primary font-medium mt-1">{viewingTask.title}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Date</span>
+                  <p className="text-text-primary mt-1">{formatPickerDate(viewingTask.date)}</p>
+                </div>
+                <div>
+                  <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Time</span>
+                  <p className="text-text-primary mt-1">{timeOptions.find(t => t.value === viewingTask.time)?.label || viewingTask.time || 'All Day'}</p>
+                </div>
+              </div>
+              {viewingTask.projectName && (
+                <div>
+                  <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Project</span>
+                  <p className="text-text-primary mt-1">{viewingTask.projectName} {viewingTask.clientName ? `(${viewingTask.clientName})` : ''}</p>
+                </div>
+              )}
+              {viewingTask.description && (
+                <div>
+                  <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Description</span>
+                  <div className="bg-surface/50 p-3 rounded-lg border border-border/50 mt-1">
+                    <p className="text-sm text-text-primary break-words whitespace-pre-wrap">{viewingTask.description}</p>
+                  </div>
+                </div>
+              )}
+              <div>
+                <span className="text-xs font-semibold text-text-muted uppercase tracking-wider">Status</span>
+                <p className="text-text-primary mt-1 capitalize">{viewingTask.status}</p>
               </div>
             </div>
           </motion.div>

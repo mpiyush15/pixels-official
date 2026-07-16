@@ -92,6 +92,7 @@ export async function PUT(
       if (updateData.validUntil) update.validUntil = new Date(updateData.validUntil);
       if (updateData.terms !== undefined) update.terms = updateData.terms;
       if (updateData.notes !== undefined) update.notes = updateData.notes;
+      if (updateData.clientAddress !== undefined) update.clientAddress = updateData.clientAddress;
       if (updateData.status) update.status = updateData.status;
     }
 

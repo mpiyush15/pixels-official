@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
           clientSalutation: client?.salutation || '',
           clientName: client?.name || 'Unknown',
           clientEmail: client?.email || '',
+          clientCompany: client?.company || '',
         };
       })
     );
@@ -62,6 +63,7 @@ export async function POST(request: NextRequest) {
       validUntil,
       terms,
       notes,
+      clientAddress,
     } = body;
 
     // Validation
@@ -116,6 +118,7 @@ export async function POST(request: NextRequest) {
       validUntil: validUntil ? new Date(validUntil) : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Default 30 days
       terms: terms || '',
       notes: notes || '',
+      clientAddress: clientAddress || '',
       status: 'pending', // pending, accepted, rejected, expired
       createdAt: new Date(),
       updatedAt: new Date(),

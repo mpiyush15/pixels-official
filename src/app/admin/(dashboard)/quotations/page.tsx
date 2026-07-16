@@ -31,7 +31,9 @@ interface Quotation {
   clientId: string;
   clientSalutation?: string;
   clientName: string;
+  clientCompany?: string;
   clientEmail: string;
+  clientAddress?: string;
   title: string;
   description?: string;
   items: QuotationItem[];
@@ -56,6 +58,8 @@ interface Client {
   email: string;
 }
 
+const defaultTerms = '1. Payment is due within 15 days of invoice date.\n2. 50% advance payment required to commence work.\n3. This quotation is valid for 30 days from the date of issue.';
+
 export default function QuotationsPage() {
   const [quotations, setQuotations] = useState<Quotation[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
@@ -71,13 +75,14 @@ export default function QuotationsPage() {
   // Form state
   const [formData, setFormData] = useState({
     clientId: '',
+    clientAddress: '',
     title: '',
     description: '',
     items: [{ description: '', quantity: 1, rate: 0, amount: 0 }],
     tax: 0,
     discount: 0,
     validUntil: '',
-    terms: '',
+    terms: defaultTerms,
     notes: ''
   });
 
@@ -227,14 +232,15 @@ export default function QuotationsPage() {
     setEditingId(quotation._id);
     setFormData({
       clientId: quotation.clientId,
+      clientAddress: quotation.clientAddress || '',
       title: quotation.title,
       description: quotation.description || '',
       items: quotation.items,
       tax: quotation.tax || 0,
       discount: quotation.discount || 0,
       validUntil: new Date(quotation.validUntil).toISOString().split('T')[0],
-      terms: '',
-      notes: ''
+      terms: quotation.terms || defaultTerms,
+      notes: quotation.notes || ''
     });
     setShowEditModal(true);
   };
@@ -316,193 +322,244 @@ export default function QuotationsPage() {
         <meta charset="utf-8">
         <title>Quotation - ${quotation.quotationNumber}</title>
         <style>
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body { 
-            font-family: Arial, sans-serif;
-            padding: 40px;
-            color: #000;
-            font-size: 12px;
+            font-family: 'Inter', sans-serif;
+            padding: 50px;
+            color: #334155;
+            font-size: 13px;
             line-height: 1.6;
-            position: relative;
+            background-color: #fff;
+            max-width: 800px;
+            margin: 0 auto;
           }
-          body::before {
-            content: 'QUOTATION';
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-45deg);
-            font-size: 120px;
-            font-weight: bold;
-            color: rgba(200, 200, 200, 0.1);
-            z-index: -1;
-            white-space: nowrap;
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 30px;
+            margin-bottom: 40px;
           }
-          .doc-title {
-            background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
-            text-align: center;
-            font-size: 24px;
-            font-weight: bold;
-            padding: 15px;
-            margin: -40px -40px 30px -40px;
-            color: #1565C0;
-            letter-spacing: 2px;
+          .brand {
+            font-size: 28px;
+            font-weight: 700;
+            color: #0f172a;
+            letter-spacing: -0.5px;
+          }
+          .doc-type {
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
+          }
+          .quotation-meta {
+            text-align: right;
+          }
+          .meta-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-bottom: 5px;
+          }
+          .meta-label {
+            font-weight: 600;
+            color: #64748b;
+          }
+          .meta-value {
+            font-weight: 500;
+            color: #0f172a;
+            min-width: 100px;
           }
           .info-section {
             display: flex;
-            gap: 30px;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid #ddd;
+            gap: 50px;
+            margin-bottom: 40px;
           }
-          .company-info {
-            flex: 1;
-          }
-          .client-info {
+          .info-block {
             flex: 1;
           }
           .section-title {
-            font-weight: bold;
-            font-size: 13px;
-            margin-bottom: 10px;
-            color: #1565C0;
+            font-size: 11px;
+            font-weight: 700;
+            color: #94a3b8;
             text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+          }
+          .info-name {
+            font-weight: 700;
+            font-size: 15px;
+            color: #0f172a;
+            margin-bottom: 5px;
           }
           .info-line {
-            margin: 5px 0;
-            font-size: 11px;
-          }
-          .project-section {
-            background: #f8f9fa;
-            padding: 15px;
-            margin-bottom: 25px;
-            border-left: 4px solid #1565C0;
-          }
-          .project-title {
-            font-weight: bold;
-            font-size: 13px;
-            margin-bottom: 5px;
-            color: #1565C0;
+            color: #475569;
+            margin-bottom: 3px;
           }
           table {
             width: 100%;
             border-collapse: collapse;
-            margin: 25px 0;
+            margin: 40px 0;
           }
           th {
-            background: #1565C0;
-            color: #fff;
-            padding: 10px;
+            background: #f8fafc;
+            color: #475569;
+            padding: 12px 15px;
             text-align: left;
-            font-weight: bold;
-            font-size: 11px;
+            font-weight: 600;
+            font-size: 12px;
+            border-bottom: 2px solid #e2e8f0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
           }
           td {
-            padding: 10px;
-            border-bottom: 1px solid #ddd;
+            padding: 15px;
+            border-bottom: 1px solid #f1f5f9;
+            color: #1e293b;
           }
-          .text-right {
-            text-align: right;
+          tr:nth-child(even) td {
+            background-color: #fcfcfd;
           }
-          .text-center {
-            text-align: center;
+          .text-right { text-align: right; }
+          .text-center { text-align: center; }
+          .totals-wrapper {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 50px;
           }
           .totals {
-            margin-left: auto;
-            width: 300px;
-            margin-top: 20px;
+            width: 350px;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
           }
           .totals-row {
             display: flex;
             justify-content: space-between;
             padding: 8px 0;
+            color: #475569;
           }
           .totals-row.grand-total {
-            border-top: 2px solid #000;
-            font-weight: bold;
-            font-size: 14px;
-            margin-top: 5px;
-            padding-top: 10px;
+            border-top: 2px solid #e2e8f0;
+            font-weight: 700;
+            font-size: 16px;
+            color: #0f172a;
+            margin-top: 10px;
+            padding-top: 15px;
           }
           .terms {
             margin-top: 40px;
+            padding-top: 30px;
+            border-top: 1px solid #e2e8f0;
             page-break-inside: avoid;
           }
           .terms-title {
-            font-weight: bold;
-            margin-bottom: 10px;
-            color: #1565C0;
-            font-size: 13px;
-            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #0f172a;
+            font-size: 14px;
           }
           .terms-content {
-            font-size: 11px;
+            font-size: 12px;
             line-height: 1.8;
+            color: #64748b;
             white-space: pre-wrap;
           }
           .footer {
             margin-top: 60px;
             text-align: center;
             font-size: 12px;
-            font-weight: bold;
-            color: #1565C0;
-            padding-top: 20px;
-            border-top: 2px solid #ddd;
+            color: #94a3b8;
           }
-          .signature-section {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 80px;
-          }
-          .signature-box {
-            width: 200px;
-            text-align: center;
-          }
-          .signature-line {
-            border-top: 1px solid #000;
-            margin-bottom: 5px;
+          @page {
+            margin: 0.5cm;
           }
           @media print {
-            body { padding: 20px; }
+            body { 
+              padding: 0 !important;
+              margin: 0 !important;
+              max-width: 100% !important;
+              width: 100% !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              font-size: 11px !important;
+            }
+            .brand { font-size: 24px !important; }
+            .info-section { gap: 30px !important; margin-bottom: 30px !important; }
+            .totals { width: 280px !important; padding: 15px !important; }
             .no-print { display: none !important; }
+            .info-section, .totals-wrapper { page-break-inside: avoid; }
+            table { page-break-inside: auto; width: 100% !important; }
+            tr { page-break-inside: avoid; page-break-after: auto; }
           }
         </style>
       </head>
       <body>
-        <!-- Header with Light Blue Background -->
-        <div class="doc-title">QUOTATION</div>
-
-        <!-- Company and Client Info Side by Side -->
-        <div class="info-section">
-          <!-- Company Info - Left -->
-          <div class="company-info">
-            <div class="section-title">From</div>
-            <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">PIXELS DIGITAL</div>
-            <div class="info-line">Email: info@pixelsdigitalsolutions.com</div>
-            <div class="info-line">Phone: +91 9766504856</div>
-            <div class="info-line">Web: pixelsdigitalsolutions.com</div>
+        <!-- Header -->
+        <div class="header">
+          <div>
+            <div class="brand">PIXELS DIGITAL SOLUTIONS</div>
+            <div class="doc-type">Quotation</div>
           </div>
-
-          <!-- Client Info - Right -->
-          <div class="client-info">
-            <div class="section-title">To</div>
-            <div style="font-weight: bold; font-size: 14px; margin-bottom: 8px;">
-              ${quotation.clientSalutation ? quotation.clientSalutation + ' ' : ''}${quotation.clientName}
+          <div class="quotation-meta">
+            <div class="meta-row">
+              <span class="meta-label">Quotation No:</span>
+              <span class="meta-value">${quotation.quotationNumber}</span>
             </div>
-            <div class="info-line">Email: ${quotation.clientEmail}</div>
-            <div class="info-line"><strong>Quotation No:</strong> ${quotation.quotationNumber}</div>
-            <div class="info-line"><strong>Date:</strong> ${new Date(quotation.createdAt).toLocaleDateString('en-IN')}</div>
-            <div class="info-line"><strong>Valid Until:</strong> ${new Date(quotation.validUntil).toLocaleDateString('en-IN')}</div>
+            <div class="meta-row">
+              <span class="meta-label">Date:</span>
+              <span class="meta-value">${new Date(quotation.createdAt).toLocaleDateString('en-IN')}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Valid Until:</span>
+              <span class="meta-value">${new Date(quotation.validUntil).toLocaleDateString('en-IN')}</span>
+            </div>
           </div>
         </div>
+
+        <!-- Info Section -->
+        <div class="info-section">
+          <!-- From -->
+          <div class="info-block">
+            <div class="section-title">From</div>
+            <div class="info-name">Pixels Digital Solutions</div>
+            <div class="info-line">mpiyush2727@gmail.com</div>
+            <div class="info-line">+91 9766504856</div>
+            <div class="info-line">pixelsdigitalsolutions.com</div>
+          </div>
+
+          <!-- To -->
+          <div class="info-block">
+            <div class="section-title">Quotation For</div>
+            ${quotation.clientCompany ? `<div class="info-name" style="margin-bottom: 2px;">${quotation.clientCompany}</div>` : ''}
+            <div class="${quotation.clientCompany ? 'info-line' : 'info-name'}" style="font-weight: ${quotation.clientCompany ? '500' : '700'};">
+              ${quotation.clientSalutation ? quotation.clientSalutation + ' ' : ''}${quotation.clientName}
+            </div>
+            <div class="info-line">${quotation.clientEmail}</div>
+            ${quotation.clientAddress ? `<div class="info-line" style="white-space: pre-wrap;">${quotation.clientAddress}</div>` : ''}
+          </div>
+        </div>
+
+        <!-- Project Overview -->
+        ${quotation.title || quotation.description ? `
+        <div style="margin-bottom: 30px;">
+          ${quotation.title ? `<div style="font-size: 16px; font-weight: 700; color: #0f172a; margin-bottom: 8px;">${quotation.title}</div>` : ''}
+          ${quotation.description ? `<div style="font-size: 13px; color: #475569; white-space: pre-wrap; line-height: 1.6;">${quotation.description}</div>` : ''}
+        </div>
+        ` : ''}
 
         <!-- Items Table -->
         <table>
           <thead>
             <tr>
-              <th style="width: 50%">Description</th>
-              <th class="text-center" style="width: 15%">Qty</th>
-              <th class="text-right" style="width: 17%">Rate</th>
-              <th class="text-right" style="width: 18%">Amount</th>
+              <th>Description</th>
+              <th class="text-center">Qty</th>
+              <th class="text-right">Rate</th>
+              <th class="text-right">Amount</th>
             </tr>
           </thead>
           <tbody>
@@ -518,34 +575,36 @@ export default function QuotationsPage() {
         </table>
 
         <!-- Totals -->
-        <div class="totals">
-          <div class="totals-row">
-            <span>Subtotal:</span>
-            <span>₹${quotation.subtotal.toFixed(2)}</span>
-          </div>
-          ${quotation.tax ? `
-          <div class="totals-row">
-            <span>Tax:</span>
-            <span>₹${quotation.tax.toFixed(2)}</span>
-          </div>
-          ` : ''}
-          ${quotation.discount ? `
-          <div class="totals-row">
-            <span>Discount:</span>
-            <span>- ₹${quotation.discount.toFixed(2)}</span>
-          </div>
-          ` : ''}
-          <div class="totals-row grand-total">
-            <span>Total:</span>
-            <span>₹${quotation.total.toFixed(2)}</span>
+        <div class="totals-wrapper">
+          <div class="totals">
+            <div class="totals-row">
+              <span>Subtotal</span>
+              <span>₹${quotation.subtotal.toFixed(2)}</span>
+            </div>
+            ${quotation.tax ? `
+            <div class="totals-row">
+              <span>Tax</span>
+              <span>₹${quotation.tax.toFixed(2)}</span>
+            </div>
+            ` : ''}
+            ${quotation.discount ? `
+            <div class="totals-row">
+              <span>Discount</span>
+              <span>- ₹${quotation.discount.toFixed(2)}</span>
+            </div>
+            ` : ''}
+            <div class="totals-row grand-total">
+              <span>Total Amount</span>
+              <span>₹${quotation.total.toFixed(2)}</span>
+            </div>
           </div>
         </div>
 
         <!-- Terms & Conditions -->
-        ${quotation.terms ? `
+        ${(quotation.terms || defaultTerms) ? `
         <div class="terms">
           <div class="terms-title">Terms & Conditions</div>
-          <div class="terms-content">${quotation.terms}</div>
+          <div class="terms-content">${quotation.terms || defaultTerms}</div>
         </div>
         ` : ''}
 
@@ -557,29 +616,15 @@ export default function QuotationsPage() {
         </div>
         ` : ''}
 
-        <!-- Signatures -->
-        <div class="signature-section">
-          <div class="signature-box">
-            <div class="signature-line"></div>
-            <div>Authorized Signature</div>
-            <div style="font-size: 10px; color: #666;">Pixels Digital</div>
-          </div>
-          <div class="signature-box">
-            <div class="signature-line"></div>
-            <div>Client Signature</div>
-            <div style="font-size: 10px; color: #666;">${quotation.clientName}</div>
-          </div>
-        </div>
-
         <!-- Footer -->
         <div class="footer">
-          Thank You For Your Business!
+          Thank you for choosing Pixels Digital Solutions.
         </div>
 
         <!-- Print Button -->
         <div class="no-print" style="position: fixed; bottom: 20px; right: 20px;">
           <button onclick="window.print()" style="
-            background: #1565C0;
+            background: #0f172a;
             color: white;
             border: none;
             padding: 10px 20px;
@@ -589,7 +634,7 @@ export default function QuotationsPage() {
             border-radius: 4px;
           ">Print PDF</button>
           <button onclick="window.close()" style="
-            background: #666;
+            background: #64748b;
             color: white;
             border: none;
             padding: 10px 20px;
@@ -609,13 +654,14 @@ export default function QuotationsPage() {
   const resetForm = () => {
     setFormData({
       clientId: '',
+      clientAddress: '',
       title: '',
       description: '',
       items: [{ description: '', quantity: 1, rate: 0, amount: 0 }],
       tax: 0,
       discount: 0,
       validUntil: '',
-      terms: '',
+      terms: defaultTerms,
       notes: ''
     });
   };
@@ -748,9 +794,14 @@ export default function QuotationsPage() {
                   </td>
 
                   {/* Client */}
-                  <td className="ta-table-td w-[30%]">
+                  <td className="ta-table-td">
                     <div className="flex flex-col">
-                      <span className="text-sm font-bold text-text-primary">{quotation.clientName}</span>
+                      {quotation.clientCompany && (
+                        <span className="text-sm font-bold text-text-primary">{quotation.clientCompany}</span>
+                      )}
+                      <span className={quotation.clientCompany ? "text-xs font-medium text-text-muted mt-0.5" : "text-sm font-bold text-text-primary"}>
+                        {quotation.clientName}
+                      </span>
                       <span className="text-xs font-medium text-text-muted mt-0.5">{quotation.clientEmail}</span>
                     </div>
                   </td>
@@ -902,6 +953,18 @@ export default function QuotationsPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Client Address */}
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-2">Client Address</label>
+                <textarea
+                  value={formData.clientAddress}
+                  onChange={(e) => setFormData({ ...formData, clientAddress: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
+                  placeholder="Client Address (optional)"
+                />
               </div>
 
               {/* Title */}
@@ -1118,6 +1181,18 @@ export default function QuotationsPage() {
                 </select>
               </div>
 
+              {/* Client Address */}
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-2">Client Address</label>
+                <textarea
+                  value={formData.clientAddress}
+                  onChange={(e) => setFormData({ ...formData, clientAddress: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
+                  placeholder="Client Address (optional)"
+                />
+              </div>
+
               {/* Title */}
               <div>
                 <label className="block text-sm font-medium text-text-primary mb-2">Title *</label>
@@ -1252,6 +1327,29 @@ export default function QuotationsPage() {
                 </div>
               </div>
 
+              {/* Terms & Notes */}
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-2">Terms & Conditions</label>
+                <textarea
+                  value={formData.terms}
+                  onChange={(e) => setFormData({ ...formData, terms: e.target.value })}
+                  rows={3}
+                  className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
+                  placeholder="Payment terms, delivery timeline, etc."
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-text-primary mb-2">Additional Notes</label>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  rows={2}
+                  className="w-full px-4 py-3 bg-surface/30 border border-white/10 rounded-lg text-text-primary focus:outline-none focus:border-white/20"
+                  placeholder="Any additional information"
+                />
+              </div>
+
               {/* Actions */}
               <div className="flex gap-4">
                 <motion.button
@@ -1300,11 +1398,17 @@ export default function QuotationsPage() {
             <div className="space-y-4 mb-6">
               <div>
                 <p className="text-sm text-text-muted">Client</p>
-                <p className="text-text-primary">
+                {selectedQuotation.clientCompany && (
+                  <p className="text-text-primary font-medium">{selectedQuotation.clientCompany}</p>
+                )}
+                <p className={selectedQuotation.clientCompany ? "text-sm text-text-primary" : "text-text-primary"}>
                   {selectedQuotation.clientSalutation && `${selectedQuotation.clientSalutation} `}
                   {selectedQuotation.clientName}
                 </p>
                 <p className="text-sm text-text-muted">{selectedQuotation.clientEmail}</p>
+                {selectedQuotation.clientAddress && (
+                  <p className="text-sm text-text-muted mt-1 whitespace-pre-wrap">{selectedQuotation.clientAddress}</p>
+                )}
               </div>
 
               {selectedQuotation.description && (
@@ -1363,11 +1467,11 @@ export default function QuotationsPage() {
                 </div>
               </div>
 
-              {selectedQuotation.terms && (
+              {(selectedQuotation.terms || defaultTerms) && (
                 <div>
                   <p className="text-sm text-text-primary mb-2">Terms & Conditions</p>
                   <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
-                    <p className="text-text-primary text-sm whitespace-pre-wrap">{selectedQuotation.terms}</p>
+                    <p className="text-text-primary text-sm whitespace-pre-wrap">{selectedQuotation.terms || defaultTerms}</p>
                   </div>
                 </div>
               )}
