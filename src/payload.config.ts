@@ -25,8 +25,9 @@ export default buildConfig({
   routes: {
     admin: '/cms',
   },
-  cors: [process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'],
-  csrf: [process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'],
+  serverURL: process.env.NEXT_PUBLIC_SITE_URL || 'https://pixelsdigitalsolutions.com',
+  cors: [process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000', 'https://pixelsdigitalsolutions.com', 'https://www.pixelsdigitalsolutions.com'],
+  csrf: [process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000', 'https://pixelsdigitalsolutions.com', 'https://www.pixelsdigitalsolutions.com'],
   collections: [
     Users,
     Media,
