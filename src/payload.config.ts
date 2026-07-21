@@ -11,6 +11,7 @@ import { AboutPage } from './globals/AboutPage'
 import { TestHomePage } from './globals/TestHomePage'
 import { Services } from './collections/Services'
 import { ServicesPage } from './globals/ServicesPage'
+import { s3Storage } from '@payloadcms/storage-s3'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
@@ -39,6 +40,21 @@ export default buildConfig({
     AboutPage,
     TestHomePage,
     ServicesPage,
+  ],
+  plugins: [
+    s3Storage({
+      collections: {
+        media: true,
+      },
+      bucket: process.env.AWS_S3_BUCKET_NAME || 'pixelsdigital',
+      config: {
+        region: process.env.AWS_REGION || 'ap-south-1',
+        credentials: {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+        },
+      },
+    }),
   ],
   editor: lexicalEditor({}),
   secret: process.env.PAYLOAD_SECRET || 'fallback-secret-key', // Ensure you have PAYLOAD_SECRET in .env
