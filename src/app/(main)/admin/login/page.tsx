@@ -43,7 +43,7 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -52,28 +52,28 @@ export default function AdminLogin() {
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-light text-white mb-2">Pixels Digital</h1>
-          <p className="text-gray-400 font-light">Admin Dashboard</p>
+          <h1 className="text-4xl font-light text-black mb-2">Pixels Digital</h1>
+          <p className="text-gray-500 font-light">Admin Dashboard</p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-8">
+        <div className="bg-white border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-3xl p-8">
           <div className="mb-8">
-            <h2 className="text-2xl font-light text-white mb-2">Welcome back</h2>
-            <p className="text-gray-400 text-sm font-light">Sign in to access your dashboard</p>
+            <h2 className="text-2xl font-light text-black mb-2">Welcome back</h2>
+            <p className="text-gray-500 text-sm font-light">Sign in to access your dashboard</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Email */}
             <div>
-              <label className="block text-white text-sm font-light mb-2">Email</label>
+              <label className="block text-gray-700 text-sm font-light mb-2">Email</label>
               <div className="relative">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" strokeWidth={1.5} />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-12 py-3 text-white focus:outline-none focus:border-white/30 transition-colors font-light"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-12 py-3 text-black focus:outline-none focus:border-gray-400 transition-colors font-light placeholder-gray-400 shadow-sm"
                   placeholder="admin@pixelsdigitalsolutions.com"
                   required
                 />
@@ -82,14 +82,14 @@ export default function AdminLogin() {
 
             {/* Password */}
             <div>
-              <label className="block text-white text-sm font-light mb-2">Password</label>
+              <label className="block text-gray-700 text-sm font-light mb-2">Password</label>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" strokeWidth={1.5} />
                 <input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-12 py-3 text-white focus:outline-none focus:border-white/30 transition-colors font-light"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-12 py-3 text-black focus:outline-none focus:border-gray-400 transition-colors font-light placeholder-gray-400 shadow-sm"
                   placeholder="••••••••"
                   required
                 />
@@ -101,7 +101,7 @@ export default function AdminLogin() {
               <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm font-light"
+                className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-red-600 text-sm font-light"
               >
                 {error}
               </motion.div>
@@ -113,7 +113,7 @@ export default function AdminLogin() {
               disabled={loading}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full bg-white text-black py-3 rounded-xl font-light flex items-center justify-center gap-2 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-[#B270FF] text-white py-3 rounded-xl font-light flex items-center justify-center gap-2 hover:bg-[#9d55f0] transition-colors shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <span>Signing in...</span>
@@ -129,7 +129,7 @@ export default function AdminLogin() {
             <div className="text-center">
               <Link
                 href="/admin/forgot-password"
-                className="text-gray-400 hover:text-white text-sm font-light transition-colors"
+                className="text-gray-500 hover:text-black text-sm font-light transition-colors"
               >
                 Forgot your password?
               </Link>
@@ -138,8 +138,8 @@ export default function AdminLogin() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-gray-500 text-sm font-light mt-8">
-          © 2024 Pixels Digital. All rights reserved.
+        <p className="text-center text-gray-400 text-sm font-light mt-8">
+          © {new Date().getFullYear()} Pixels Digital. All rights reserved.
         </p>
       </motion.div>
     </div>

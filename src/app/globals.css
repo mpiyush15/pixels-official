@@ -61,11 +61,7 @@
     --text-secondary: #CBD5E1;
     --text-muted: #94A3B8;
   }
-
-  html {
-    scroll-behavior: smooth;
-  }
-
+  /* scroll-behavior: smooth removed to fix Next.js App Router scrolling bugs */
   body {
     background-color: var(--background);
     color: var(--text-primary);
@@ -142,6 +138,15 @@
 
 .animate-gradient {
   animation: gradient 6s ease infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 25s linear infinite;
 }
 
 .scrollbar-hide {
