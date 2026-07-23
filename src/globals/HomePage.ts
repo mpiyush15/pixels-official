@@ -10,175 +10,138 @@ export const HomePage: GlobalConfig = {
       name: 'hero',
       type: 'group',
       fields: [
-        { name: 'headingLine1', type: 'text', required: true, defaultValue: 'Creating' },
-        { 
-          name: 'animatedLines', 
-          type: 'array',
-          defaultValue: [
-            { gradientText: 'Exciting Solutions', trailingText: 'for Campaigns.' },
-            { gradientText: 'Inspiring Solutions', trailingText: 'for Communities.' },
-            { gradientText: 'Innovative Solutions', trailingText: 'for Products.' }
-          ],
-          fields: [
-            { name: 'gradientText', type: 'text', required: true },
-            { name: 'trailingText', type: 'text', required: true }
-          ]
-        },
+        { name: 'headingWord1', type: 'text', required: true, defaultValue: 'Building' },
+        { name: 'headingLine1Rest', type: 'text', required: true, defaultValue: ' Software,' },
+        { name: 'headingLine2', type: 'text', required: true, defaultValue: 'AI Systems &' },
+        { name: 'headingLine3', type: 'text', required: true, defaultValue: 'Digital Products' },
+        { name: 'subheading', type: 'textarea', required: true, defaultValue: 'Building strong, scalable, and intelligent systems for the modern era.' },
         { 
           name: 'heroImage', 
           type: 'upload', 
           relationTo: 'media', 
           label: 'Hero Image',
-          admin: { description: 'Upload a background image for the Hero section' } 
         },
-        { name: 'subheading', type: 'textarea', required: true, defaultValue: 'Building strong, scalable, and intelligent systems for the modern era.' },
+      ]
+    },
+    {
+      name: 'brands',
+      type: 'array',
+      label: 'Brands Marquee',
+      defaultValue: [
+        { name: 'ATUT Tech' },
+        { name: 'VAIBHAV BIOTECH' },
+        { name: 'ABHANGG COTTON' },
+        { name: 'PLANTS MALL' }
+      ],
+      fields: [
+        { name: 'name', type: 'text', required: true }
+      ]
+    },
+    {
+      name: 'intro',
+      type: 'group',
+      fields: [
+        { name: 'eyebrow', type: 'text', required: true, defaultValue: 'WHO WE ARE' },
+        { name: 'headingLine1', type: 'text', required: true, defaultValue: 'Engineering systems for ' },
+        { name: 'headingHighlight', type: 'text', required: true, defaultValue: 'Growth.' },
         {
-          name: 'ctaButtons',
-          type: 'array',
-          label: 'Hero CTA Buttons',
-          defaultValue: [
-            { label: 'Talk to the team', url: '/contact', style: 'primary' },
-            { label: 'View our work', url: '/portfolio', style: 'secondary' }
-          ],
-          fields: [
-            { name: 'label', type: 'text', required: true },
-            { name: 'url', type: 'text', required: true },
-            { 
-              name: 'style', 
-              type: 'select', 
-              options: [
-                { label: 'Primary (Solid Purple)', value: 'primary' },
-                { label: 'Secondary (Outline/Glass)', value: 'secondary' }
-              ],
-              defaultValue: 'primary',
-              required: true
-            }
-          ]
-        },
-        {
-          name: 'stats',
+          name: 'paragraphs',
           type: 'array',
           defaultValue: [
-            { value: '10+', label: 'Projects Delivered' },
-            { value: '4+', label: 'Industries Served' },
-            { value: '2', label: 'Products Built' }
+            { text: 'Pixels Digital Solutions is a software engineering team that helps ambitious companies build products, automate operations, and scale faster.' },
+            { text: 'We design and develop custom software, SaaS platforms, AI automation, and enterprise systems that solve real-world problems and unlock new avenues for growth.' },
+            { text: 'By combining engineering excellence with business understanding, we build products that are scalable, secure, and ready for the future.' }
           ],
           fields: [
-            { name: 'value', type: 'text', required: true },
-            { name: 'label', type: 'text', required: true }
-          ]
-        },
-        {
-          name: 'brands',
-          type: 'array',
-          defaultValue: [
-            { name: 'VAIBHAV BIOTECH' },
-            { name: 'REPLYSYS' },
-            { name: 'MITRA' },
-            { name: 'UCHAL PORTAL' },
-            { name: 'PIXELS' }
-          ],
-          fields: [
-            { name: 'name', type: 'text', required: true }
+            { name: 'text', type: 'textarea', required: true }
           ]
         }
       ]
     },
     {
-      name: 'whatWeDo',
+      name: 'solutions',
       type: 'group',
       fields: [
-        { name: 'heading', type: 'textarea', required: true, defaultValue: 'Engineering solutions\nthat scale with your vision.' },
-        { name: 'subheading', type: 'textarea', required: true, defaultValue: 'We combine modern technologies with deep domain understanding to build secure, scalable and future-ready digital systems.' },
+        { name: 'headingLine1', type: 'text', required: true, defaultValue: 'Solutions we ' },
+        { name: 'headingHighlight', type: 'text', required: true, defaultValue: 'build.' },
         {
           name: 'cards',
           type: 'array',
           defaultValue: [
-            { title: "Custom Software Development", description: "Tailored systems, web applications, ERPs and enterprise platforms.", iconName: "Box" },
-            { title: "AI Agents & Automation", description: "Intelligent automation that streamlines operations and accelerates growth.", iconName: "BrainCircuit" },
-            { title: "SaaS Product Development", description: "Multi-tenant SaaS platforms built for scalability, performance and growth.", iconName: "Monitor" },
-            { title: "E-commerce Solutions", description: "End-to-end e-commerce systems with powerful integrations.", iconName: "ShoppingCart" }
+            { title: 'Custom Software\nDevelopment', description: 'Tailored systems built for your unique business workflows, internal operations and digital transformation initiatives', theme: 'white' },
+            { title: 'E-commerce\nPlatforms', description: 'Scalable ecommerce ecosystems with payments, inventory management and third-party integrations', theme: 'yellow' },
+            { title: 'API Integrations', description: 'Connect your software ecosystem through secure APIs, automation and seamless data synchronization', theme: 'white' },
+            { title: 'SaaS Product\nDevelopment', description: 'Multi-tenant SaaS platforms engineered for scalability, subscriptions and long-term growth', theme: 'yellow' },
+            { title: 'AI Agents &\nAutomation', description: 'Intelligent AI systems that automate operations, customer communication and repetitive workflows', theme: 'white' },
+            { title: 'ERP & Business\nSystems', description: 'Enterprise platforms for managing finance, inventory, operations, HR and business processes', theme: 'yellow' },
+            { title: 'WhatsApp & Communication\nSystems', description: 'Customer communication pipelines, automated notifications, and alert systems.', theme: 'white' },
+            { title: 'Product Strategy &\nConsulting', description: 'From idea validation to architecture and launch, we help you succeed in building digital products.', theme: 'yellow' },
+            { title: 'Mobile Application\nDevelopment', description: 'Cross-platform mobile applications designed for performance, scaling, and customer engagement.', theme: 'white' }
           ],
           fields: [
-            { name: 'title', type: 'text', required: true },
+            { name: 'title', type: 'textarea', required: true, admin: { description: 'Use new lines (Enter) for line breaks.' } },
             { name: 'description', type: 'textarea', required: true },
-            { name: 'iconName', type: 'text', required: true, admin: { description: 'Icon identifier like Box, BrainCircuit, Monitor, ShoppingCart' } }
+            { 
+              name: 'theme', 
+              type: 'select', 
+              options: [
+                { label: 'White', value: 'white' },
+                { label: 'Yellow', value: 'yellow' }
+              ],
+              defaultValue: 'white',
+              required: true
+            }
           ]
         }
       ]
     },
     {
-      name: 'howWeWork',
+      name: 'aiAutomation',
       type: 'group',
       fields: [
-        { name: 'heading', type: 'textarea', required: true, defaultValue: 'Strategy. Design.\nDevelop. Deliver.' },
+        { name: 'headingLine1', type: 'textarea', required: true, defaultValue: 'Artificial Intelligence &\nBusiness ' },
+        { name: 'headingHighlight', type: 'text', required: true, defaultValue: 'Automation.' },
+        { name: 'subheading', type: 'textarea', required: true, defaultValue: 'AI and machine learning tools that automate business workflows and processes.' },
         {
-          name: 'steps',
+          name: 'cards',
           type: 'array',
           defaultValue: [
-            { stepNumber: "01", title: "Discover", description: "We understand your goals, challenges and opportunities.", iconName: "Search" },
-            { stepNumber: "02", title: "Plan", description: "We design the right solution architecture and roadmap.", iconName: "PenTool" },
-            { stepNumber: "03", title: "Build", description: "We engineer with clean code, modern tools and best practices.", iconName: "Code" },
-            { stepNumber: "04", title: "Deliver", description: "We launch, support and scale as you grow.", iconName: "Rocket" }
+            { title: 'AI Agents &\nWorkflows', description: 'Intelligent systems that automate tasks, analyze data, and run business operations.', theme: 'white' },
+            { title: 'Conversational AI\n& Chatbots', description: 'Build customer support systems and intelligent assistants that engage customers 24/7.', theme: 'dark' },
+            { title: 'AI Enhanced\nApplications', description: 'Enhance digital experiences with recommendation engines, intelligent search, and personalization.', theme: 'white' }
           ],
           fields: [
-            { name: 'stepNumber', type: 'text', required: true },
-            { name: 'title', type: 'text', required: true },
+            { name: 'title', type: 'textarea', required: true, admin: { description: 'Use new lines for line breaks.' } },
             { name: 'description', type: 'textarea', required: true },
-            { name: 'iconName', type: 'text', required: true }
+            { 
+              name: 'theme', 
+              type: 'select', 
+              options: [
+                { label: 'White', value: 'white' },
+                { label: 'Dark', value: 'dark' }
+              ],
+              defaultValue: 'white',
+              required: true
+            }
           ]
         }
       ]
     },
     {
-      name: 'featuredWork',
+      name: 'ourWork',
       type: 'group',
       fields: [
-        { name: 'heading', type: 'textarea', required: true, defaultValue: 'Real projects.\nReal impact.' },
+        { name: 'headingLine1', type: 'text', required: true, defaultValue: 'Our ' },
+        { name: 'headingHighlight', type: 'text', required: true, defaultValue: 'Work.' },
         {
           name: 'projects',
           type: 'relationship',
           relationTo: 'case-studies',
           hasMany: true,
-          maxDepth: 2,
           admin: {
-            description: 'Select up to 4 case studies to feature on the home page.',
+            description: 'Select case studies to feature on the home page.',
           },
         }
-      ]
-    },
-    {
-      name: 'capabilities',
-      type: 'group',
-      fields: [
-        { name: 'heading', type: 'textarea', required: true, defaultValue: 'Engineering software with\nbusiness understanding.' },
-        { name: 'subheading', type: 'textarea', required: true, defaultValue: "We don't just write code. We build systems that solve real business problems with strategy, engineering and long-term vision." },
-        {
-          name: 'items',
-          type: 'array',
-          defaultValue: [
-            { title: "ERP & Enterprise Systems", description: "Comprehensive platforms managing accounts, inventory, and operations." },
-            { title: "SaaS Platforms", description: "Multi-tenant cloud applications built for scalability and performance." },
-            { title: "AI & Automation", description: "Intelligent agents and workflows that accelerate business growth.", badge: "Beta", badgeColor: "bg-orange-100 text-orange-600" },
-            { title: "Ecommerce Systems", description: "End-to-end scalable online stores with powerful integrations." },
-            { title: "Government Portals", description: "Secure role-based management built for complex workflows." },
-            { title: "Custom Software", description: "Tailored systems engineered specifically for your unique needs.", badge: "Strong Portfolio", badgeColor: "bg-green-100 text-green-700" }
-          ],
-          fields: [
-            { name: 'title', type: 'text', required: true },
-            { name: 'description', type: 'textarea', required: true },
-            { name: 'badge', type: 'text' },
-            { name: 'badgeColor', type: 'text' }
-          ]
-        }
-      ]
-    },
-    {
-      name: 'cta',
-      type: 'group',
-      fields: [
-        { name: 'heading', type: 'textarea', required: true, defaultValue: "Let's build something\nmeaningful together." },
-        { name: 'subheading', type: 'textarea', required: true, defaultValue: "Have an idea or project in mind? Let's discuss how we can help you build, automate and scale." }
       ]
     }
   ],

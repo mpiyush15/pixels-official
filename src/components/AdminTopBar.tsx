@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Bell, Search, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from '@/components/ThemeToggle';
+import Link from 'next/link';
 
 export default function AdminTopBar({ sidebarOpen, setSidebarOpen }: { sidebarOpen: boolean; setSidebarOpen: (arg: boolean) => void }) {
   const [notifications, setNotifications] = useState([]);
@@ -13,6 +14,25 @@ export default function AdminTopBar({ sidebarOpen, setSidebarOpen }: { sidebarOp
 
   const trigger = useRef<any>(null);
   const dropdown = useRef<any>(null);
+
+  useEffect(() => {
+    const fetchLeads = async () => {
+      try {
+        const res = await fetch('/api/leads');
+        if (res.ok) {
+          const data = await res.json();
+          const newLeads = data.filter((lead: any) => lead.status === 'new');
+          setNotifications(newLeads);
+          setUnreadCount(newLeads.length);
+        }
+      } catch (err) {
+        console.error('Failed to fetch leads for notifications', err);
+      }
+    };
+    fetchLeads();
+    const interval = setInterval(fetchLeads, 30000); // Check every 30s
+    return () => clearInterval(interval);
+  }, []);
 
   // close on click outside for notifications
   useEffect(() => {
@@ -96,9 +116,11 @@ export default function AdminTopBar({ sidebarOpen, setSidebarOpen }: { sidebarOp
                 onClick={() => setDropdownOpen(!dropdownOpen)}
                 className="relative flex h-8.5 w-8.5 items-center justify-center rounded-full border-[0.5px] border-border bg-surface hover:text-primary text-text-secondary"
               >
-                <span className="absolute -top-0.5 right-0 z-1 h-2 w-2 rounded-full bg-danger">
-                  <span className="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-danger opacity-75"></span>
-                </span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-0.5 right-0 z-1 h-2 w-2 rounded-full bg-danger">
+                    <span className="absolute -z-1 inline-flex h-full w-full animate-ping rounded-full bg-danger opacity-75"></span>
+                  </span>
+                )}
                 <Bell className="w-4 h-4" />
               </button>
 
@@ -114,11 +136,21 @@ export default function AdminTopBar({ sidebarOpen, setSidebarOpen }: { sidebarOp
                     <div className="px-4.5 py-3 border-b border-border">
                       <h5 className="text-sm font-medium text-[var(--muted-fg)]">Notification</h5>
                     </div>
-                    <ul className="flex h-auto flex-col overflow-y-auto">
-                      {/* Placeholder for notifications */}
-                      <li className="p-4 text-center text-sm text-[var(--muted-fg)]">
-                        No new notifications
-                      </li>
+                    <ul className="flex h-auto max-h-64 flex-col overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <li className="p-4 text-center text-sm text-[var(--muted-fg)]">
+                          No new notifications
+                        </li>
+                      ) : (
+                        notifications.map((notif: any, i: number) => (
+                          <li key={i} className="border-b border-border last:border-b-0 hover:bg-surface transition-colors">
+                            <Link href="/admin/leads" onClick={() => setDropdownOpen(false)} className="flex flex-col gap-1 p-4.5">
+                              <p className="text-sm font-medium text-text-primary">New Lead: {notif.name}</p>
+                              <p className="text-xs text-[var(--muted-fg)] truncate">{notif.service}</p>
+                            </Link>
+                          </li>
+                        ))
+                      )}
                     </ul>
                   </motion.div>
                 )}

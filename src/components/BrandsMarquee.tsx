@@ -9,7 +9,7 @@ export default function BrandsMarquee({ brands = [] }: { brands?: { name: string
       <div className="absolute right-0 top-0 bottom-0 w-24 bg-gradient-to-l from-white to-transparent z-10"></div>
       
       <p className="text-[10px] tracking-[0.2em] uppercase text-gray-400 font-bold mb-8 text-center">
-        TRUSTED BY GROWING BUSINESSES
+        TRUSTED BY AMBITIOUS COMPANIES
       </p>
 
       <div className="flex w-full max-w-full overflow-hidden">

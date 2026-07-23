@@ -96,12 +96,14 @@ export interface Config {
     'about-page': AboutPage;
     'test-home-page': TestHomePage;
     'services-page': ServicesPage;
+    navbar: Navbar;
   };
   globalsSelect: {
     'home-page': HomePageSelect<false> | HomePageSelect<true>;
     'about-page': AboutPageSelect<false> | AboutPageSelect<true>;
     'test-home-page': TestHomePageSelect<false> | TestHomePageSelect<true>;
     'services-page': ServicesPageSelect<false> | ServicesPageSelect<true>;
+    navbar: NavbarSelect<false> | NavbarSelect<true>;
   };
   locale: null;
   widgets: {
@@ -703,91 +705,68 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
 export interface HomePage {
   id: string;
   hero: {
-    headingLine1: string;
-    animatedLines?:
-      | {
-          gradientText: string;
-          trailingText: string;
-          id?: string | null;
-        }[]
-      | null;
-    /**
-     * Upload a background image for the Hero section
-     */
-    heroImage?: (string | null) | Media;
+    headingWord1: string;
+    headingLine1Rest: string;
+    headingLine2: string;
+    headingLine3: string;
     subheading: string;
-    ctaButtons?:
+    heroImage?: (string | null) | Media;
+  };
+  brands?:
+    | {
+        name: string;
+        id?: string | null;
+      }[]
+    | null;
+  intro: {
+    eyebrow: string;
+    headingLine1: string;
+    headingHighlight: string;
+    paragraphs?:
       | {
-          label: string;
-          url: string;
-          style: 'primary' | 'secondary';
-          id?: string | null;
-        }[]
-      | null;
-    stats?:
-      | {
-          value: string;
-          label: string;
-          id?: string | null;
-        }[]
-      | null;
-    brands?:
-      | {
-          name: string;
+          text: string;
           id?: string | null;
         }[]
       | null;
   };
-  whatWeDo: {
-    heading: string;
+  solutions: {
+    headingLine1: string;
+    headingHighlight: string;
+    cards?:
+      | {
+          /**
+           * Use new lines (Enter) for line breaks.
+           */
+          title: string;
+          description: string;
+          theme: 'white' | 'yellow';
+          id?: string | null;
+        }[]
+      | null;
+  };
+  aiAutomation: {
+    headingLine1: string;
+    headingHighlight: string;
     subheading: string;
     cards?:
       | {
-          title: string;
-          description: string;
           /**
-           * Icon identifier like Box, BrainCircuit, Monitor, ShoppingCart
+           * Use new lines for line breaks.
            */
-          iconName: string;
-          id?: string | null;
-        }[]
-      | null;
-  };
-  howWeWork: {
-    heading: string;
-    steps?:
-      | {
-          stepNumber: string;
           title: string;
           description: string;
-          iconName: string;
+          theme: 'white' | 'dark';
           id?: string | null;
         }[]
       | null;
   };
-  featuredWork: {
-    heading: string;
+  ourWork: {
+    headingLine1: string;
+    headingHighlight: string;
     /**
-     * Select up to 4 case studies to feature on the home page.
+     * Select case studies to feature on the home page.
      */
     projects?: (string | CaseStudy)[] | null;
-  };
-  capabilities: {
-    heading: string;
-    subheading: string;
-    items?:
-      | {
-          title: string;
-          description: string;
-          badge?: string | null;
-          badgeColor?: string | null;
-          id?: string | null;
-        }[]
-      | null;
-  };
-  cta: {
-    heading: string;
-    subheading: string;
   };
   updatedAt?: string | null;
   createdAt?: string | null;
@@ -1022,98 +1001,110 @@ export interface ServicesPage {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "navbar".
+ */
+export interface Navbar {
+  id: string;
+  /**
+   * Upload the logo for the navigation bar (transparent PNG recommended).
+   */
+  logo?: (string | null) | Media;
+  /**
+   * Navigation links displayed in the center of the navbar.
+   */
+  links?:
+    | {
+        label: string;
+        /**
+         * URL (e.g. /services or https://google.com)
+         */
+        url: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Call to action button settings.
+   */
+  ctaButton?: {
+    /**
+     * Toggle to show or hide the call-to-action button.
+     */
+    showButton?: boolean | null;
+    label?: string | null;
+    url?: string | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "home-page_select".
  */
 export interface HomePageSelect<T extends boolean = true> {
   hero?:
     | T
     | {
-        headingLine1?: T;
-        animatedLines?:
-          | T
-          | {
-              gradientText?: T;
-              trailingText?: T;
-              id?: T;
-            };
-        heroImage?: T;
+        headingWord1?: T;
+        headingLine1Rest?: T;
+        headingLine2?: T;
+        headingLine3?: T;
         subheading?: T;
-        ctaButtons?:
+        heroImage?: T;
+      };
+  brands?:
+    | T
+    | {
+        name?: T;
+        id?: T;
+      };
+  intro?:
+    | T
+    | {
+        eyebrow?: T;
+        headingLine1?: T;
+        headingHighlight?: T;
+        paragraphs?:
           | T
           | {
-              label?: T;
-              url?: T;
-              style?: T;
-              id?: T;
-            };
-        stats?:
-          | T
-          | {
-              value?: T;
-              label?: T;
-              id?: T;
-            };
-        brands?:
-          | T
-          | {
-              name?: T;
+              text?: T;
               id?: T;
             };
       };
-  whatWeDo?:
+  solutions?:
     | T
     | {
-        heading?: T;
+        headingLine1?: T;
+        headingHighlight?: T;
+        cards?:
+          | T
+          | {
+              title?: T;
+              description?: T;
+              theme?: T;
+              id?: T;
+            };
+      };
+  aiAutomation?:
+    | T
+    | {
+        headingLine1?: T;
+        headingHighlight?: T;
         subheading?: T;
         cards?:
           | T
           | {
               title?: T;
               description?: T;
-              iconName?: T;
+              theme?: T;
               id?: T;
             };
       };
-  howWeWork?:
+  ourWork?:
     | T
     | {
-        heading?: T;
-        steps?:
-          | T
-          | {
-              stepNumber?: T;
-              title?: T;
-              description?: T;
-              iconName?: T;
-              id?: T;
-            };
-      };
-  featuredWork?:
-    | T
-    | {
-        heading?: T;
+        headingLine1?: T;
+        headingHighlight?: T;
         projects?: T;
-      };
-  capabilities?:
-    | T
-    | {
-        heading?: T;
-        subheading?: T;
-        items?:
-          | T
-          | {
-              title?: T;
-              description?: T;
-              badge?: T;
-              badgeColor?: T;
-              id?: T;
-            };
-      };
-  cta?:
-    | T
-    | {
-        heading?: T;
-        subheading?: T;
       };
   updatedAt?: T;
   createdAt?: T;
@@ -1244,6 +1235,30 @@ export interface ServicesPageSelect<T extends boolean = true> {
               id?: T;
             };
         id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "navbar_select".
+ */
+export interface NavbarSelect<T extends boolean = true> {
+  logo?: T;
+  links?:
+    | T
+    | {
+        label?: T;
+        url?: T;
+        id?: T;
+      };
+  ctaButton?:
+    | T
+    | {
+        showButton?: T;
+        label?: T;
+        url?: T;
       };
   updatedAt?: T;
   createdAt?: T;
