@@ -17,13 +17,18 @@ export default function Navbar({ data }: { data?: any }) {
 
   const defaultLinks = [
     { name: 'Services', href: '/services' },
-    { name: 'Solutions', href: '/solutions' },
     { name: 'Work', href: '/portfolio' },
     { name: 'About', href: '/about' }
   ];
 
   const links = data?.links && data.links.length > 0 
-    ? data.links.map((link: any) => ({ name: link.label, href: link.url }))
+    ? data.links.map((link: any) => {
+        let formattedHref = link.url;
+        if (formattedHref && !formattedHref.startsWith('/') && !formattedHref.startsWith('http')) {
+          formattedHref = `/${formattedHref}`;
+        }
+        return { name: link.label, href: formattedHref };
+      })
     : defaultLinks;
 
   const logoUrl = data?.logo?.url || "/cropped-logo.png";
@@ -46,9 +51,9 @@ export default function Navbar({ data }: { data?: any }) {
               <Link 
                 key={link.name} 
                 href={link.href}
-                className={`text-[15px] font-medium transition-colors ${
+                className={`text-[15px] font-medium transition-colors px-4 py-2 rounded-full ${
                   isActive 
-                    ? 'text-black' 
+                    ? 'bg-blue-400 text-white' 
                     : 'text-gray-500 hover:text-black'
                 }`}
               >

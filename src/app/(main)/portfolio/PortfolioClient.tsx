@@ -18,7 +18,7 @@ export default function PortfolioClient({ caseStudies }: { caseStudies: any[] })
           transition={{ duration: 0.8 }}
           className="mb-24 mt-12"
         >
-          <h1 className="text-6xl md:text-[100px] font-bold text-[#242038] mb-6 tracking-tight leading-[0.9]">
+          <h1 className="text-6xl md:text-[100px] font-light text-[#242038] mb-6 tracking-tight leading-[0.9]">
             Our Work.
           </h1>
           <p className="text-xl md:text-3xl text-gray-500 max-w-3xl font-light">

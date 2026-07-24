@@ -9,7 +9,19 @@ interface Lead {
   name: string;
   email: string;
   phone?: string;
-  message: string;
+  companyName?: string;
+  industry?: string;
+  role?: string;
+  companySize?: string;
+  message?: string;
+  projectDescription?: string;
+  projectGoals?: string;
+  currentChallenges?: string;
+  requiredFeatures?: string;
+  timeline?: string;
+  estimatedBudget?: string;
+  preferredStartDate?: string;
+  existingWebsite?: string;
   source: string;
   status: 'new' | 'contacted' | 'converted' | 'closed';
   createdAt: string;
@@ -243,34 +255,115 @@ export default function LeadsPage() {
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm text-text-muted font-medium">Name</label>
-                <p className="text-lg font-medium text-text-primary">{selectedLead.name}</p>
-              </div>
-              <div>
-                <label className="text-sm text-text-muted font-medium">Email</label>
-                <p className="text-lg font-medium text-text-primary">{selectedLead.email}</p>
-              </div>
-              {selectedLead.phone && (
+            <div className="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="text-sm text-text-muted font-medium">Phone</label>
-                  <p className="text-lg font-medium text-text-primary">{selectedLead.phone}</p>
+                  <label className="text-sm text-text-muted font-medium">Name</label>
+                  <p className="text-lg font-medium text-text-primary">{selectedLead.name}</p>
+                </div>
+                <div>
+                  <label className="text-sm text-text-muted font-medium">Email</label>
+                  <p className="text-lg font-medium text-text-primary">{selectedLead.email}</p>
+                </div>
+                {selectedLead.phone && (
+                  <div>
+                    <label className="text-sm text-text-muted font-medium">Phone</label>
+                    <p className="text-lg font-medium text-text-primary">{selectedLead.phone}</p>
+                  </div>
+                )}
+                {selectedLead.companyName && (
+                  <div>
+                    <label className="text-sm text-text-muted font-medium">Company Name</label>
+                    <p className="text-lg font-medium text-text-primary">{selectedLead.companyName}</p>
+                  </div>
+                )}
+                {selectedLead.role && (
+                  <div>
+                    <label className="text-sm text-text-muted font-medium">Role</label>
+                    <p className="text-lg font-medium text-text-primary">{selectedLead.role}</p>
+                  </div>
+                )}
+                {selectedLead.industry && (
+                  <div>
+                    <label className="text-sm text-text-muted font-medium">Industry</label>
+                    <p className="text-lg font-medium text-text-primary">{selectedLead.industry}</p>
+                  </div>
+                )}
+                {selectedLead.companySize && (
+                  <div>
+                    <label className="text-sm text-text-muted font-medium">Company Size</label>
+                    <p className="text-lg font-medium text-text-primary">{selectedLead.companySize}</p>
+                  </div>
+                )}
+                {selectedLead.timeline && (
+                  <div>
+                    <label className="text-sm text-text-muted font-medium">Expected Timeline</label>
+                    <p className="text-lg font-medium text-text-primary">{selectedLead.timeline}</p>
+                  </div>
+                )}
+                {selectedLead.estimatedBudget && (
+                  <div>
+                    <label className="text-sm text-text-muted font-medium">Estimated Budget</label>
+                    <p className="text-lg font-medium text-text-primary">{selectedLead.estimatedBudget}</p>
+                  </div>
+                )}
+                {selectedLead.preferredStartDate && (
+                  <div>
+                    <label className="text-sm text-text-muted font-medium">Preferred Start Date</label>
+                    <p className="text-lg font-medium text-text-primary">{selectedLead.preferredStartDate}</p>
+                  </div>
+                )}
+                {selectedLead.existingWebsite && (
+                  <div className="col-span-2">
+                    <label className="text-sm text-text-muted font-medium">Existing Website</label>
+                    <p className="text-lg font-medium text-text-primary">
+                      <a href={selectedLead.existingWebsite} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
+                        {selectedLead.existingWebsite}
+                      </a>
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {(selectedLead.projectDescription || selectedLead.message) && (
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <label className="text-sm text-text-muted font-medium">Project Description</label>
+                  <p className="text-base font-medium text-text-primary mt-1 whitespace-pre-wrap">{selectedLead.projectDescription || selectedLead.message}</p>
                 </div>
               )}
-              <div>
-                <label className="text-sm text-text-muted font-medium">Message</label>
-                <p className="text-base font-medium text-text-primary mt-1">{selectedLead.message}</p>
-              </div>
-              <div>
-                <label className="text-sm text-text-muted font-medium">Source</label>
-                <p className="text-lg font-medium text-text-primary">{selectedLead.source}</p>
-              </div>
-              <div>
-                <label className="text-sm text-text-muted font-medium">Date</label>
-                <p className="text-lg font-medium text-text-primary">
-                  {new Date(selectedLead.createdAt).toLocaleString()}
-                </p>
+
+              {selectedLead.projectGoals && (
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <label className="text-sm text-text-muted font-medium">Project Goals</label>
+                  <p className="text-base font-medium text-text-primary mt-1 whitespace-pre-wrap">{selectedLead.projectGoals}</p>
+                </div>
+              )}
+
+              {selectedLead.currentChallenges && (
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <label className="text-sm text-text-muted font-medium">Current Challenges</label>
+                  <p className="text-base font-medium text-text-primary mt-1 whitespace-pre-wrap">{selectedLead.currentChallenges}</p>
+                </div>
+              )}
+
+              {selectedLead.requiredFeatures && (
+                <div className="bg-gray-50 p-4 rounded-xl">
+                  <label className="text-sm text-text-muted font-medium">Required Features</label>
+                  <p className="text-base font-medium text-text-primary mt-1 whitespace-pre-wrap">{selectedLead.requiredFeatures}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4 border-t border-gray-100 pt-4">
+                <div>
+                  <label className="text-sm text-text-muted font-medium">Source</label>
+                  <p className="text-lg font-medium text-text-primary">{selectedLead.source}</p>
+                </div>
+                <div>
+                  <label className="text-sm text-text-muted font-medium">Date</label>
+                  <p className="text-lg font-medium text-text-primary">
+                    {new Date(selectedLead.createdAt).toLocaleString()}
+                  </p>
+                </div>
               </div>
             </div>
 
