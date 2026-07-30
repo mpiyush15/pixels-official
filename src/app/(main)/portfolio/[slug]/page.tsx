@@ -118,22 +118,22 @@ export default async function SingleCaseStudyPage({ params }: { params: Promise<
             {firstPart} {lastTwoWords && <span className="text-[#B270FF]">{lastTwoWords}</span>}
           </h1>
 
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_2fr] gap-12 text-[15px]">
-            <div className="flex gap-8 md:gap-16">
-              <div className="flex flex-col gap-2 font-bold text-[#242038]">
-                <span>Client:</span>
-                <span>Project:</span>
-                {(caseStudy as any).techStack && Array.isArray((caseStudy as any).techStack) && (caseStudy as any).techStack.length > 0 && (
-                  <span>Tech Stack:</span>
-                )}
-              </div>
-              <div className="flex flex-col gap-2 text-gray-600">
-                <span>{caseStudy.client}</span>
-                <span>{caseStudy.title}</span>
-                {(caseStudy as any).techStack && Array.isArray((caseStudy as any).techStack) && (caseStudy as any).techStack.length > 0 && (
-                  <span>{(caseStudy as any).techStack.map((t: any) => t.technology).join(', ')}</span>
-                )}
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 text-[15px]">
+            <div className="grid grid-cols-[auto_1fr] gap-x-8 md:gap-x-12 gap-y-4 items-start">
+              <span className="font-bold text-[#242038] whitespace-nowrap">Client:</span>
+              <span className="text-gray-600">{caseStudy.client}</span>
+
+              <span className="font-bold text-[#242038] whitespace-nowrap">Project:</span>
+              <span className="text-gray-600">{caseStudy.title}</span>
+
+              {(caseStudy as any).techStack && Array.isArray((caseStudy as any).techStack) && (caseStudy as any).techStack.length > 0 && (
+                <>
+                  <span className="font-bold text-[#242038] whitespace-nowrap">Tech Stack:</span>
+                  <span className="text-gray-600">
+                    {(caseStudy as any).techStack.map((t: any) => t.technology).join(', ')}
+                  </span>
+                </>
+              )}
             </div>
             
             <div className="text-gray-600 leading-relaxed max-w-2xl">

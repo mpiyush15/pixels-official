@@ -183,6 +183,10 @@ export interface Media {
  */
 export interface CaseStudy {
   id: string;
+  /**
+   * Toggle to show this case study in the Our Work section on the Home Page (up to 3 will be shown)
+   */
+  showInHome?: boolean | null;
   title: string;
   /**
    * Used for the URL (e.g., my-awesome-project)
@@ -200,6 +204,15 @@ export interface CaseStudy {
   services?:
     | {
         service?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * List of technologies used (e.g., Next.js, React, Node.js)
+   */
+  techStack?:
+    | {
+        technology?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -540,6 +553,7 @@ export interface MediaSelect<T extends boolean = true> {
  * via the `definition` "case-studies_select".
  */
 export interface CaseStudiesSelect<T extends boolean = true> {
+  showInHome?: T;
   title?: T;
   slug?: T;
   client?: T;
@@ -549,6 +563,12 @@ export interface CaseStudiesSelect<T extends boolean = true> {
     | T
     | {
         service?: T;
+        id?: T;
+      };
+  techStack?:
+    | T
+    | {
+        technology?: T;
         id?: T;
       };
   thumbnail?: T;
