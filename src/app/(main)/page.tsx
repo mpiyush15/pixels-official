@@ -5,11 +5,25 @@ import { FadeIn, StaggerContainer, StaggerItem } from '@/components/animations';
 import { getPayload } from 'payload';
 import configPromise from '@/payload.config';
 
+export const dynamic = 'force-dynamic'; // Ensures fresh data on every request
+
 export default async function Home() {
   const payload = await getPayload({ config: configPromise });
   const homeData = await payload.findGlobal({ 
     slug: 'home-page',
     depth: 2
+  });
+  
+  // Fetch featured case studies
+  const { docs: featuredProjects } = await payload.find({
+    collection: 'case-studies',
+    where: {
+      showInHome: {
+        equals: true,
+      },
+    },
+    limit: 3,
+    depth: 1,
   });
 
   // Safe defaults if CMS is empty
@@ -148,17 +162,21 @@ export default async function Home() {
 
       {/* OUR WORK SECTION */}
       <section className="py-24 px-6 lg:px-16 xl:px-24 max-w-[1600px] mx-auto">
-        <FadeIn>
-          <h2 className="text-4xl md:text-5xl font-light tracking-tight mb-16 text-black">
+        <FadeIn className="flex justify-between items-end mb-16">
+          <h2 className="text-4xl md:text-5xl font-light tracking-tight text-black">
             {ourWork.headingLine1 || 'Our '} <span className="text-[#8B5CF6] font-bold">{ourWork.headingHighlight || 'Work.'}</span>
           </h2>
+          <Link href="/portfolio" className="hidden md:inline-flex items-center gap-2 text-gray-500 hover:text-black transition-colors font-medium">
+            See all projects
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+          </Link>
         </FadeIn>
 
-        <StaggerContainer className="grid md:grid-cols-2 gap-8">
-          {ourWork.projects && ourWork.projects.length > 0 ? (
-            ourWork.projects.map((project: any, idx) => (
-              <Link href={`/portfolio/${project.slug || ''}`} key={idx}>
-                <StaggerItem className="aspect-[4/3] rounded-[2rem] bg-[#F5F1EB] flex flex-col justify-end p-10 cursor-pointer hover:opacity-90 transition relative overflow-hidden group">
+        <StaggerContainer className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {featuredProjects && featuredProjects.length > 0 ? (
+            featuredProjects.map((project: any, idx) => (
+              <Link href={`/portfolio/${project.slug || ''}`} key={idx} className="block">
+                <StaggerItem className="aspect-[4/3] rounded-[1.5rem] bg-[#F5F1EB] flex flex-col justify-end p-6 cursor-pointer hover:opacity-90 transition relative overflow-hidden group">
                   {(project.thumbnail as any)?.url && (
                     <Image 
                       src={(project.thumbnail as any).url}
@@ -167,26 +185,27 @@ export default async function Home() {
                       className="object-cover transition duration-500 group-hover:scale-105"
                     />
                   )}
-                  <div className="relative z-10 p-4 rounded-2xl bg-white/80 backdrop-blur-sm w-max">
-                    <h3 className="text-2xl font-semibold text-black">{project.title}</h3>
-                    <p className="text-gray-600">{project.client || 'Case Study'}</p>
+                  <div className="relative z-10 p-4 rounded-xl bg-white/90 backdrop-blur-md w-full bottom-0 shadow-sm mt-auto">
+                    <h3 className="text-lg font-semibold text-black truncate">{project.title}</h3>
+                    <p className="text-sm text-gray-500 truncate">{project.client || 'Case Study'}</p>
                   </div>
                 </StaggerItem>
               </Link>
             ))
           ) : (
-            <>
-              <StaggerItem className="aspect-[4/3] rounded-[2rem] bg-[#F5F1EB] flex flex-col justify-end p-10 cursor-pointer hover:opacity-90 transition">
-                <h3 className="text-2xl font-semibold text-black">Atut Technology</h3>
-                <p className="text-gray-600">Case Study</p>
-              </StaggerItem>
-              <StaggerItem className="aspect-[4/3] rounded-[2rem] bg-[#F5F1EB] flex flex-col justify-end p-10 cursor-pointer hover:opacity-90 transition">
-                <h3 className="text-2xl font-semibold text-black">Vaibhav Biotech</h3>
-                <p className="text-gray-600">Case Study</p>
-              </StaggerItem>
-            </>
+            <div className="col-span-full py-12 text-center text-gray-400">
+              No featured projects found. Enable "Show in Home" on your case studies in the CMS.
+            </div>
           )}
         </StaggerContainer>
+        
+        {/* Mobile See All */}
+        <div className="mt-10 flex justify-center md:hidden">
+          <Link href="/portfolio" className="inline-flex items-center gap-2 text-black hover:text-[#8B5CF6] transition-colors font-semibold px-6 py-3 rounded-full border border-gray-200">
+            See all projects
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+          </Link>
+        </div>
       </section>
     </div>
   );

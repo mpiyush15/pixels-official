@@ -2,6 +2,9 @@ import { getPayload } from 'payload'
 import configPromise from '@/payload.config'
 import PortfolioClient from './PortfolioClient'
 
+export const dynamic = 'force-dynamic'; // Ensures fresh data on every request
+
+
 export default async function PortfolioPage() {
   const payload = await getPayload({ config: configPromise })
   

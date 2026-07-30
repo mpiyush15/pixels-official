@@ -123,10 +123,16 @@ export default async function SingleCaseStudyPage({ params }: { params: Promise<
               <div className="flex flex-col gap-2 font-bold text-[#242038]">
                 <span>Client:</span>
                 <span>Project:</span>
+                {(caseStudy as any).techStack && Array.isArray((caseStudy as any).techStack) && (caseStudy as any).techStack.length > 0 && (
+                  <span>Tech Stack:</span>
+                )}
               </div>
               <div className="flex flex-col gap-2 text-gray-600">
                 <span>{caseStudy.client}</span>
                 <span>{caseStudy.title}</span>
+                {(caseStudy as any).techStack && Array.isArray((caseStudy as any).techStack) && (caseStudy as any).techStack.length > 0 && (
+                  <span>{(caseStudy as any).techStack.map((t: any) => t.technology).join(', ')}</span>
+                )}
               </div>
             </div>
             

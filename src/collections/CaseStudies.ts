@@ -10,6 +10,14 @@ export const CaseStudies: CollectionConfig = {
   },
   fields: [
     {
+      name: 'showInHome',
+      type: 'checkbox',
+      defaultValue: false,
+      admin: {
+        description: 'Toggle to show this case study in the Our Work section on the Home Page (up to 3 will be shown)',
+      }
+    },
+    {
       name: 'title',
       type: 'text',
       required: true,
@@ -51,6 +59,19 @@ export const CaseStudies: CollectionConfig = {
       ],
       admin: {
         description: 'List of services provided (e.g., Branding, Art Direction)',
+      }
+    },
+    {
+      name: 'techStack',
+      type: 'array',
+      fields: [
+        {
+          name: 'technology',
+          type: 'text',
+        }
+      ],
+      admin: {
+        description: 'List of technologies used (e.g., Next.js, React, Node.js)',
       }
     },
     {
