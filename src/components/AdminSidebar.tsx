@@ -74,6 +74,7 @@ const menuGroups: MenuGroup[] = [
           { label: 'Leads Pipeline', path: '/admin/leads' },
           { label: 'Client Directory', path: '/admin/clients' },
           { label: 'Quotations', path: '/admin/quotations' },
+          { label: 'Subscription Payments', path: '/admin/subscription-payments' },
         ]
       },
       {

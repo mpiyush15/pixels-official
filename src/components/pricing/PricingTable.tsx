@@ -4,6 +4,7 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Check } from 'lucide-react'
 import PricingWizard from './PricingWizard'
+import Link from 'next/link'
 
 type BillingPeriod = 'monthly' | 'quarterly' | 'annual'
 
@@ -33,80 +34,8 @@ export default function PricingTable({ config, data }: { config: any, data?: any
     return plan.monthlyPrice
   }
 
-  const loadRazorpayScript = () => {
-    return new Promise((resolve) => {
-      const script = document.createElement('script')
-      script.src = 'https://checkout.razorpay.com/v1/checkout.js'
-      script.onload = () => resolve(true)
-      script.onerror = () => resolve(false)
-      document.body.appendChild(script)
-    })
-  }
-
-  const handlePayment = async (plan: any) => {
-    setIsProcessing(true)
-    const res = await loadRazorpayScript()
-    
-    if (!res) {
-      alert('Razorpay SDK failed to load. Are you online?')
-      setIsProcessing(false)
-      return
-    }
-
-    try {
-      const amount = getPrice(plan)
-      const orderResponse = await fetch('/api/create-order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount,
-          currency: 'INR',
-          notes: {
-            planName: plan.name || plan.title,
-            billingPeriod: billingPeriod
-          }
-        }),
-      })
-
-      const orderData = await orderResponse.json()
-      if (orderData.error) throw new Error(orderData.error)
-
-      const options = {
-        key: orderData.key_id,
-        amount: orderData.order.amount,
-        currency: orderData.order.currency,
-        name: 'Pixels Digital',
-        description: `${plan.name || plan.title} - ${billingPeriod}`,
-        order_id: orderData.order.id,
-        handler: async function (response: any) {
-          const verifyData = {
-            ...response,
-            paymentDetails: {
-              planName: plan.name || plan.title,
-              billingPeriod,
-              amount,
-              currency: 'INR'
-            }
-          }
-          await fetch('/api/verify-payment', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(verifyData),
-          })
-          alert('Payment Successful!')
-        },
-        prefill: { name: '', email: '', contact: '' },
-        theme: { color: '#8b5cf6' }
-      }
-
-      const paymentObject = new (window as any).Razorpay(options)
-      paymentObject.open()
-    } catch (err) {
-      console.error(err)
-      alert('Failed to initiate payment')
-    }
-    setIsProcessing(false)
-  }
+  // The payment handling is now completely offloaded to the new /checkout page.
+  // We keep this component purely for display and routing.
 
   if (showWizard) {
     return (
@@ -162,13 +91,12 @@ export default function PricingTable({ config, data }: { config: any, data?: any
               <span className="text-gray-500">/{billingPeriod === 'monthly' ? 'mo' : billingPeriod === 'quarterly' ? 'qtr' : 'yr'}</span>
             </div>
             
-            <button
-              onClick={() => handlePayment(plan)}
-              disabled={isProcessing}
-              className={`w-full py-3 rounded-xl font-bold transition-all mb-8 ${plan.isRecommended ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-md hover:shadow-lg' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'}`}
+            <Link
+              href={`/checkout?planId=${plan.id}&billing=${billingPeriod}`}
+              className={`w-full py-3 rounded-xl font-bold transition-all mb-8 flex justify-center items-center ${plan.isRecommended ? 'bg-purple-600 text-white hover:bg-purple-700 shadow-md hover:shadow-lg' : 'bg-purple-50 text-purple-700 hover:bg-purple-100'}`}
             >
-              {isProcessing ? 'Wait...' : 'Get Started'}
-            </button>
+              Get Started
+            </Link>
 
             <div className="flex-1">
               <p className="font-semibold text-gray-900 mb-4">Top Features:</p>
@@ -309,13 +237,12 @@ export default function PricingTable({ config, data }: { config: any, data?: any
                 <td className="p-6 bg-gray-50/50"></td>
                 {plans.map((plan: any) => (
                   <td key={plan.id} className="p-6 bg-white text-center">
-                    <button
-                      onClick={() => handlePayment(plan)}
-                      disabled={isProcessing}
-                      className="w-full py-2.5 px-4 rounded-lg font-medium transition-all bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
+                    <Link
+                      href={`/checkout?planId=${plan.id}&billing=${billingPeriod}`}
+                      className="w-full block py-2.5 px-4 rounded-lg font-medium transition-all bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200"
                     >
-                      {isProcessing ? 'Wait...' : 'Get Started'}
-                    </button>
+                      Get Started
+                    </Link>
                   </td>
                 ))}
               </tr>
