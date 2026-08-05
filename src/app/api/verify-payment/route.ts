@@ -8,7 +8,8 @@ import { createAndUploadInvoice } from '@/lib/invoiceGenerator'
 import { 
   sendLoginCredentialsEmail, 
   sendPaymentConfirmationEmail, 
-  sendInvoiceEmail 
+  sendInvoiceEmail,
+  sendAdminNewSubscriptionEmail
 } from '@/lib/email'
 
 export async function POST(req: NextRequest) {
@@ -144,7 +145,10 @@ export async function POST(req: NextRequest) {
 
           // Send Login Credentials for new users
           isNewClient ? 
-            sendLoginCredentialsEmail(email, clientName, email, rawPassword, `${process.env.NEXT_PUBLIC_BASE_URL || 'https://pixelsdigitalsolutions.com'}/client-portal/login`) : Promise.resolve()
+            sendLoginCredentialsEmail(email, clientName, email, rawPassword, `${process.env.NEXT_PUBLIC_BASE_URL || 'https://pixelsdigitalsolutions.com'}/client-portal/login`) : Promise.resolve(),
+            
+          // Notify Admin
+          sendAdminNewSubscriptionEmail(clientName, email, planName || 'Unknown Plan', billingPeriod || 'Monthly', amount)
         ]).catch(err => console.error('Failed to send automated emails:', err))
       }
 

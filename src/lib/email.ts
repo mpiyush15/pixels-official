@@ -900,3 +900,84 @@ export async function sendProposalEmail(
     html,
   });
 }
+
+// Admin Notification for New Subscription
+export async function sendAdminNewSubscriptionEmail(
+  clientName: string,
+  clientEmail: string,
+  planName: string,
+  billingPeriod: string,
+  amount: number
+) {
+  const adminEmail = 'piyush@pixelsdigitalsolutions.com';
+  
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .content { background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-radius: 0 0 10px 10px; }
+        .success-box { background: #d1fae5; color: #065f46; padding: 15px; border-radius: 5px; margin: 20px 0; border: 1px solid #34d399; text-align: center; font-size: 18px; font-weight: bold; }
+        .details-table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        .details-table th, .details-table td { padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: left; }
+        .details-table th { color: #6b7280; font-weight: normal; width: 40%; }
+        .details-table td { font-weight: bold; color: #111827; }
+        .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>🚀 New Subscription Sold!</h1>
+        </div>
+        <div class="content">
+          <p>Hi Admin,</p>
+          <p>Great news! A new client just purchased a subscription via the website checkout.</p>
+          
+          <div class="success-box">
+            + ₹${amount.toLocaleString('en-IN')} Received
+          </div>
+
+          <table class="details-table">
+            <tr>
+              <th>Client Name</th>
+              <td>${clientName}</td>
+            </tr>
+            <tr>
+              <th>Client Email</th>
+              <td>${clientEmail}</td>
+            </tr>
+            <tr>
+              <th>Plan Name</th>
+              <td>${planName}</td>
+            </tr>
+            <tr>
+              <th>Billing Period</th>
+              <td style="text-transform: capitalize;">${billingPeriod}</td>
+            </tr>
+            <tr>
+              <th>Amount Paid</th>
+              <td>₹${amount.toLocaleString('en-IN')}</td>
+            </tr>
+          </table>
+
+          <p style="margin-top: 20px;">You can view the full payment details and the automatically generated invoice in the admin dashboard under <strong>CRM &gt; Subscription Payments</strong>.</p>
+        </div>
+        <div class="footer">
+          <p>System Automated Notification - Pixels Digital Solutions</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to: adminEmail,
+    subject: `🚨 New Subscription Sold: ${planName} - ₹${amount.toLocaleString('en-IN')}`,
+    html,
+  });
+}
