@@ -71,6 +71,11 @@ export interface Config {
     media: Media;
     'case-studies': CaseStudy;
     services: Service;
+    proposals: Proposal;
+    payments: Payment;
+    'feature-categories': FeatureCategory;
+    features: Feature;
+    plans: Plan;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -82,6 +87,11 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     'case-studies': CaseStudiesSelect<false> | CaseStudiesSelect<true>;
     services: ServicesSelect<false> | ServicesSelect<true>;
+    proposals: ProposalsSelect<false> | ProposalsSelect<true>;
+    payments: PaymentsSelect<false> | PaymentsSelect<true>;
+    'feature-categories': FeatureCategoriesSelect<false> | FeatureCategoriesSelect<true>;
+    features: FeaturesSelect<false> | FeaturesSelect<true>;
+    plans: PlansSelect<false> | PlansSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -97,6 +107,8 @@ export interface Config {
     'test-home-page': TestHomePage;
     'services-page': ServicesPage;
     navbar: Navbar;
+    'pricing-page': PricingPage;
+    'payment-settings': PaymentSetting;
   };
   globalsSelect: {
     'home-page': HomePageSelect<false> | HomePageSelect<true>;
@@ -104,6 +116,8 @@ export interface Config {
     'test-home-page': TestHomePageSelect<false> | TestHomePageSelect<true>;
     'services-page': ServicesPageSelect<false> | ServicesPageSelect<true>;
     navbar: NavbarSelect<false> | NavbarSelect<true>;
+    'pricing-page': PricingPageSelect<false> | PricingPageSelect<true>;
+    'payment-settings': PaymentSettingsSelect<false> | PaymentSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -428,6 +442,105 @@ export interface Service {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "proposals".
+ */
+export interface Proposal {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  businessName: string;
+  /**
+   * The estimated price shown to the user at the time of submission
+   */
+  estimatedPrice?: number | null;
+  /**
+   * The complete selected configuration JSON
+   */
+  configuration?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  industry?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payments".
+ */
+export interface Payment {
+  id: string;
+  customerName: string;
+  customerEmail: string;
+  planName: string;
+  billingPeriod: string;
+  amount: number;
+  currency?: string | null;
+  razorpayOrderId?: string | null;
+  razorpayPaymentId?: string | null;
+  status?: ('pending' | 'success' | 'failed') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "feature-categories".
+ */
+export interface FeatureCategory {
+  id: string;
+  title: string;
+  /**
+   * Lower numbers appear first
+   */
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "features".
+ */
+export interface Feature {
+  id: string;
+  title: string;
+  icon?: string | null;
+  description?: string | null;
+  category: string | FeatureCategory;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "plans".
+ */
+export interface Plan {
+  id: string;
+  name: string;
+  description?: string | null;
+  isRecommended?: boolean | null;
+  monthlyPrice: number;
+  quarterlyPrice: number;
+  annualPrice: number;
+  planFeatures?:
+    | {
+        feature: string | Feature;
+        value?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  order?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -465,6 +578,26 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'services';
         value: string | Service;
+      } | null)
+    | ({
+        relationTo: 'proposals';
+        value: string | Proposal;
+      } | null)
+    | ({
+        relationTo: 'payments';
+        value: string | Payment;
+      } | null)
+    | ({
+        relationTo: 'feature-categories';
+        value: string | FeatureCategory;
+      } | null)
+    | ({
+        relationTo: 'features';
+        value: string | Feature;
+      } | null)
+    | ({
+        relationTo: 'plans';
+        value: string | Plan;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -675,6 +808,83 @@ export interface ServicesSelect<T extends boolean = true> {
         id?: T;
       };
   relatedProjects?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "proposals_select".
+ */
+export interface ProposalsSelect<T extends boolean = true> {
+  name?: T;
+  email?: T;
+  phone?: T;
+  businessName?: T;
+  estimatedPrice?: T;
+  configuration?: T;
+  industry?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payments_select".
+ */
+export interface PaymentsSelect<T extends boolean = true> {
+  customerName?: T;
+  customerEmail?: T;
+  planName?: T;
+  billingPeriod?: T;
+  amount?: T;
+  currency?: T;
+  razorpayOrderId?: T;
+  razorpayPaymentId?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "feature-categories_select".
+ */
+export interface FeatureCategoriesSelect<T extends boolean = true> {
+  title?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "features_select".
+ */
+export interface FeaturesSelect<T extends boolean = true> {
+  title?: T;
+  icon?: T;
+  description?: T;
+  category?: T;
+  order?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "plans_select".
+ */
+export interface PlansSelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  isRecommended?: T;
+  monthlyPrice?: T;
+  quarterlyPrice?: T;
+  annualPrice?: T;
+  planFeatures?:
+    | T
+    | {
+        feature?: T;
+        value?: T;
+        id?: T;
+      };
+  order?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1058,6 +1268,68 @@ export interface Navbar {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pricing-page".
+ */
+export interface PricingPage {
+  id: string;
+  plannerSettings?: {
+    goals?:
+      | {
+          label: string;
+          value: string;
+          basePrice: number;
+          id?: string | null;
+        }[]
+      | null;
+    platforms?:
+      | {
+          label: string;
+          value: string;
+          cost: number;
+          id?: string | null;
+        }[]
+      | null;
+    contentTypes?:
+      | {
+          label: string;
+          value: string;
+          cost: number;
+          id?: string | null;
+        }[]
+      | null;
+    industryTemplates?:
+      | {
+          industryName: string;
+          recommendedFeatures?:
+            | {
+                feature?: string | null;
+                id?: string | null;
+              }[]
+            | null;
+          basePrice: number;
+          id?: string | null;
+        }[]
+      | null;
+  };
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-settings".
+ */
+export interface PaymentSetting {
+  id: string;
+  razorpayKeyId: string;
+  /**
+   * Keep this secret. It will not be exposed to the frontend.
+   */
+  razorpayKeySecret: string;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "home-page_select".
  */
 export interface HomePageSelect<T extends boolean = true> {
@@ -1280,6 +1552,67 @@ export interface NavbarSelect<T extends boolean = true> {
         label?: T;
         url?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "pricing-page_select".
+ */
+export interface PricingPageSelect<T extends boolean = true> {
+  plannerSettings?:
+    | T
+    | {
+        goals?:
+          | T
+          | {
+              label?: T;
+              value?: T;
+              basePrice?: T;
+              id?: T;
+            };
+        platforms?:
+          | T
+          | {
+              label?: T;
+              value?: T;
+              cost?: T;
+              id?: T;
+            };
+        contentTypes?:
+          | T
+          | {
+              label?: T;
+              value?: T;
+              cost?: T;
+              id?: T;
+            };
+        industryTemplates?:
+          | T
+          | {
+              industryName?: T;
+              recommendedFeatures?:
+                | T
+                | {
+                    feature?: T;
+                    id?: T;
+                  };
+              basePrice?: T;
+              id?: T;
+            };
+      };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "payment-settings_select".
+ */
+export interface PaymentSettingsSelect<T extends boolean = true> {
+  razorpayKeyId?: T;
+  razorpayKeySecret?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

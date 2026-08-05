@@ -12,6 +12,13 @@ import { TestHomePage } from './globals/TestHomePage'
 import { Services } from './collections/Services'
 import { ServicesPage } from './globals/ServicesPage'
 import { Navbar } from './globals/Navbar'
+import { Proposals } from './collections/Proposals'
+import { Payments } from './collections/Payments'
+import { PricingPage } from './globals/PricingPage'
+import { FeatureCategories } from './collections/FeatureCategories'
+import { Features } from './collections/Features'
+import { Plans } from './collections/Plans'
+import { PaymentSettings } from './globals/PaymentSettings'
 import { s3Storage } from '@payloadcms/storage-s3'
 
 // Helper to check if we should use S3
@@ -78,6 +85,11 @@ export default buildConfig({
     Media,
     CaseStudies,
     Services,
+    Proposals,
+    Payments,
+    FeatureCategories,
+    Features,
+    Plans,
   ],
   globals: [
     HomePage,
@@ -85,6 +97,8 @@ export default buildConfig({
     TestHomePage,
     ServicesPage,
     Navbar,
+    PricingPage,
+    PaymentSettings,
   ],
   plugins,
   editor: lexicalEditor({}),
