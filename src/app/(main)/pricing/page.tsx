@@ -4,6 +4,8 @@ import configPromise from '@/payload.config'
 import PricingTable from '@/components/pricing/PricingTable'
 import { Metadata } from 'next'
 
+export const revalidate = 60 // Revalidate page every 60 seconds (ISR)
+
 export const metadata: Metadata = {
   title: 'Pricing - Pixels Growth Planner',
   description: 'Choose your standard plan or build a custom growth plan with Pixels.',
