@@ -12,9 +12,38 @@ export default function CheckoutForm({ planId, planName, billingPeriod, amount }
   })
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState('')
+  const [emailStatus, setEmailStatus] = useState<'checking' | 'exists' | 'new' | ''>('')
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }))
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+
+    if (name === 'email') {
+      if (value.includes('@') && value.includes('.')) {
+        checkEmail(value)
+      } else {
+        setEmailStatus('')
+      }
+    }
+  }
+
+  const checkEmail = async (email: string) => {
+    setEmailStatus('checking')
+    try {
+      const res = await fetch('/api/check-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const data = await res.json()
+      if (data.exists) {
+        setEmailStatus('exists')
+      } else {
+        setEmailStatus('new')
+      }
+    } catch (e) {
+      setEmailStatus('')
+    }
   }
 
   const loadRazorpayScript = () => {
@@ -163,6 +192,14 @@ export default function CheckoutForm({ planId, planName, billingPeriod, amount }
             onChange={handleChange}
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all"
           />
+          {emailStatus === 'exists' && (
+            <p className="mt-2 text-sm text-green-600 font-medium flex items-center gap-1">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              Account found! We will seamlessly upgrade your existing workspace.
+            </p>
+          )}
         </div>
 
         <div>
