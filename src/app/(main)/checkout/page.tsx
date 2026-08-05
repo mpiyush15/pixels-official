@@ -9,7 +9,8 @@ export const metadata: Metadata = {
   description: 'Complete your purchase securely.',
 }
 
-export default async function CheckoutPage({ searchParams }: { searchParams: { planId?: string, billing?: string } }) {
+export default async function CheckoutPage(props: { searchParams: Promise<{ planId?: string, billing?: string }> }) {
+  const searchParams = await props.searchParams
   const planId = searchParams.planId
   const billingPeriod = (searchParams.billing || 'monthly') as 'monthly' | 'quarterly' | 'annual'
 
