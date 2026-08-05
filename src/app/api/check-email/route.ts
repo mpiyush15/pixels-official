@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getPayload } from 'payload'
-import configPromise from '@/payload.config'
+import { getDatabase } from '@/lib/mongodb'
 
 export async function POST(request: Request) {
   try {
@@ -9,18 +8,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ exists: false })
     }
 
-    const payload = await getPayload({ config: configPromise })
-    const result = await payload.find({
-      collection: 'clients',
-      where: {
-        email: {
-          equals: email,
-        },
-      },
-      limit: 1,
-    })
+    const db = await getDatabase()
+    const client = await db.collection('clients').findOne({ email })
 
-    return NextResponse.json({ exists: result.totalDocs > 0 })
+    return NextResponse.json({ exists: !!client })
   } catch (error) {
     console.error('Error checking email:', error)
     return NextResponse.json({ exists: false }, { status: 500 })
