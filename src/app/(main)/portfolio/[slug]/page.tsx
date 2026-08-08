@@ -66,8 +66,15 @@ export default async function SingleCaseStudyPage({ params }: { params: Promise<
                 const imgUrl = item.image?.url || '/placeholder.jpg';
                 const imgAlt = item.image?.alt || 'Gallery image';
                 return (
-                  <div key={idx} className="bg-white rounded-2xl shadow-md overflow-hidden aspect-[4/3] relative">
-                    <Image src={imgUrl} alt={imgAlt} fill className="object-cover" sizes="(max-width: 768px) 100vw, 33vw" />
+                  <div key={idx} className="bg-white rounded-2xl shadow-md overflow-hidden relative flex">
+                    <Image 
+                      src={imgUrl} 
+                      alt={imgAlt} 
+                      width={item.image?.width || 1200}
+                      height={item.image?.height || 800}
+                      className="w-full h-auto object-contain" 
+                      sizes="(max-width: 768px) 100vw, 33vw" 
+                    />
                   </div>
                 );
               })}
