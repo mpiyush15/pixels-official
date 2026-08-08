@@ -73,7 +73,8 @@ export default async function SingleCaseStudyPage({ params }: { params: Promise<
                       width={item.image?.width || 1200}
                       height={item.image?.height || 800}
                       className="w-full h-auto object-contain" 
-                      sizes="(max-width: 768px) 100vw, 33vw" 
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      unoptimized
                     />
                   </div>
                 );
