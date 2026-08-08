@@ -60,8 +60,8 @@ export default async function SingleCaseStudyPage({ params }: { params: Promise<
   const renderGallery = (galleryData: any[]) => {
     if (galleryData && Array.isArray(galleryData) && galleryData.length > 0) {
       return (
-        <div className="w-full rounded-[32px] md:rounded-[48px] bg-[#F5F5F7] p-8 md:p-12 flex items-center justify-center min-h-[250px] mb-20 md:mb-32">
-           <div className={`grid grid-cols-1 ${galleryData.length > 1 ? 'md:grid-cols-2 lg:grid-cols-3 max-w-6xl' : 'max-w-3xl'} gap-8 w-full mx-auto`}>
+        <div className="w-full mb-20 md:mb-32">
+           <div className={`grid grid-cols-1 ${galleryData.length > 1 ? 'md:grid-cols-2' : ''} gap-6 md:gap-10 w-full`}>
               {galleryData.map((item: any, idx: number) => {
                 const imgUrl = item.image?.url || '/placeholder.jpg';
                 const imgAlt = item.image?.alt || 'Gallery image';
@@ -83,10 +83,10 @@ export default async function SingleCaseStudyPage({ params }: { params: Promise<
       );
     }
     return (
-      <div className="w-full rounded-[32px] md:rounded-[48px] bg-[#F5F5F7] p-8 md:p-12 flex items-center justify-center min-h-[250px] mb-20 md:mb-32">
-         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
+      <div className="w-full mb-20 md:mb-32">
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10 w-full">
             {/* Dummy cards representing social posts or UI */}
-            {[1, 2, 3].map((i) => (
+            {[1, 2].map((i) => (
               <div key={i} className="bg-white rounded-2xl shadow-sm overflow-hidden aspect-[4/3] flex flex-col relative">
                 <div className="p-4 flex items-center gap-3 border-b border-gray-100">
                   <div className="w-8 h-8 rounded-full bg-gray-200"></div>
