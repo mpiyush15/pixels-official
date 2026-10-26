@@ -15,7 +15,9 @@ import {
   FolderKanban,
   User,
   Loader2,
-  ExternalLink
+  ExternalLink,
+  Sparkles,
+  Plus
 } from 'lucide-react';
 
 interface Client {
@@ -66,9 +68,10 @@ export default function ClientDetailsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
+  const [researches, setResearches] = useState<any[]>([]);
   
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'payments' | 'contracts'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'projects' | 'payments' | 'contracts' | 'research'>('overview');
 
   useEffect(() => {
     const fetchClientData = async () => {
@@ -98,6 +101,13 @@ export default function ClientDetailsPage() {
         const payData = await payRes.json();
         const clientPayments = payData.filter((p: any) => p.clientId === clientId);
         setPayments(clientPayments);
+
+        // Fetch Researches
+        const resRes = await fetch(`/api/client-research?clientId=${clientId}`);
+        if (resRes.ok) {
+          const resData = await resRes.json();
+          setResearches(resData);
+        }
 
       } catch (err) {
         console.error('Failed to load client data', err);
@@ -176,6 +186,7 @@ export default function ClientDetailsPage() {
       <div className="flex gap-6 border-b border-border mb-8 overflow-x-auto no-scrollbar">
         {[
           { id: 'overview', icon: User, label: 'Overview' },
+          { id: 'research', icon: Sparkles, label: `Research (${researches.length})` },
           { id: 'projects', icon: FolderKanban, label: `Projects (${projects.length})` },
           { id: 'contracts', icon: FileText, label: `Invoices (${invoices.length})` },
           { id: 'payments', icon: CreditCard, label: `Payments (${payments.length})` },
@@ -372,6 +383,114 @@ export default function ClientDetailsPage() {
                   ))}
                 </tbody>
               </table>
+            )}
+          </div>
+        )}
+
+        {/* RESEARCH TAB */}
+        {activeTab === 'research' && (
+          <div className="space-y-6">
+            <div className="p-5 rounded-2xl bg-surface border border-border flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-base font-bold text-text-primary flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  Pre-Project Market Research & Discovery
+                </h3>
+                <p className="text-xs text-text-muted mt-0.5">
+                  Conduct structured Q&A interviews, upload pitch decks, email reports via ZeptoMail, and kickoff projects with advance payments.
+                </p>
+              </div>
+
+              <button
+                onClick={async () => {
+                  try {
+                    const res = await fetch('/api/client-research', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        clientId,
+                        title: `Market Discovery - ${client.company || client.name}`,
+                        reportType: 'questions',
+                      }),
+                    });
+                    const data = await res.json();
+                    if (data.success && data.researchId) {
+                      router.push(`/admin/client-research/${data.researchId}`);
+                    }
+                  } catch (e) {
+                    console.error('Error starting research:', e);
+                  }
+                }}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-xs font-semibold hover:bg-primary/90 transition-all shadow-md shadow-primary/20"
+              >
+                <Plus className="w-4 h-4" /> Start New Research Session
+              </button>
+            </div>
+
+            {researches.length === 0 ? (
+              <div className="ta-table-container p-12 text-center">
+                <Sparkles className="w-8 h-8 text-primary mx-auto mb-2 opacity-60" />
+                <h4 className="text-sm font-semibold text-text-primary mb-1">No Research Sessions Yet</h4>
+                <p className="text-xs text-text-muted max-w-sm mx-auto">
+                  Start an optional pre-project discovery study to capture client FAQs, benchmark competitors, and define scope before creating a project.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {researches.map((r: any) => {
+                  const answered = r.questions?.filter((q: any) => q.answer && q.answer.trim().length > 0).length || 0;
+                  const total = r.questions?.length || 18;
+                  const pct = Math.round((answered / total) * 100);
+
+                  return (
+                    <div
+                      key={r._id}
+                      className="bg-surface border border-border rounded-2xl p-5 hover:border-primary/40 transition-all space-y-3 cursor-pointer"
+                      onClick={() => router.push(`/admin/client-research/${r._id}`)}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <h4 className="text-sm font-bold text-text-primary hover:text-primary transition-colors">
+                          {r.title}
+                        </h4>
+                        <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full uppercase bg-primary/10 text-primary">
+                          {r.status.replace('_', ' ')}
+                        </span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[11px] text-text-muted">
+                          <span>Discovery Progress</span>
+                          <span className="font-semibold text-text-primary">{answered}/{total} ({pct}%)</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-background rounded-full overflow-hidden border border-border">
+                          <div className="h-full bg-primary rounded-full" style={{ width: `${pct}%` }} />
+                        </div>
+                      </div>
+
+                      <div className="pt-2 border-t border-border flex items-center justify-between text-xs">
+                        <span className="text-text-muted">
+                          {new Date(r.createdAt).toLocaleDateString()}
+                        </span>
+
+                        <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                          <button
+                            onClick={() => router.push(`/admin/client-research/${r._id}/report`)}
+                            className="px-2.5 py-1 rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 text-xs font-semibold"
+                          >
+                            Report
+                          </button>
+                          <button
+                            onClick={() => router.push(`/admin/client-research/${r._id}`)}
+                            className="px-2.5 py-1 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/90"
+                          >
+                            Workspace →
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
         )}

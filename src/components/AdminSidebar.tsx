@@ -73,6 +73,7 @@ const menuGroups: MenuGroup[] = [
         children: [
           { label: 'Leads Pipeline', path: '/admin/leads' },
           { label: 'Client Directory', path: '/admin/clients' },
+          { label: 'Client Research', path: '/admin/client-research' },
           { label: 'Quotations', path: '/admin/quotations' },
           { label: 'Subscription Payments', path: '/admin/subscription-payments' },
         ]

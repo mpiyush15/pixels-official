@@ -981,3 +981,85 @@ export async function sendAdminNewSubscriptionEmail(
     html,
   });
 }
+
+/**
+ * Send Project Research & Discovery Report to Client via ZeptoMail
+ */
+export async function sendProjectResearchReportEmail(
+  to: string,
+  clientName: string,
+  companyName: string,
+  reportTitle: string,
+  reportUrl: string,
+  downloadUrl?: string,
+  executiveSummary?: string
+) {
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 0; background-color: #f4f7fb; }
+        .container { max-width: 600px; margin: 20px auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .header { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); padding: 36px 30px; text-align: center; color: #ffffff; }
+        .logo { max-height: 48px; margin-bottom: 12px; }
+        .badge { display: inline-block; background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.3); padding: 4px 14px; border-radius: 9999px; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 10px; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 700; color: #ffffff; }
+        .content { padding: 32px 30px; color: #334155; }
+        .summary-box { background: #f8fafc; border-left: 4px solid #3b82f6; padding: 18px 20px; border-radius: 0 8px 8px 0; margin: 24px 0; font-size: 14px; color: #475569; }
+        .cta-container { text-align: center; margin: 32px 0 20px 0; }
+        .btn-primary { display: inline-block; background: #3b82f6; color: #ffffff !important; padding: 14px 32px; border-radius: 8px; font-size: 15px; font-weight: 600; text-decoration: none; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.3); }
+        .btn-secondary { display: inline-block; background: #f1f5f9; color: #334155 !important; padding: 12px 26px; border-radius: 8px; font-size: 14px; font-weight: 600; text-decoration: none; margin-top: 10px; border: 1px solid #cbd5e1; }
+        .footer { background: #f8fafc; padding: 24px 30px; text-align: center; font-size: 13px; color: #94a3b8; border-top: 1px solid #e2e8f0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <img src="${LOGO_URL}" alt="${COMPANY_NAME}" class="logo" />
+          <div><span class="badge">Project Discovery & Market Intelligence</span></div>
+          <h1>${reportTitle}</h1>
+        </div>
+        <div class="content">
+          <p>Dear <strong>${clientName}</strong>,</p>
+          <p>We are excited to share that our team has compiled the comprehensive <strong>Market & Project Research Report</strong> tailored for <strong>${companyName}</strong>.</p>
+          
+          ${executiveSummary ? `
+          <div class="summary-box">
+            <strong style="color: #0f172a; display: block; margin-bottom: 6px;">Executive Brief:</strong>
+            ${executiveSummary}
+          </div>
+          ` : ''}
+
+          <p>This report details our findings across target market profiling, competitor benchmarking, technical scope recommendations, and proposed project milestones.</p>
+
+          <div class="cta-container">
+            <a href="${reportUrl}" class="btn-primary" target="_blank">View Project Research Report →</a>
+            ${downloadUrl ? `
+              <div style="margin-top: 14px;">
+                <a href="${downloadUrl}" class="btn-secondary" target="_blank">📥 Download Attached Document / Pitch Deck</a>
+              </div>
+            ` : ''}
+          </div>
+
+          <p style="margin-top: 28px; font-size: 14px; color: #64748b;">
+            Following your review, we are ready to initiate project kickoff and milestone scheduling. Please feel free to reply directly to this email if you have any questions or require revisions.
+          </p>
+        </div>
+        <div class="footer">
+          <p><strong>${COMPANY_NAME}</strong> • Strategic Digital Solutions</p>
+          <p>Need support? Contact us at <a href="mailto:${SUPPORT_EMAIL}" style="color: #3b82f6;">${SUPPORT_EMAIL}</a></p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  return sendEmail({
+    to,
+    subject: `📊 Project Research & Discovery Report: ${companyName} - Pixels Digital`,
+    html,
+  });
+}
+
