@@ -169,11 +169,20 @@ export async function PUT(
 
       if (client && client.email) {
         console.log('Sending contract acceptance email to:', client.email);
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://pixelsdigitalsolutions.com';
+        const downloadUrl = project.proposalToken ? `${baseUrl}/contract/${project.proposalToken}` : undefined;
         const emailResult = await sendContractAcceptanceEmail(
           client.email,
           client.name || clientName || 'Client',
           project.projectName || 'Project',
-          project.projectType || 'Web Development'
+          project.projectType || 'Web Development',
+          {
+            budget: project.budget,
+            description: project.description,
+            milestones: project.milestones || [],
+            acceptedAt: now.toISOString(),
+            downloadUrl,
+          }
         );
 
         console.log('Email result:', emailResult);

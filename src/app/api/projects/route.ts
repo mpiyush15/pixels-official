@@ -119,6 +119,7 @@ export async function POST(request: NextRequest) {
       videos: body.videos || [],
       proposalToken: proposalToken, // Generated for public contract acceptance
       agreementText: body.agreementText || 'Standard terms and conditions apply.',
+      projectReport: body.projectReport || '',
       activityLog: activityLog,
     };
 

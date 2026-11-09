@@ -4,6 +4,7 @@ import { ObjectId } from 'mongodb';
 import { createAndUploadInvoice } from '@/lib/invoiceGenerator';
 import { sendInvoiceEmail, sendPaymentConfirmationEmail } from '@/lib/email';
 import { getPresignedDownloadUrl } from '@/lib/s3';
+import { createInvoicePaymentLink } from '@/lib/razorpay';
 
 export async function POST(
   request: NextRequest,
@@ -35,7 +36,12 @@ export async function POST(
           clientAddress: invoice.clientAddress,
           invoiceDate: new Date(invoice.issueDate),
           dueDate: new Date(invoice.dueDate),
-          items: invoice.services.map((service: any) => ({ description: service.name || service.description, quantity: service.quantity || 1, rate: service.price || service.amount, amount: service.amount || service.price })),
+          items: invoice.services.map((service: any) => ({
+            description: service.name || service.description,
+            quantity: service.quantity || 1,
+            rate: service.price || service.amount,
+            amount: service.amount || service.price,
+          })),
           subtotal: invoice.subtotal,
           tax: invoice.tax || 0,
           discount: invoice.discount || 0,
@@ -47,7 +53,10 @@ export async function POST(
         const uploadResult = await createAndUploadInvoice(invoiceData);
         if (uploadResult.success) {
           s3Key = uploadResult.key;
-          await db.collection('invoices').updateOne({ _id: new ObjectId(id) }, { $set: { s3Key: uploadResult.key, s3Url: uploadResult.url, s3UploadedAt: new Date() } });
+          await db.collection('invoices').updateOne(
+            { _id: new ObjectId(id) },
+            { $set: { s3Key: uploadResult.key, s3Url: uploadResult.url, s3UploadedAt: new Date() } }
+          );
         }
       } catch (err) {
         console.error('Error generating invoice PDF for send:', err);
@@ -66,12 +75,56 @@ export async function POST(
     // If invoice is paid, send payment confirmation; otherwise send invoice email
     if (invoice.status === 'paid') {
       try {
-        await sendPaymentConfirmationEmail(invoice.clientEmail, invoice.clientName, invoice.total, invoice.paymentDetails || 'N/A', new Date(invoice.paidAt || Date.now()));
+        await sendPaymentConfirmationEmail(
+          invoice.clientEmail,
+          invoice.clientName,
+          invoice.total,
+          invoice.paymentDetails || 'Razorpay',
+          new Date(invoice.paidAt || Date.now())
+        );
       } catch (err) {
         console.error('Error sending payment confirmation email:', err);
         return NextResponse.json({ success: false, error: 'Failed to send payment confirmation email' }, { status: 500 });
       }
     } else {
+      // 💳 Ensure active Razorpay payment link exists for this invoice
+      let paymentLink = invoice.paymentLink;
+
+      if (!paymentLink) {
+        try {
+          const remainingAmount = invoice.total - (invoice.amountPaid || 0);
+          if (remainingAmount > 0) {
+            const linkData = await createInvoicePaymentLink(invoice, remainingAmount);
+            paymentLink = linkData.short_url || (linkData as any).url;
+
+            if (paymentLink) {
+              await db.collection('invoices').updateOne(
+                { _id: new ObjectId(id) },
+                {
+                  $set: {
+                    paymentLink,
+                    razorpayPaymentLinkId: linkData.id,
+                    paymentLinkCreatedAt: new Date(),
+                    updatedAt: new Date(),
+                  },
+                }
+              );
+            }
+          }
+        } catch (paymentLinkErr) {
+          console.warn('Could not auto-generate Razorpay payment link for email:', paymentLinkErr);
+          // Don't crash email sending if payment link generation fails; email still delivers with portal link
+        }
+      }
+
+      // Update status to 'sent' if it was in 'draft'
+      if (invoice.status === 'draft') {
+        await db.collection('invoices').updateOne(
+          { _id: new ObjectId(id) },
+          { $set: { status: 'sent', updatedAt: new Date() } }
+        );
+      }
+
       try {
         await sendInvoiceEmail(
           invoice.clientEmail,
@@ -79,8 +132,12 @@ export async function POST(
           invoice.invoiceNumber,
           invoice.total,
           new Date(invoice.dueDate),
-          invoice.services.map((s: any) => ({ description: s.name || s.description, amount: (s.quantity || 1) * (s.price || s.amount) })),
-          invoiceUrl
+          invoice.services.map((s: any) => ({
+            description: s.name || s.description,
+            amount: (s.quantity || 1) * (s.price || s.amount),
+          })),
+          invoiceUrl,
+          paymentLink
         );
       } catch (err) {
         console.error('Error sending invoice email:', err);

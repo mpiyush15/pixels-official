@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutDashboard, 
   FileText, 
@@ -32,6 +32,11 @@ export default function ClientSidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  // Auto-close drawer on route change
+  useEffect(() => {
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
+
   // Fetch unread message count
   const fetchUnreadCount = async () => {
     try {
@@ -47,9 +52,6 @@ export default function ClientSidebar() {
 
   useEffect(() => {
     fetchUnreadCount();
-    // DISABLED: Poll every 10 seconds for new messages
-    // const interval = setInterval(fetchUnreadCount, 10000);
-    // return () => clearInterval(interval);
   }, []);
 
   const handleLogout = async () => {
@@ -59,41 +61,51 @@ export default function ClientSidebar() {
 
   return (
     <>
-      {/* Mobile Header - Logo centered */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-black border-b border-white/10 px-4 py-4">
-        <div className="flex items-center justify-center relative">
-          {/* Hamburger Button - Absolute Left */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="absolute left-0 text-white p-2 rounded-lg hover:bg-white/10 transition-colors"
-          >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
-          
-          {/* Logo/Title - Centered */}
-          <div className="text-center">
-            <h1 className="text-lg font-light text-white">Pixels Digital</h1>
-            <p className="text-gray-400 text-xs font-light">Client Portal</p>
-          </div>
+      {/* Mobile Top Header */}
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-black/95 backdrop-blur-md border-b border-white/10 px-4 py-3.5 flex items-center justify-between">
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="text-white p-2 -ml-2 rounded-lg hover:bg-white/10 transition-colors focus:outline-none"
+          aria-label="Toggle menu"
+        >
+          {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+        
+        <div className="text-center flex-1">
+          <h1 className="text-base font-medium text-white tracking-wide">Pixels Digital</h1>
+          <p className="text-gray-400 text-[11px] font-light">Client Portal</p>
         </div>
+
+        <div className="w-8" /> {/* Placeholder for balance */}
       </div>
 
-      {/* Sidebar */}
-      <motion.div
-        initial={false}
-        animate={{ x: 0 }}
-        className={`fixed lg:static inset-y-0 left-0 z-40 w-72 bg-black border-r border-white/10 flex flex-col ${
+      {/* Mobile Backdrop Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="lg:hidden fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar Drawer */}
+      <div
+        className={`fixed lg:static inset-y-0 left-0 z-40 w-72 bg-black border-r border-white/10 flex flex-col transition-transform duration-300 ease-in-out ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-        } lg:translate-x-0 transition-transform duration-300 mt-[73px] lg:mt-0`}
+        } lg:translate-x-0 pt-[60px] lg:pt-0`}
       >
-        {/* Logo - Desktop Only */}
+        {/* Desktop Logo */}
         <div className="hidden lg:block p-8 border-b border-white/10 flex-shrink-0">
-          <h1 className="text-2xl font-light text-white">Pixels Digital</h1>
+          <h1 className="text-2xl font-light text-white tracking-wide">Pixels Digital</h1>
           <p className="text-gray-400 text-sm font-light mt-1">Client Portal</p>
         </div>
 
-        {/* Menu Items - Scrollable */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        {/* Menu Items */}
+        <nav className="flex-1 p-4 space-y-1.5 overflow-y-auto">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.path;
@@ -101,51 +113,43 @@ export default function ClientSidebar() {
             const showBadge = isChatsPage && unreadCount > 0;
 
             return (
-              <motion.button
+              <button
                 key={item.path}
                 onClick={() => {
                   router.push(item.path);
                   setIsMobileMenuOpen(false);
                 }}
-                whileHover={{ x: 4 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-colors relative ${
+                className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all text-sm font-light ${
                   isActive
-                    ? 'bg-white text-black'
-                    : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    ? 'bg-white text-black font-normal shadow-sm'
+                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
                 }`}
               >
-                <Icon className="w-5 h-5" strokeWidth={1.5} />
-                <span className="font-light">{item.label}</span>
+                <div className="flex items-center space-x-3">
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-black' : 'text-gray-400'}`} />
+                  <span>{item.label}</span>
+                </div>
                 {showBadge && (
-                  <span className="ml-auto bg-red-500 text-white text-xs font-semibold rounded-full px-2 py-0.5 min-w-[20px] text-center">
-                    {unreadCount > 99 ? '99+' : unreadCount}
+                  <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+                    {unreadCount}
                   </span>
                 )}
-              </motion.button>
+              </button>
             );
           })}
         </nav>
 
-        {/* Logout */}
+        {/* User Info & Logout Footer */}
         <div className="p-4 border-t border-white/10 flex-shrink-0">
-          <motion.button
+          <button
             onClick={handleLogout}
-            whileHover={{ x: 4 }}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-400 hover:bg-red-500/10 transition-colors"
+            className="w-full flex items-center space-x-3 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl transition-colors text-sm font-light"
           >
-            <LogOut className="w-5 h-5" strokeWidth={1.5} />
-            <span className="font-light">Logout</span>
-          </motion.button>
+            <LogOut className="w-5 h-5" />
+            <span>Sign Out</span>
+          </button>
         </div>
-      </motion.div>
-
-      {/* Mobile Overlay */}
-      {isMobileMenuOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-30"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
-      )}
+      </div>
     </>
   );
 }

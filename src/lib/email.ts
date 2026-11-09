@@ -343,8 +343,24 @@ export async function sendPaymentReminderEmail(
   clientName: string,
   amount: number,
   dueDate: Date,
-  invoiceNumber: string
+  invoiceNumber: string,
+  paymentLink?: string
 ) {
+  const paymentButton = paymentLink ? `
+    <p style="text-align: center; margin: 25px 0 10px 0;">
+      <a href="${paymentLink}" class="button" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); font-size: 16px; padding: 14px 32px; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);">
+        💳 Pay Now • ₹${amount.toLocaleString('en-IN')}
+      </a>
+    </p>
+    <p style="text-align: center; font-size: 12px; color: #6b7280; margin-bottom: 20px;">
+      Secure instant payment via UPI, Debit/Credit Card, Netbanking & Wallets
+    </p>
+  ` : `
+    <p style="text-align: center; margin: 25px 0;">
+      <a href="${'https://pixelsdigitalsolutions.com'}/client-portal/payments" class="button">Make Payment</a>
+    </p>
+  `;
+
   const html = `
     <!DOCTYPE html>
     <html>
@@ -357,7 +373,7 @@ export async function sendPaymentReminderEmail(
         .content { background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; }
         .amount { font-size: 36px; font-weight: bold; color: #f44336; text-align: center; margin: 20px 0; }
         .info-box { background: #fff3cd; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #ffc107; }
-        .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; font-weight: bold; }
         .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
       </style>
     </head>
@@ -368,15 +384,13 @@ export async function sendPaymentReminderEmail(
         </div>
         <div class="content">
           <h2>Hi ${clientName},</h2>
-          <p>This is a friendly reminder about your upcoming payment.</p>
+          <p>This is a friendly reminder about your outstanding payment.</p>
           <div class="amount">₹${amount.toLocaleString('en-IN')}</div>
           <div class="info-box">
             <p><strong>Invoice Number:</strong> ${invoiceNumber}</p>
-            <p><strong>Due Date:</strong> ${dueDate.toLocaleDateString()}</p>
+            <p><strong>Due Date:</strong> ${dueDate.toLocaleDateString('en-IN')}</p>
           </div>
-          <p style="text-align: center;">
-            <a href="${'https://pixelsdigitalsolutions.com'}/client-portal/payments" class="button">Make Payment</a>
-          </p>
+          ${paymentButton}
           <p>If you've already made this payment, please disregard this reminder.</p>
           <p>Questions? Contact us at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a></p>
           <p>Best regards,<br>The ${COMPANY_NAME} Team</p>
@@ -404,7 +418,8 @@ export async function sendInvoiceEmail(
   amount: number,
   dueDate: Date,
   items: Array<{ description: string; amount: number }>,
-  invoiceUrl?: string // S3 presigned URL
+  invoiceUrl?: string, // S3 presigned URL
+  paymentLink?: string // Razorpay payment link
 ) {
   const itemsHtml = items.map(item => `
     <div class="info-row">
@@ -413,9 +428,20 @@ export async function sendInvoiceEmail(
     </div>
   `).join('');
 
+  const payNowButton = paymentLink ? `
+    <div style="text-align: center; margin: 25px 0 10px 0;">
+      <a href="${paymentLink}" class="button" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); font-size: 16px; padding: 14px 36px; border-radius: 8px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4); display: inline-block;">
+        💳 Pay Now • ₹${amount.toLocaleString('en-IN')}
+      </a>
+      <div style="font-size: 12px; color: #6b7280; margin-top: 8px;">
+        Instant payment via UPI (GPay, PhonePe, Paytm), Cards & Netbanking
+      </div>
+    </div>
+  ` : '';
+
   const downloadButton = invoiceUrl ? `
-    <p style="text-align: center; margin-top: 30px;">
-      <a href="${invoiceUrl}" class="button" style="background: #10b981;">📥 Download Invoice PDF</a>
+    <p style="text-align: center; margin: 15px 0;">
+      <a href="${invoiceUrl}" class="button" style="background: #374151; padding: 10px 24px; font-size: 14px;">📥 Download Invoice PDF</a>
     </p>
   ` : '';
 
@@ -427,35 +453,44 @@ export async function sendInvoiceEmail(
       <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: #667eea; color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
         .content { background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; }
         .info-box { background: #f8f9fa; padding: 20px; border-radius: 5px; margin: 20px 0; }
-        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e0e0e0; }
+        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e0e0e0; font-size: 14px; }
         .total { font-size: 24px; font-weight: bold; color: #667eea; text-align: right; margin-top: 20px; }
-        .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0; font-weight: bold; }
         .footer { text-align: center; padding: 20px; color: #666; font-size: 12px; }
       </style>
     </head>
     <body>
       <div class="container">
         <div class="header">
-          <h1>📄 New Invoice</h1>
+          <h1 style="margin: 0; font-size: 26px;">📄 New Invoice</h1>
+          <p style="margin: 5px 0 0 0; opacity: 0.9;">Pixels Digital Solutions</p>
         </div>
         <div class="content">
           <h2>Hi ${clientName},</h2>
-          <p>We've generated a new invoice for you.</p>
+          <p>We've generated an invoice for your project.</p>
           <p><strong>Invoice Number:</strong> ${invoiceNumber}</p>
-          <p><strong>Due Date:</strong> ${dueDate.toLocaleDateString()}</p>
+          <p><strong>Due Date:</strong> ${dueDate.toLocaleDateString('en-IN')}</p>
+          
           <div class="info-box">
-            <h3>Invoice Details</h3>
+            <h3 style="margin-top: 0;">Invoice Summary</h3>
             ${itemsHtml}
-            <div class="total">Total: ₹${amount.toLocaleString('en-IN')}</div>
+            <div class="total">Total Due: ₹${amount.toLocaleString('en-IN')}</div>
           </div>
+
+          ${payNowButton}
           ${downloadButton}
-          <p style="text-align: center;">
-            <a href="${'https://pixelsdigitalsolutions.com'}/client-portal/invoices" class="button">View in Portal</a>
+
+          <p style="text-align: center; margin-top: 20px;">
+            <a href="${'https://pixelsdigitalsolutions.com'}/client-portal/invoices" style="color: #667eea; text-decoration: none; font-size: 14px;">
+              View all invoices in Client Portal →
+            </a>
           </p>
-          <p>If you have any questions, contact us at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a></p>
+
+          <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;" />
+          <p>If you have any questions regarding this invoice, contact us at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a>.</p>
           <p>Best regards,<br>The ${COMPANY_NAME} Team</p>
         </div>
         <div class="footer">
@@ -468,7 +503,7 @@ export async function sendInvoiceEmail(
 
   return sendEmail({
     to,
-    subject: `New Invoice ${invoiceNumber}`,
+    subject: `Invoice ${invoiceNumber} from Pixels Digital - ₹${amount.toLocaleString('en-IN')}`,
     html,
   });
 }
@@ -526,20 +561,81 @@ export async function sendProjectUpdateEmail(
   });
 }
 
+export interface ContractAcceptanceEmailOptions {
+  budget?: number;
+  description?: string;
+  milestones?: Array<{ name: string; amount?: number; dueDate?: string | Date }>;
+  acceptedAt?: Date | string;
+  downloadUrl?: string; // Direct PDF / agreement download URL
+}
+
 // Contract Acceptance Email
 export async function sendContractAcceptanceEmail(
   to: string,
   clientName: string,
   projectName: string,
-  projectType: string
+  projectType: string,
+  options?: ContractAcceptanceEmailOptions
 ) {
-  const acceptanceDate = new Date().toLocaleDateString('en-IN', {
+  const rawDate = options?.acceptedAt ? new Date(options.acceptedAt) : new Date();
+  const acceptanceDate = rawDate.toLocaleDateString('en-IN', {
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
   
   const portalUrl = `${'https://pixelsdigitalsolutions.com'}/client-portal/projects`;
+
+  const budgetRow = options?.budget ? `
+    <div class="info-row">
+      <span><strong>Total Agreed Budget:</strong></span>
+      <span style="font-weight: bold; color: #059669;">₹${options.budget.toLocaleString('en-IN')}</span>
+    </div>
+  ` : '';
+
+  const scopeBox = options?.description ? `
+    <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 15px; margin: 20px 0;">
+      <h4 style="margin: 0 0 10px 0; color: #374151; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Project Scope & Deliverables</h4>
+      <p style="margin: 0; color: #4b5563; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${options.description}</p>
+    </div>
+  ` : '';
+
+  const milestonesSection = options?.milestones && options.milestones.length > 0 ? `
+    <div style="margin: 20px 0;">
+      <h4 style="margin: 0 0 10px 0; color: #374151; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Milestone & Payment Schedule</h4>
+      <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+        <thead>
+          <tr style="background: #f3f4f6; text-align: left; color: #4b5563;">
+            <th style="padding: 10px; border-bottom: 2px solid #e5e7eb;">Milestone</th>
+            <th style="padding: 10px; border-bottom: 2px solid #e5e7eb; text-align: center;">Due Date</th>
+            <th style="padding: 10px; border-bottom: 2px solid #e5e7eb; text-align: right;">Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${options.milestones.map((m, idx) => `
+            <tr style="border-bottom: 1px solid #f3f4f6;">
+              <td style="padding: 10px;">${idx + 1}. <strong>${m.name}</strong></td>
+              <td style="padding: 10px; text-align: center; color: #6b7280;">${m.dueDate ? new Date(m.dueDate).toLocaleDateString('en-IN') : 'TBD'}</td>
+              <td style="padding: 10px; text-align: right; font-weight: bold; color: #111827;">${m.amount ? `₹${Number(m.amount).toLocaleString('en-IN')}` : '-'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  ` : '';
+
+  const downloadButton = options?.downloadUrl ? `
+    <p style="text-align: center; margin: 25px 0 10px 0;">
+      <a href="${options.downloadUrl}" class="button" style="background: #059669; font-size: 15px; padding: 14px 30px;">
+        📥 Download Signed Agreement (PDF)
+      </a>
+    </p>
+    <p style="text-align: center; font-size: 12px; color: #6b7280; margin-bottom: 20px;">
+      Save an official offline signed PDF copy of this agreement for your records
+    </p>
+  ` : '';
 
   const html = `
     <!DOCTYPE html>
@@ -553,10 +649,10 @@ export async function sendContractAcceptanceEmail(
         .content { background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; }
         .success-badge { background: #d1fae5; color: #065f46; padding: 15px 20px; border-radius: 8px; text-align: center; margin: 20px 0; border: 2px solid #10b981; }
         .project-info { background: #f0fdf4; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #10b981; }
-        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; }
+        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #e5e7eb; font-size: 14px; }
         .info-row:last-child { border-bottom: none; }
         .status-change { background: #fef3c7; padding: 15px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #fbbf24; }
-        .button { display: inline-block; padding: 12px 30px; background: #10b981; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+        .button { display: inline-block; padding: 12px 30px; background: #10b981; color: white; text-decoration: none; border-radius: 5px; margin: 10px 0; font-weight: bold; }
         .next-steps { background: #eff6ff; padding: 20px; border-radius: 5px; margin: 20px 0; border-left: 4px solid #3b82f6; }
         .next-steps ol { margin: 10px 0; padding-left: 20px; }
         .next-steps li { margin: 8px 0; }
@@ -566,19 +662,19 @@ export async function sendContractAcceptanceEmail(
     <body>
       <div class="container">
         <div class="header">
-          <h1>✅ Contract Accepted!</h1>
-          <p>Your project is ready to begin</p>
+          <h1 style="margin: 0; font-size: 26px;">✅ Contract Accepted & Signed!</h1>
+          <p style="margin: 5px 0 0 0; opacity: 0.9;">Project Agreement Confirmed</p>
         </div>
         <div class="content">
           <h2>Hi ${clientName},</h2>
-          <p>Thank you for accepting the contract. We're excited to work with you on this project!</p>
+          <p>Thank you for reviewing and accepting the project agreement. We are officially ready to begin work on your project!</p>
           
           <div class="success-badge">
-            <strong>Contract Accepted on ${acceptanceDate}</strong>
+            <strong>✅ Confirmed & Signed on ${acceptanceDate}</strong>
           </div>
 
           <div class="project-info">
-            <h3 style="margin-top: 0; color: #059669;">Project Details</h3>
+            <h3 style="margin-top: 0; color: #059669;">Project Summary</h3>
             <div class="info-row">
               <span><strong>Project Name:</strong></span>
               <span>${projectName}</span>
@@ -587,33 +683,39 @@ export async function sendContractAcceptanceEmail(
               <span><strong>Project Type:</strong></span>
               <span>${projectType}</span>
             </div>
+            ${budgetRow}
             <div class="info-row">
-              <span><strong>Acceptance Date:</strong></span>
+              <span><strong>Signed At:</strong></span>
               <span>${acceptanceDate}</span>
             </div>
           </div>
 
+          ${scopeBox}
+          ${milestonesSection}
+          ${downloadButton}
+
           <div class="status-change">
-            <strong>📊 Status Update:</strong>
-            <p style="margin: 10px 0 0 0;">Your project status has been updated to <strong>"In Progress"</strong>. We'll begin work according to the agreed timeline.</p>
+            <strong>📊 Project Status:</strong>
+            <p style="margin: 5px 0 0 0; font-size: 14px;">Your project status has been updated to <strong>"In Progress"</strong>. Our team will proceed according to the agreed milestone schedule.</p>
           </div>
 
           <div class="next-steps">
             <h3 style="margin-top: 0; color: #1e40af;">What's Next?</h3>
             <ol>
-              <li>Monitor project progress in your dashboard</li>
-              <li>Review work submissions and provide feedback</li>
-              <li>Chat with our team anytime for updates</li>
-              <li>Track milestones and deliverables</li>
+              <li>Monitor real-time task progress and updates</li>
+              <li>Review work submissions, files & request revisions</li>
+              <li>Chat with our team anytime inside your portal</li>
+              <li>Track milestone deliverables and invoices</li>
             </ol>
           </div>
 
           <p style="text-align: center; margin: 30px 0;">
-            <a href="${portalUrl}" class="button">View Your Project</a>
+            <a href="${portalUrl}" class="button" style="background: #111827;">🚀 Open Project in Client Portal</a>
           </p>
 
-          <p><strong>Questions or need help?</strong></p>
-          <p>Reach out to our support team at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a>. We're here to help!</p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;" />
+          <p><strong>Questions or need assistance?</strong></p>
+          <p>Reach out to our support team at <a href="mailto:${SUPPORT_EMAIL}">${SUPPORT_EMAIL}</a>.</p>
           <p>Best regards,<br>The ${COMPANY_NAME} Team</p>
         </div>
         <div class="footer">
@@ -626,7 +728,7 @@ export async function sendContractAcceptanceEmail(
 
   return sendEmail({
     to,
-    subject: `Contract Accepted: ${projectName} - Project Started ✅`,
+    subject: `Contract Signed: ${projectName} - Project Started ✅`,
     html,
   });
 }

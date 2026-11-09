@@ -49,11 +49,11 @@ export default function ClientPortalLayout({
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-gray-50 overflow-hidden">
       <ClientSidebar />
-      <main className="flex-1 overflow-y-auto flex flex-col pt-[73px] lg:pt-0">
+      <main className="flex-1 overflow-y-auto flex flex-col pt-[58px] lg:pt-0">
         <ClientTopBar clientName={clientName} />
-        <div className="flex-1">
+        <div className="flex-1 p-0">
           {children}
         </div>
       </main>

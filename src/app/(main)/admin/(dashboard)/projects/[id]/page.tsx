@@ -27,6 +27,8 @@ interface Project {
   endDate: string;
   clientEmail?: string;
   projectReportText?: string;
+  projectReport?: string;
+  proposalToken?: string;
   projectRevision?: string;
   agreementText?: string;
   milestones: Milestone[];
@@ -55,6 +57,14 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   useEffect(() => {
     fetchProject();
     fetchAccounts();
+
+    if (typeof window !== 'undefined') {
+      const sp = new URLSearchParams(window.location.search);
+      const tabParam = sp.get('tab');
+      if (tabParam === 'report' || tabParam === 'milestones' || tabParam === 'timeline' || tabParam === 'whatsapp') {
+        setActiveTab(tabParam as any);
+      }
+    }
   }, [id]);
 
   const fetchAccounts = async () => {
@@ -87,10 +97,17 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
   const handleSave = async () => {
     setSaving(true);
     try {
+      const reportVal = editForm.projectReport || editForm.projectReportText || '';
+      const payload = {
+        ...editForm,
+        projectReport: reportVal,
+        projectReportText: reportVal,
+      };
+
       const res = await fetch(`/api/projects/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -108,22 +125,30 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
 
   const handleDownloadAgreement = () => {
     if (!project) return;
+    if (project.proposalToken) {
+      window.open(`/contract/${project.proposalToken}`, '_blank');
+      return;
+    }
+
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
+    const reportContent = project.projectReport || project.projectReportText || '';
     const html = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="utf-8">
-        <title>Agreement - ${project.projectName}</title>
+        <title>Agreement & Scope - ${project.projectName}</title>
         <style>
           body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 40px; color: #333; line-height: 1.6; }
-          .header { text-align: center; margin-bottom: 40px; }
-          .header h1 { color: #1a1a1a; margin-bottom: 10px; }
-          .details { margin-bottom: 30px; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .header h1 { color: #1a1a1a; margin-bottom: 6px; }
+          .details { margin-bottom: 25px; border-bottom: 1px solid #e5e7eb; padding-bottom: 15px; }
           .details div { margin-bottom: 5px; }
-          .agreement { white-space: pre-wrap; font-family: monospace; background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; }
+          .section-title { font-size: 16px; font-weight: bold; margin-top: 25px; margin-bottom: 10px; color: #111; }
+          .box { white-space: pre-wrap; font-family: sans-serif; background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 14px; line-height: 1.6; }
+          .agreement { white-space: pre-wrap; font-family: monospace; background: #f9fafb; padding: 20px; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 13px; }
           @media print {
             .no-print { display: none; }
           }
@@ -131,16 +156,22 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
       </head>
       <body>
         <div class="header">
-          <h1>Project Agreement</h1>
+          <h1>Project Agreement & Scope of Work</h1>
           <p>${project.projectName}</p>
         </div>
         <div class="details">
           <div><strong>Project Type:</strong> ${project.projectType || 'N/A'}</div>
-          <div><strong>Date:</strong> ${new Date().toLocaleDateString()}</div>
+          <div><strong>Date:</strong> ${new Date().toLocaleDateString('en-IN')}</div>
+          <div><strong>Total Agreed Budget:</strong> ₹${(project.budget || 0).toLocaleString('en-IN')}</div>
         </div>
+        ${reportContent ? `
+          <div class="section-title">📋 Comprehensive Project Report & Scope</div>
+          <div class="box">${reportContent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+        ` : ''}
+        <div class="section-title">⚖️ Terms & Conditions</div>
         <div class="agreement">${project.agreementText ? project.agreementText.replace(/</g, '&lt;').replace(/>/g, '&gt;') : 'Standard terms and conditions apply.'}</div>
         <div class="no-print" style="position: fixed; bottom: 20px; right: 20px;">
-          <button onclick="window.print()" style="background: #1565C0; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Print / Save PDF</button>
+          <button onclick="window.print()" style="background: #000; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Print / Save PDF</button>
         </div>
         <script>
           setTimeout(() => { window.print(); }, 500);
@@ -424,59 +455,125 @@ export default function ProjectDetailsPage({ params }: { params: Promise<{ id: s
           {/* TAB 2: PROJECT REPORT */}
           {activeTab === 'report' && (
             <motion.div key="report" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-6">
-              <div className="ta-card max-w-3xl">
-                <h2 className="text-lg font-semibold text-text-primary border-b border-border pb-3 mb-4">Project Deliverables & Reports</h2>
+              <div className="ta-card max-w-4xl">
+                <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
+                  <div>
+                    <h2 className="text-lg font-semibold text-text-primary">Project Deliverables & Comprehensive Report</h2>
+                    <p className="text-xs text-text-muted mt-0.5">Visible to both Admin and Client. Automatically embedded into the agreement contract.</p>
+                  </div>
+                  {!isEditing ? (
+                    <button
+                      onClick={() => setIsEditing(true)}
+                      className="text-xs flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 text-primary hover:bg-primary/20 rounded-lg font-medium transition-colors"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" /> Edit Report
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="text-xs flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white hover:bg-primary/90 rounded-lg font-medium transition-colors"
+                    >
+                      <Save className="w-3.5 h-3.5" /> {saving ? 'Saving...' : 'Save Report'}
+                    </button>
+                  )}
+                </div>
                 
                 {isEditing ? (
                   <div className="space-y-5">
                     <div>
-                      <label className="block text-sm font-medium text-text-primary mb-1">Project Report</label>
-                      <p className="text-xs text-text-muted mb-2">Detailed report, deliverables, or summary of the project.</p>
-                      <textarea rows={6} placeholder="Type the full project report here..." className="ta-input w-full" value={editForm.projectReportText || ''} onChange={(e) => setEditForm({...editForm, projectReportText: e.target.value})} />
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-sm font-medium text-text-primary">Comprehensive Project Report & Scope</label>
+                        <span className="text-xs text-text-muted">Type or paste full architecture & deliverables</span>
+                      </div>
+                      <textarea
+                        rows={12}
+                        placeholder="Paste or type the comprehensive project report, technical specifications, and deliverables here..."
+                        className="ta-input w-full font-mono text-sm leading-relaxed"
+                        value={editForm.projectReport ?? editForm.projectReportText ?? ''}
+                        onChange={(e) => setEditForm({...editForm, projectReport: e.target.value, projectReportText: e.target.value})}
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-text-primary mb-1">Current Revision / Version</label>
-                      <p className="text-xs text-text-muted mb-2">Track the current version of the deliverables (e.g. v1.2, Final).</p>
-                      <input type="text" placeholder="e.g. v1.2" className="ta-input w-full md:w-1/2" value={editForm.projectRevision || ''} onChange={(e) => setEditForm({...editForm, projectRevision: e.target.value})} />
+                      <p className="text-xs text-text-muted mb-2">Track the current version of the deliverables (e.g. v1.0, v1.2, Final).</p>
+                      <input type="text" placeholder="e.g. v1.0" className="ta-input w-full md:w-1/2" value={editForm.projectRevision || ''} onChange={(e) => setEditForm({...editForm, projectRevision: e.target.value})} />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-text-primary mb-1">Project Agreement / Terms</label>
-                      <p className="text-xs text-text-muted mb-2">The contract text the client needs to agree to.</p>
-                      <textarea rows={6} className="ta-input w-full font-mono text-sm" value={editForm.agreementText || ''} onChange={(e) => setEditForm({...editForm, agreementText: e.target.value})} placeholder="Enter the full contract terms here..." />
+                      <label className="block text-sm font-medium text-text-primary mb-1">Project Agreement / Contract Terms</label>
+                      <p className="text-xs text-text-muted mb-2">Terms and legal conditions client accepts when signing.</p>
+                      <textarea rows={6} className="ta-input w-full font-mono text-sm leading-relaxed" value={editForm.agreementText || ''} onChange={(e) => setEditForm({...editForm, agreementText: e.target.value})} placeholder="Enter the full contract terms here..." />
                     </div>
                   </div>
                 ) : (
                   <div className="space-y-6">
                     <div className="bg-surface/50 p-6 rounded-xl border border-border">
-                      <p className="text-sm font-semibold text-text-primary mb-3">Project Report</p>
-                      {project.projectReportText ? (
-                        <div className="bg-white p-4 border border-border rounded-lg text-sm text-text-secondary whitespace-pre-wrap">
-                          {project.projectReportText}
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-semibold text-text-primary">📋 Comprehensive Project Report</p>
+                        {project.proposalToken && (
+                          <a
+                            href={`/contract/${project.proposalToken}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs flex items-center gap-1 text-primary hover:underline font-medium"
+                          >
+                            <FileText className="w-3.5 h-3.5" /> View Public Contract Page
+                          </a>
+                        )}
+                      </div>
+                      {project.projectReport || project.projectReportText ? (
+                        <div className="bg-white dark:bg-card p-5 border border-border rounded-lg text-sm text-text-secondary whitespace-pre-wrap leading-relaxed font-sans shadow-sm">
+                          {project.projectReport || project.projectReportText}
                         </div>
                       ) : (
-                        <p className="text-text-muted italic text-sm">No project report has been written yet.</p>
+                        <div className="text-center py-8 border-2 border-dashed border-border rounded-lg">
+                          <FileText className="w-8 h-8 text-text-muted mx-auto mb-2 opacity-50" />
+                          <p className="text-text-muted italic text-sm">No project report has been written yet.</p>
+                          <button
+                            onClick={() => setIsEditing(true)}
+                            className="mt-3 text-xs text-primary font-medium hover:underline inline-flex items-center gap-1"
+                          >
+                            <Edit2 className="w-3 h-3" /> Add Project Report Now
+                          </button>
+                        </div>
                       )}
                     </div>
                     
-                    <div className="bg-surface/50 p-6 rounded-xl border border-border">
-                      <p className="text-sm text-text-muted mb-1">Current Revision</p>
-                      <p className="text-xl font-bold text-text-primary">
-                        {project.projectRevision || 'N/A'}
-                      </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-surface/50 p-4 rounded-xl border border-border">
+                        <p className="text-xs text-text-muted mb-1 font-medium">Current Revision</p>
+                        <p className="text-lg font-bold text-text-primary">
+                          {project.projectRevision || 'v1.0 (Initial)'}
+                        </p>
+                      </div>
+                      <div className="bg-surface/50 p-4 rounded-xl border border-border">
+                        <p className="text-xs text-text-muted mb-1 font-medium">Contract Status</p>
+                        <p className="text-lg font-bold text-text-primary flex items-center gap-1.5">
+                          {(project as any).contractAccepted ? (
+                            <span className="text-emerald-500 inline-flex items-center gap-1 text-base">
+                              <CheckCircle className="w-4 h-4" /> Signed & Active
+                            </span>
+                          ) : (
+                            <span className="text-amber-500 inline-flex items-center gap-1 text-base">
+                              <Clock className="w-4 h-4" /> Pending Client Signature
+                            </span>
+                          )}
+                        </p>
+                      </div>
                     </div>
 
                     <div className="bg-surface/50 p-6 rounded-xl border border-border">
                       <div className="flex items-center justify-between mb-3">
-                        <p className="text-sm font-semibold text-text-primary">Project Agreement / Terms</p>
+                        <p className="text-sm font-semibold text-text-primary">Contract Terms & Conditions</p>
                         <button 
                           onClick={handleDownloadAgreement}
-                          className="text-xs flex items-center gap-1 bg-white border border-border px-3 py-1.5 rounded-md hover:bg-gray-50 text-text-primary font-medium transition-colors"
+                          className="text-xs flex items-center gap-1 bg-white dark:bg-card border border-border px-3 py-1.5 rounded-md hover:bg-gray-50 text-text-primary font-medium transition-colors"
                         >
                           <FileText className="w-3.5 h-3.5" />
-                          Download PDF
+                          Download Agreement
                         </button>
                       </div>
-                      <div className="bg-white p-4 border border-border rounded-lg h-48 overflow-y-auto text-sm text-text-secondary whitespace-pre-wrap font-mono">
+                      <div className="bg-white dark:bg-card p-4 border border-border rounded-lg max-h-48 overflow-y-auto text-sm text-text-secondary whitespace-pre-wrap font-mono leading-relaxed">
                         {project.agreementText || 'Standard terms and conditions apply.'}
                       </div>
                     </div>

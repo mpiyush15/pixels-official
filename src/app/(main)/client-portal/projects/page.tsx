@@ -37,6 +37,11 @@ interface Project {
   startDate: string;
   endDate: string;
   budget: number;
+  projectReport?: string;
+  projectReportText?: string;
+  projectRevision?: string;
+  agreementText?: string;
+  proposalToken?: string;
   contractAccepted?: boolean;
   contractAcceptedAt?: string;
   contractAcceptedBy?: string;
@@ -77,6 +82,7 @@ export default function ClientProjectsPage() {
   const [expandedProjects, setExpandedProjects] = useState<{ [key: string]: boolean }>({});
   const [contractProject, setContractProject] = useState<Project | null>(null);
   const [showContractModal, setShowContractModal] = useState(false);
+  const [selectedReportProject, setSelectedReportProject] = useState<Project | null>(null);
 
   useEffect(() => {
     checkAuth();
@@ -550,40 +556,75 @@ export default function ClientProjectsPage() {
                   <Calendar className="w-4 h-4" />
                   End: {new Date(project.endDate).toLocaleDateString('en-IN')}
                 </div>
-                <div className="ml-auto flex gap-2">
+                <div className="ml-auto flex flex-wrap gap-2 items-center">
+                  {/* Project Report Button (Admin & Client both have it, Client is strictly read-only) */}
+                  <button
+                    onClick={() => setSelectedReportProject(project)}
+                    className="px-3.5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-medium border border-gray-200"
+                    title="View Comprehensive Project Report & Scope"
+                  >
+                    <FileText className="w-4 h-4 text-gray-600" />
+                    📋 Project Report
+                  </button>
+
                   {!project.contractAccepted ? (
-                    <button
-                      onClick={() => {
-                        setContractProject(project);
-                        setShowContractModal(true);
-                      }}
-                      className="px-6 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 text-sm font-medium"
-                    >
-                      <FileText className="w-4 h-4" />
-                      Accept Contract to Start
-                    </button>
-                  ) : (
-                    <>
+                    project.proposalToken ? (
+                      <a
+                        href={`/contract/${project.proposalToken}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-5 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 text-sm font-medium"
+                      >
+                        <FileText className="w-4 h-4" />
+                        Review & Sign Contract
+                      </a>
+                    ) : (
                       <button
                         onClick={() => {
                           setContractProject(project);
                           setShowContractModal(true);
                         }}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 text-sm font-light"
+                        className="px-5 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2 text-sm font-medium"
                       >
                         <FileText className="w-4 h-4" />
-                        View Contract
+                        Accept Contract to Start
                       </button>
+                    )
+                  ) : (
+                    <>
+                      {project.proposalToken ? (
+                        <a
+                          href={`/contract/${project.proposalToken}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3.5 py-2 bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 rounded-lg transition-colors flex items-center gap-1.5 text-sm font-medium"
+                          title="View & Download Signed Agreement PDF"
+                        >
+                          <Download className="w-4 h-4" />
+                          Signed Agreement
+                        </a>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setContractProject(project);
+                            setShowContractModal(true);
+                          }}
+                          className="px-3.5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-1.5 text-sm font-light"
+                        >
+                          <FileText className="w-4 h-4" />
+                          View Contract
+                        </button>
+                      )}
                       <button
                         onClick={() => setActiveSubmissionProject(project)}
-                        className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2 text-sm font-light"
+                        className="px-3.5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-1.5 text-sm font-light"
                       >
                         <Upload className="w-4 h-4" />
                         Submit Work
                       </button>
                       <button
                         onClick={() => setActiveChatProject(project)}
-                        className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 text-sm font-light"
+                        className="px-3.5 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-1.5 text-sm font-light"
                       >
                         <MessageCircle className="w-4 h-4" />
                         Chat
@@ -669,6 +710,151 @@ export default function ClientProjectsPage() {
               </div>
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* Read-Only Project Report Modal for Client */}
+      <AnimatePresence>
+        {selectedReportProject && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 15 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 15 }}
+              className="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden border border-gray-200"
+            >
+              {/* Modal Header */}
+              <div className="bg-gradient-to-r from-gray-900 to-black text-white px-6 py-5 flex items-center justify-between">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs uppercase tracking-wider font-semibold bg-white/20 px-2 py-0.5 rounded text-white">
+                      Official Document • Read-Only
+                    </span>
+                    {selectedReportProject.projectRevision && (
+                      <span className="text-xs bg-white/10 px-2 py-0.5 rounded text-gray-300">
+                        Rev: {selectedReportProject.projectRevision}
+                      </span>
+                    )}
+                  </div>
+                  <h2 className="text-xl font-bold mt-1 text-white">
+                    {selectedReportProject.projectName} — Comprehensive Scope & Deliverables Report
+                  </h2>
+                </div>
+                <button
+                  onClick={() => setSelectedReportProject(null)}
+                  className="p-2 hover:bg-white/10 rounded-lg transition text-gray-300 hover:text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Modal Body */}
+              <div className="p-6 md:p-8 overflow-y-auto space-y-6 flex-1">
+                {/* Meta Banner */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200 text-xs">
+                  <div>
+                    <span className="text-gray-500 block">Service Domain</span>
+                    <span className="font-semibold text-gray-900">{selectedReportProject.projectType || 'Development'}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block">Status</span>
+                    <span className="font-semibold text-gray-900 capitalize">{selectedReportProject.status.replace('-', ' ')}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block">Start Date</span>
+                    <span className="font-semibold text-gray-900">{new Date(selectedReportProject.startDate).toLocaleDateString('en-IN')}</span>
+                  </div>
+                  <div>
+                    <span className="text-gray-500 block">Agreed Budget</span>
+                    <span className="font-semibold text-emerald-600 font-mono">₹{(selectedReportProject.budget || 0).toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+
+                {/* Scope / Description */}
+                {selectedReportProject.description && (
+                  <div>
+                    <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-500 mb-2">Scope Summary</h4>
+                    <p className="text-sm text-gray-700 bg-gray-50 p-4 rounded-xl border border-gray-200 leading-relaxed">
+                      {selectedReportProject.description}
+                    </p>
+                  </div>
+                )}
+
+                {/* Comprehensive Report */}
+                <div>
+                  <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-500 mb-2">📋 Comprehensive Project Report & Architecture</h4>
+                  {selectedReportProject.projectReport || selectedReportProject.projectReportText ? (
+                    <div className="bg-white p-6 rounded-xl border border-gray-200 text-sm text-gray-800 whitespace-pre-wrap leading-relaxed shadow-inner font-sans">
+                      {selectedReportProject.projectReport || selectedReportProject.projectReportText}
+                    </div>
+                  ) : (
+                    <div className="p-8 text-center bg-gray-50 rounded-xl border border-dashed border-gray-300">
+                      <FileText className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                      <p className="text-sm text-gray-500 italic">Project report will be published here upon formulation or contract dispatch.</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Milestones Summary */}
+                {selectedReportProject.milestones && selectedReportProject.milestones.length > 0 && (
+                  <div>
+                    <h4 className="text-xs uppercase tracking-wider font-semibold text-gray-500 mb-2">Phased Roadmap & Payment Milestones</h4>
+                    <div className="border border-gray-200 rounded-xl overflow-hidden">
+                      <table className="w-full text-xs text-left">
+                        <thead className="bg-gray-100 text-gray-700 border-b border-gray-200">
+                          <tr>
+                            <th className="p-3">Phase</th>
+                            <th className="p-3">Due Date</th>
+                            <th className="p-3 text-right">Amount</th>
+                            <th className="p-3 text-right">Payment</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {selectedReportProject.milestones.map((m, idx) => (
+                            <tr key={idx} className="hover:bg-gray-50">
+                              <td className="p-3 font-medium text-gray-900">{m.name}</td>
+                              <td className="p-3 text-gray-600">{m.dueDate ? new Date(m.dueDate).toLocaleDateString('en-IN') : 'N/A'}</td>
+                              <td className="p-3 text-right font-mono font-medium">₹{(m.amount || 0).toLocaleString('en-IN')}</td>
+                              <td className="p-3 text-right">
+                                <span className={`px-2 py-0.5 rounded text-[11px] font-semibold ${m.paymentStatus === 'paid' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
+                                  {m.paymentStatus === 'paid' ? 'Paid' : 'Unpaid'}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+                <span className="text-xs text-gray-500">
+                  🔒 Read-Only for Client • Need modifications? Request via Project Chat.
+                </span>
+                <div className="flex gap-2">
+                  {selectedReportProject.proposalToken && (
+                    <a
+                      href={`/contract/${selectedReportProject.proposalToken}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-white border border-gray-300 text-gray-800 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors flex items-center gap-1.5"
+                    >
+                      <Download className="w-4 h-4" /> Full Agreement (PDF)
+                    </a>
+                  )}
+                  <button
+                    onClick={() => setSelectedReportProject(null)}
+                    className="px-5 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

@@ -19,9 +19,9 @@ export default function ClientTopBar({ clientName }: ClientTopBarProps) {
 
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-IN', {
-      weekday: 'long',
+      weekday: 'short',
       year: 'numeric',
-      month: 'long',
+      month: 'short',
       day: 'numeric',
     });
   };
@@ -30,31 +30,30 @@ export default function ClientTopBar({ clientName }: ClientTopBarProps) {
     return date.toLocaleTimeString('en-IN', {
       hour: '2-digit',
       minute: '2-digit',
-      second: '2-digit',
       hour12: true,
     });
   };
 
   return (
-    <div className="sticky top-0 z-10 bg-gradient-to-r from-blue-600 to-purple-600 border-b border-blue-700 px-6 py-4">
+    <div className="sticky top-0 z-20 bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 border-b border-blue-700/50 px-4 py-3 md:px-6 md:py-4 shadow-sm">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold text-white">
+          <h1 className="text-lg md:text-2xl font-bold text-white tracking-tight">
             Welcome back, {clientName || 'Client'}! 👋
           </h1>
-          <p className="text-blue-100 text-sm mt-1">
-            Manage your projects and track progress
+          <p className="text-blue-100 text-xs md:text-sm mt-0.5 font-light">
+            Manage your projects, billing & deliverables
           </p>
         </div>
         
-        <div className="flex flex-col items-end gap-1">
-          <div className="flex items-center gap-2 text-white">
-            <Calendar className="w-4 h-4" />
-            <span className="text-sm font-medium">{formatDate(currentTime)}</span>
+        <div className="hidden sm:flex flex-col items-end gap-0.5">
+          <div className="flex items-center gap-1.5 text-white text-xs md:text-sm font-medium">
+            <Calendar className="w-3.5 h-3.5" />
+            <span>{formatDate(currentTime)}</span>
           </div>
-          <div className="flex items-center gap-2 text-blue-100">
-            <Clock className="w-4 h-4" />
-            <span className="text-sm font-mono">{formatTime(currentTime)}</span>
+          <div className="flex items-center gap-1.5 text-blue-100 text-xs font-mono">
+            <Clock className="w-3.5 h-3.5" />
+            <span>{formatTime(currentTime)}</span>
           </div>
         </div>
       </div>

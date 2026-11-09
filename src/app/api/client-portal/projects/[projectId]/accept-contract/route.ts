@@ -93,6 +93,32 @@ export async function POST(
       );
     }
 
+    // Dispatch official signed contract acceptance email to client
+    if (clientDoc.email) {
+      try {
+        const { sendContractAcceptanceEmail } = await import('@/lib/email');
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://pixelsdigitalsolutions.com';
+        const downloadUrl = project.proposalToken ? `${baseUrl}/contract/${project.proposalToken}` : `${baseUrl}/client-portal/projects`;
+
+        await sendContractAcceptanceEmail(
+          clientDoc.email,
+          clientDoc.name || 'Valued Client',
+          project.projectName,
+          project.projectType || 'Project',
+          {
+            budget: project.budget,
+            description: project.description || project.projectReport,
+            milestones: project.milestones || [],
+            acceptedAt: new Date(),
+            downloadUrl,
+          }
+        );
+        console.log(`✅ Signed contract acceptance email sent to ${clientDoc.email}`);
+      } catch (emailErr) {
+        console.error('Error sending contract acceptance email:', emailErr);
+      }
+    }
+
     console.log('Contract accepted successfully');
     return NextResponse.json({
       success: true,

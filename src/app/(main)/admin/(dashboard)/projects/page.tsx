@@ -588,6 +588,13 @@ export default function ProjectsPage() {
                     <td className="ta-table-td">
                       <div className="flex items-center gap-2">
                         <Link
+                          href={`/admin/projects/${project._id}?tab=report`}
+                          className="hover:text-primary text-text-muted transition-colors flex items-center gap-1 text-xs border border-border px-2 py-1 rounded bg-surface/40 hover:bg-surface font-medium"
+                          title="View / Edit Project Report"
+                        >
+                          <FileText className="w-3.5 h-3.5" /> Report
+                        </Link>
+                        <Link
                           href={`/admin/projects/${project._id}`}
                           className="hover:text-primary text-text-muted transition-colors"
                           title="View Details"

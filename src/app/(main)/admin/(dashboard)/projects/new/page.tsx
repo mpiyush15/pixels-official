@@ -25,6 +25,7 @@ export default function NewProjectPage() {
     startDate: '',
     endDate: '',
     description: '',
+    projectReport: '',
     agreementText: '',
     budget: '',
     milestones: [] as { name: string; dueDate: string; amount: string; paymentStatus: string }[],
@@ -187,6 +188,21 @@ export default function NewProjectPage() {
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="ta-input w-full"
                 placeholder="Briefly describe the project scope and goals..."
+              />
+            </div>
+            <div className="md:col-span-2">
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-text-primary">
+                  📋 Comprehensive Project Report / Scope of Work (Unified into Contract & Client Portal)
+                </label>
+                <span className="text-xs text-text-muted">Shown in Contract & Client Portal</span>
+              </div>
+              <textarea
+                rows={6}
+                value={formData.projectReport}
+                onChange={(e) => setFormData({ ...formData, projectReport: e.target.value })}
+                className="ta-input w-full font-mono text-sm leading-relaxed"
+                placeholder="Paste or type the comprehensive Project Report, Technical Specifications, Deliverables, Architecture, and Phased Roadmap here. This is automatically unified with the contract terms and accessible read-only by the client..."
               />
             </div>
             <div className="md:col-span-2">

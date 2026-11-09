@@ -14,9 +14,23 @@ function PaymentCallbackContent() {
 
   useEffect(() => {
     const orderId = searchParams.get('order_id');
+    const invoiceId = searchParams.get('invoice_id');
+    const razorpayPaymentId = searchParams.get('razorpay_payment_id');
     const paymentType = searchParams.get('type');
     const projectId = searchParams.get('project_id');
     const milestoneIndex = searchParams.get('milestone_index');
+
+    // Handle Invoice Payment Return (Razorpay or link return)
+    if (invoiceId || razorpayPaymentId) {
+      setStatus('success');
+      setMessage('Your invoice payment has been processed successfully! Your receipt and updated invoice are available in your portal.');
+      if (razorpayPaymentId) {
+        setOrderDetails({
+          order_id: razorpayPaymentId,
+        });
+      }
+      return;
+    }
     
     if (!orderId) {
       setStatus('failed');
@@ -117,15 +131,25 @@ function PaymentCallbackContent() {
                 <p className="text-2xl text-black font-light">₹{orderDetails.order_amount?.toLocaleString()}</p>
               </div>
             )}
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => router.push('/')}
-              className="w-full bg-black text-white py-4 rounded-xl font-light flex items-center justify-center gap-2"
-            >
-              <span>Back to Home</span>
-              <ArrowRight className="w-5 h-5" strokeWidth={1.5} />
-            </motion.button>
+            <div className="space-y-3">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => router.push(searchParams.get('invoice_id') ? '/client-portal/invoices' : '/')}
+                className="w-full bg-black text-white py-4 rounded-xl font-light flex items-center justify-center gap-2"
+              >
+                <span>{searchParams.get('invoice_id') ? 'View Invoices in Portal' : 'Back to Home'}</span>
+                <ArrowRight className="w-5 h-5" strokeWidth={1.5} />
+              </motion.button>
+              {searchParams.get('invoice_id') && (
+                <button
+                  onClick={() => router.push('/')}
+                  className="w-full py-2.5 text-gray-500 hover:text-black text-sm font-light transition-colors"
+                >
+                  Return to Home
+                </button>
+              )}
+            </div>
           </>
         )}
 

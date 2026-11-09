@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
+import { createInvoicePaymentLink } from '@/lib/razorpay';
 
 export async function POST(
   request: NextRequest,
@@ -25,102 +26,44 @@ export async function POST(
     const remainingAmount = invoice.total - amountPaid;
 
     // If already fully paid, don't generate link
-    if (remainingAmount <= 0) {
+    if (remainingAmount <= 0 || invoice.status === 'paid') {
       return NextResponse.json(
         { error: 'Invoice is already fully paid' },
         { status: 400 }
       );
     }
 
-    // Create Cashfree order using V2 API (Payment Link)
-    const isProduction =
-      process.env.CASHFREE_MODE === "PROD" ||
-      process.env.CASHFREE_MODE === "PRODUCTION" ||
-      process.env.CASHFREE_MODE === "production";
-
-    const apiUrl = isProduction
-      ? "https://api.cashfree.com/api/v2/order/create"
-      : "https://sandbox.cashfree.com/api/v2/order/create";
-
-    const orderId = `INV_${invoice.invoiceNumber}_${Date.now()}`;
-    
-    const baseUrl = 'https://pixelsdigitalsolutions.com';
-
-    console.log('Creating Cashfree V2 invoice payment order:', {
-      orderId,
-      totalAmount: invoice.total,
-      amountPaid: amountPaid,
-      remainingAmount: remainingAmount,
-      mode: process.env.CASHFREE_MODE,
-      isProduction,
-      apiUrl,
-      baseUrl,
-      clientId: process.env.CASHFREE_CLIENT_ID?.substring(0, 8) + '...',
-    });
-
-    const orderResponse = await fetch(apiUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-client-id': process.env.CASHFREE_CLIENT_ID!,
-        'x-client-secret': process.env.CASHFREE_CLIENT_SECRET!,
-      },
-      body: JSON.stringify({
-        appId: process.env.CASHFREE_CLIENT_ID!,
-        secretKey: process.env.CASHFREE_CLIENT_SECRET!,
-        orderId: orderId,
-        orderAmount: remainingAmount, // Use remaining amount instead of total
-        orderCurrency: 'INR',
-        customerName: invoice.clientName,
-        customerEmail: invoice.clientEmail,
-        customerPhone: invoice.clientPhone || '9999999999',
-        returnUrl: `${baseUrl}/payment/callback?invoice_id=${id}`,
-        notifyUrl: `${baseUrl}/api/cashfree/webhook`,
-        orderNote: amountPaid > 0 
-          ? `Remaining payment for Invoice ${invoice.invoiceNumber} (₹${remainingAmount.toLocaleString('en-IN')} of ₹${invoice.total.toLocaleString('en-IN')})`
-          : `Payment for Invoice ${invoice.invoiceNumber}`,
-      }),
-    });
-
-    if (!orderResponse.ok) {
-      const error = await orderResponse.json();
-      console.error('Cashfree V2 invoice order creation error:', {
-        status: orderResponse.status,
-        error,
+    // If active Razorpay payment link already exists and amount hasn't changed, reuse it
+    if (invoice.paymentLink && invoice.razorpayPaymentLinkId && !invoice.linkExpired) {
+      return NextResponse.json({
+        success: true,
+        paymentLink: invoice.paymentLink,
+        orderId: invoice.razorpayPaymentLinkId,
       });
-      return NextResponse.json(
-        { error: 'Failed to create payment link' },
-        { status: 500 }
-      );
     }
 
-    const orderData = await orderResponse.json();
+    // Create Razorpay payment link
+    const paymentLinkData = await createInvoicePaymentLink(invoice, remainingAmount);
 
-    console.log('Cashfree V2 invoice order created:', {
-      status: orderData.status,
-      orderId: orderData.orderId,
-      paymentLink: orderData.paymentLink,
-    });
-
-    // V2 API returns paymentLink directly
-    const paymentUrl = orderData.paymentLink;
+    const paymentUrl = paymentLinkData.short_url || (paymentLinkData as any).url;
 
     if (!paymentUrl) {
-      console.error('No payment link in Cashfree response:', orderData);
+      console.error('No payment link in Razorpay response:', paymentLinkData);
       return NextResponse.json(
         { error: 'Failed to generate payment link' },
         { status: 500 }
       );
     }
 
-    // Update invoice with payment link details
+    // Update invoice with Razorpay payment link details
     await db.collection('invoices').updateOne(
       { _id: new ObjectId(id) },
       {
         $set: {
           paymentLink: paymentUrl,
-          cashfreeOrderId: orderData.orderId,
+          razorpayPaymentLinkId: paymentLinkData.id,
           paymentLinkCreatedAt: new Date(),
+          updatedAt: new Date(),
         },
       }
     );
@@ -128,12 +71,12 @@ export async function POST(
     return NextResponse.json({
       success: true,
       paymentLink: paymentUrl,
-      orderId: orderData.orderId,
+      orderId: paymentLinkData.id,
     });
-  } catch (error) {
-    console.error('Generate payment link error:', error);
+  } catch (error: any) {
+    console.error('Generate Razorpay payment link error:', error);
     return NextResponse.json(
-      { error: 'Failed to generate payment link' },
+      { error: error.message || 'Failed to generate payment link' },
       { status: 500 }
     );
   }

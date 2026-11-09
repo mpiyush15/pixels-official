@@ -1464,10 +1464,10 @@ export default function InvoicesPage() {
                     onClick={handleGeneratePaymentLink}
                     disabled={generatingPaymentLink}
                     className="px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg flex items-center gap-2 text-xs font-light whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-                    title="Generate payment link with Cashfree"
+                    title="Generate Razorpay payment link"
                   >
                     <IndianRupee className="w-4 h-4" />
-                    {generatingPaymentLink ? 'Generating...' : 'Payment Link'}
+                    {generatingPaymentLink ? 'Generating...' : 'Razorpay Link'}
                   </button>
                 )}
                 <button
