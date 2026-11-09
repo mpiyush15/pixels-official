@@ -112,7 +112,7 @@ export async function POST(
             }
           }
         } catch (paymentLinkErr) {
-          console.warn('Could not auto-generate Razorpay payment link for email:', paymentLinkErr);
+          console.error('❌ Could not auto-generate Razorpay payment link for email:', paymentLinkErr);
           // Don't crash email sending if payment link generation fails; email still delivers with portal link
         }
       }
@@ -145,7 +145,10 @@ export async function POST(
       }
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ 
+      success: true, 
+      paymentLink: invoice.status === 'paid' ? null : (invoice.paymentLink || null) 
+    });
   } catch (error) {
     console.error('Error in send invoice route:', error);
     return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });

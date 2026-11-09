@@ -58,24 +58,43 @@ export async function createInvoicePaymentLink(invoice: any, amountToPay: number
 
   const amountInPaise = Math.round(amountToPay * 100);
 
+  // Clean and sanitize phone number (Razorpay accepts E.164 e.g. +919876543210 or 10 digits without spaces)
+  let cleanContact: string | undefined = undefined;
+  if (invoice.clientPhone) {
+    const rawDigits = String(invoice.clientPhone).replace(/\D/g, '');
+    if (rawDigits.length === 10) {
+      cleanContact = `+91${rawDigits}`;
+    } else if (rawDigits.length === 12 && rawDigits.startsWith('91')) {
+      cleanContact = `+${rawDigits}`;
+    } else if (rawDigits.length >= 8 && rawDigits.length <= 15) {
+      cleanContact = `+${rawDigits}`;
+    }
+  }
+
+  const customer: any = {
+    name: invoice.clientName || 'Valued Client',
+  };
+  if (invoice.clientEmail) {
+    customer.email = String(invoice.clientEmail).trim();
+  }
+  if (cleanContact) {
+    customer.contact = cleanContact;
+  }
+
   const options: any = {
     amount: amountInPaise,
     currency: 'INR',
     accept_partial: false,
-    description: `Payment for Invoice #${invoice.invoiceNumber}`,
-    customer: {
-      name: invoice.clientName || 'Valued Client',
-      email: invoice.clientEmail,
-      contact: invoice.clientPhone || undefined,
-    },
+    description: `Payment for Invoice #${invoice.invoiceNumber || 'INV'}`,
+    customer,
     notify: {
-      sms: Boolean(invoice.clientPhone),
-      email: false, // We send our custom branded email
+      sms: false, // Avoid failing API if merchant SMS credits are unconfigured
+      email: false, // We deliver our branded email
     },
-    reminder_enable: true,
+    reminder_enable: false,
     notes: {
       invoiceId: invoice._id ? invoice._id.toString() : '',
-      invoiceNumber: invoice.invoiceNumber,
+      invoiceNumber: invoice.invoiceNumber ? String(invoice.invoiceNumber) : '',
       clientId: invoice.clientId ? invoice.clientId.toString() : '',
       projectId: invoice.projectId ? invoice.projectId.toString() : '',
     },

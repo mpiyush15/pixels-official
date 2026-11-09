@@ -766,7 +766,11 @@ export default function InvoicesPage() {
       const result = await response.json();
 
       if (result.success) {
-        alert('Invoice email sent successfully!');
+        if (result.paymentLink) {
+          alert('Invoice email sent successfully with Razorpay Pay Now button!');
+        } else {
+          alert('Invoice email sent successfully! (Note: If Razorpay Pay Now button did not appear, verify RAZORPAY_KEY_ID & RAZORPAY_KEY_SECRET in server .env and restart PM2).');
+        }
       } else {
         alert('Failed to send invoice email: ' + (result.error || 'Unknown error'));
       }
