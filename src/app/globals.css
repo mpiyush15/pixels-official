@@ -70,6 +70,50 @@
     -moz-osx-font-smoothing: grayscale;
     font-weight: 300;
   }
+
+  /* Universal Form Input Contrast Fix: Prevents white-on-white text in light and dark modes */
+  input, textarea, select {
+    color: var(--text-primary);
+  }
+
+  /* Any input/select/textarea on white or light backgrounds MUST have dark, crisp text */
+  input.bg-white,
+  input.bg-gray-50,
+  input.bg-gray-100,
+  textarea.bg-white,
+  textarea.bg-gray-50,
+  textarea.bg-gray-100,
+  select.bg-white,
+  select.bg-gray-50,
+  select.bg-gray-100,
+  .bg-white input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]),
+  .bg-white textarea,
+  .bg-white select,
+  .bg-gray-50 input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]),
+  .bg-gray-50 textarea,
+  .bg-gray-50 select,
+  .bg-gray-100 input:not([type="submit"]):not([type="button"]):not([type="checkbox"]):not([type="radio"]),
+  .bg-gray-100 textarea,
+  .bg-gray-100 select {
+    color: #0f172a !important;
+  }
+
+  /* Placeholders on light backgrounds */
+  input.bg-white::placeholder,
+  input.bg-gray-50::placeholder,
+  input.bg-gray-100::placeholder,
+  textarea.bg-white::placeholder,
+  textarea.bg-gray-50::placeholder,
+  textarea.bg-gray-100::placeholder,
+  .bg-white input::placeholder,
+  .bg-white textarea::placeholder,
+  .bg-gray-50 input::placeholder,
+  .bg-gray-50 textarea::placeholder,
+  .bg-gray-100 input::placeholder,
+  .bg-gray-100 textarea::placeholder {
+    color: #64748b !important;
+    opacity: 1 !important;
+  }
 }
 
 @layer components {

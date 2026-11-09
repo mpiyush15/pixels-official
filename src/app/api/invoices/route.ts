@@ -59,6 +59,7 @@ export async function POST(request: NextRequest) {
       clientAddress: body.clientAddress || '',
       projectId: body.projectId || null,
       projectName: body.projectName || '',
+      milestoneName: body.milestoneName || '',
       services: body.services,
       subtotal: body.subtotal,
       discount: body.discount || 0,

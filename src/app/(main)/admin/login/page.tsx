@@ -73,7 +73,7 @@ export default function AdminLogin() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-12 py-3 text-black focus:outline-none focus:border-gray-400 transition-colors font-light placeholder-gray-400 shadow-sm"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-12 py-3 text-gray-900 focus:text-black focus:outline-none focus:border-gray-400 transition-colors font-normal placeholder:text-gray-400 shadow-sm"
                   placeholder="admin@pixelsdigitalsolutions.com"
                   required
                 />
@@ -89,7 +89,7 @@ export default function AdminLogin() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full bg-white border border-gray-200 rounded-xl px-12 py-3 text-black focus:outline-none focus:border-gray-400 transition-colors font-light placeholder-gray-400 shadow-sm"
+                  className="w-full bg-white border border-gray-200 rounded-xl px-12 py-3 text-gray-900 focus:text-black focus:outline-none focus:border-gray-400 transition-colors font-normal placeholder:text-gray-400 shadow-sm"
                   placeholder="••••••••"
                   required
                 />

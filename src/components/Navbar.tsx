@@ -10,8 +10,14 @@ export default function Navbar({ data }: { data?: any }) {
   const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
 
-  // Hide Navbar completely on the Superadmin Dashboard routes
-  if (pathname?.startsWith('/admin')) {
+  // Hide Navbar completely on Dashboard and Portal routes
+  if (
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/client-portal') ||
+    pathname?.startsWith('/staff-portal') ||
+    pathname?.startsWith('/contract') ||
+    pathname?.startsWith('/payment')
+  ) {
     return null;
   }
 

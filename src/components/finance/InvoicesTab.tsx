@@ -13,11 +13,24 @@ interface Client {
   address?: string;
 }
 
+interface Milestone {
+  name: string;
+  dueDate?: string;
+  amount: number | string;
+  paymentStatus?: 'unpaid' | 'paid';
+  status?: string;
+  description?: string;
+}
+
 interface Project {
   _id: string;
-  name: string;
-  clientName: string;
+  name?: string;
+  projectName?: string;
+  clientName?: string;
   clientId?: string;
+  clientEmail?: string;
+  milestones?: Milestone[];
+  budget?: number;
 }
 
 interface Invoice {
@@ -31,6 +44,7 @@ interface Invoice {
   clientAddress?: string;
   projectId?: string;
   projectName?: string;
+  milestoneName?: string;
   services: Array<{
     name: string;
     description: string;
@@ -100,6 +114,7 @@ export default function InvoicesPage() {
     clientId: '',
     projectId: '',
     projectName: '',
+    milestoneName: '',
     services: [{ name: '', description: '', quantity: 1, price: 0 }],
     discount: 0,
     discountType: 'percentage' as 'percentage' | 'fixed',
@@ -202,6 +217,7 @@ export default function InvoicesPage() {
           clientAddress: selectedClient.address || '',
           projectId: formData.projectId || null,
           projectName: formData.projectName || '',
+          milestoneName: formData.milestoneName || '',
           services: formData.services,
           subtotal,
           discount: formData.discount,
@@ -220,6 +236,7 @@ export default function InvoicesPage() {
         clientId: '',
         projectId: '',
         projectName: '',
+        milestoneName: '',
         services: [{ name: '', description: '', quantity: 1, price: 0 }],
         discount: 0,
         discountType: 'percentage' as 'percentage' | 'fixed',
@@ -1073,7 +1090,22 @@ export default function InvoicesPage() {
                   <label className="block text-sm text-gray-600 font-light mb-2">Select Client *</label>
                   <select
                     value={formData.clientId}
-                    onChange={(e) => setFormData({ ...formData, clientId: e.target.value })}
+                    onChange={(e) => {
+                      const newClientId = e.target.value;
+                      const currentProj = projects.find(p => p._id === formData.projectId);
+                      const isStillValid = currentProj && (
+                        currentProj.clientId === newClientId || 
+                        (currentProj.clientEmail && clients.find(c => c._id === newClientId)?.email?.toLowerCase() === currentProj.clientEmail?.toLowerCase())
+                      );
+
+                      setFormData({
+                        ...formData,
+                        clientId: newClientId,
+                        projectId: isStillValid ? formData.projectId : '',
+                        projectName: isStillValid ? formData.projectName : '',
+                        milestoneName: isStillValid ? formData.milestoneName : '',
+                      });
+                    }}
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
                     required
                   >
@@ -1094,26 +1126,105 @@ export default function InvoicesPage() {
                     onChange={(e) => {
                       const projectId = e.target.value;
                       const project = projects.find(p => p._id === projectId);
+                      const projName = project ? (project.projectName || project.name || '') : '';
+
+                      let resolvedClientId = formData.clientId;
+                      if (project && !resolvedClientId) {
+                        resolvedClientId = project.clientId || '';
+                        if (!resolvedClientId && project.clientEmail) {
+                          const matchedClient = clients.find(c => c.email?.toLowerCase() === project.clientEmail?.toLowerCase());
+                          if (matchedClient) resolvedClientId = matchedClient._id;
+                        }
+                      }
+
                       setFormData({
                         ...formData,
                         projectId,
-                        projectName: project ? project.name : '',
-                        clientId: project ? (project.clientId || formData.clientId) : formData.clientId, // Auto-fill client if project selected
+                        projectName: projName,
+                        clientId: resolvedClientId,
+                        milestoneName: '', // reset milestone when project changes
                       });
                     }}
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-black font-light"
                   >
                     <option value="">-- No Project --</option>
                     {projects
-                      .filter(p => !formData.clientId || p.clientId === formData.clientId) // Filter by client if selected
-                      .map(project => (
-                      <option key={project._id} value={project._id}>
-                        {project.name}
-                      </option>
-                    ))}
+                      .filter(p => {
+                        if (!formData.clientId) return true;
+                        const client = clients.find(c => c._id === formData.clientId);
+                        return (
+                          p.clientId === formData.clientId ||
+                          (client?.email && p.clientEmail && p.clientEmail.toLowerCase() === client.email.toLowerCase())
+                        );
+                      })
+                      .map(project => {
+                        const displayName = project.projectName || project.name || 'Untitled Project';
+                        return (
+                          <option key={project._id} value={project._id}>
+                            {displayName}
+                          </option>
+                        );
+                      })}
                   </select>
                 </div>
               </div>
+
+              {/* Milestone / Phase Selection (Visible if linked project has milestones) */}
+              {(() => {
+                const linkedProject = projects.find(p => p._id === formData.projectId);
+                const projectMilestones = linkedProject?.milestones || [];
+                if (!linkedProject || projectMilestones.length === 0) return null;
+
+                return (
+                  <div className="bg-gradient-to-r from-blue-50/70 to-indigo-50/70 border border-blue-200 rounded-xl p-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-2">
+                      <label className="block text-sm font-semibold text-blue-900">
+                        🎯 Select Milestone / Phase to Invoice (Auto-Fills Details)
+                      </label>
+                      <span className="text-xs text-blue-700">
+                        Auto-populates service, amount & due date
+                      </span>
+                    </div>
+                    <select
+                      value={formData.milestoneName}
+                      onChange={(e) => {
+                        const mName = e.target.value;
+                        const m = projectMilestones.find(item => item.name === mName);
+                        if (m) {
+                          const mAmount = typeof m.amount === 'string' ? parseFloat(m.amount) || 0 : (m.amount || 0);
+                          const mDueDate = m.dueDate ? m.dueDate.split('T')[0] : formData.dueDate;
+                          setFormData({
+                            ...formData,
+                            milestoneName: m.name,
+                            dueDate: mDueDate,
+                            services: [
+                              {
+                                name: m.name,
+                                description: m.description || `Milestone payment for ${linkedProject.projectName || linkedProject.name || 'Project'}`,
+                                quantity: 1,
+                                price: mAmount,
+                              }
+                            ]
+                          });
+                        } else {
+                          setFormData({
+                            ...formData,
+                            milestoneName: '',
+                          });
+                        }
+                      }}
+                      className="w-full px-4 py-2.5 bg-white border border-blue-200 rounded-xl focus:outline-none focus:border-blue-600 font-normal text-sm text-gray-800"
+                    >
+                      <option value="">-- Custom Invoice (or Select a Phase / Milestone) --</option>
+                      {projectMilestones.map((m, idx) => (
+                        <option key={idx} value={m.name}>
+                          {m.name} — ₹{Number(m.amount || 0).toLocaleString('en-IN')} {m.paymentStatus === 'paid' ? '✅ [PAID]' : '⏳ [UNPAID]'}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                );
+              })()}
 
               {/* Auto-fetched Client Details */}
               {selectedClient && (

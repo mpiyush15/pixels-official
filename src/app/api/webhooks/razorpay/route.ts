@@ -132,13 +132,19 @@ export async function POST(request: NextRequest) {
           const project = await db.collection('projects').findOne({ _id: new ObjectId(invoice.projectId) });
           if (project) {
             const updatedMilestones = (project.milestones || []).map((m: any) => {
-              if (m.paymentStatus !== 'paid' && (m.name === invoice.projectName || (m.amount && Math.abs(m.amount - totalAmount) < 1))) {
+              const matchesMilestone =
+                (invoice.milestoneName && m.name && m.name.trim().toLowerCase() === invoice.milestoneName.trim().toLowerCase()) ||
+                (invoice.services && invoice.services.some((s: any) => s.name && s.name.trim().toLowerCase() === m.name.trim().toLowerCase())) ||
+                (m.name === invoice.projectName) ||
+                (m.amount && Math.abs(m.amount - totalAmount) < 1);
+
+              if (m.paymentStatus !== 'paid' && matchesMilestone) {
                 return {
                   ...m,
                   paymentStatus: 'paid',
                   paidAt: paidDate,
                   paidAmount: m.amount || totalAmount,
-                  status: m.status === 'pending' ? 'in-progress' : m.status,
+                  status: m.status === 'pending' ? 'completed' : m.status,
                 };
               }
               return m;

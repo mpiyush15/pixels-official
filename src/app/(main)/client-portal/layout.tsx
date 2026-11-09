@@ -14,8 +14,11 @@ export default function ClientPortalLayout({
   const pathname = usePathname();
   const [clientName, setClientName] = useState('');
   
-  // Don't show sidebar/topbar on login and forgot-password pages
-  const isAuthPage = pathname === '/client-portal/login' || pathname === '/client-portal/forgot-password';
+  // Don't show sidebar/topbar on login, forgot-password, and reset-password pages
+  const isAuthPage = 
+    pathname === '/client-portal/login' || 
+    pathname === '/client-portal/forgot-password' ||
+    Boolean(pathname?.startsWith('/client-portal/reset-password'));
 
   // Fetch client info
   useEffect(() => {

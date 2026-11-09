@@ -8,8 +8,14 @@ import Image from 'next/image';
 export default function Footer() {
   const pathname = usePathname();
 
-  // Hide Footer completely on the Superadmin Dashboard routes
-  if (pathname?.startsWith('/admin')) {
+  // Hide Footer completely on Dashboard and Portal routes
+  if (
+    pathname?.startsWith('/admin') ||
+    pathname?.startsWith('/client-portal') ||
+    pathname?.startsWith('/staff-portal') ||
+    pathname?.startsWith('/contract') ||
+    pathname?.startsWith('/payment')
+  ) {
     return null;
   }
 
